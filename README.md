@@ -13,6 +13,11 @@ A tool for checking cloud object storage.
     - use [GetObjectInput.Range](https://docs.aws.amazon.com/sdk-for-go/api/service/s3/#GetObjectInput)
       to limit the size of the buffer?
 - streaming download performance
+  - throughput
   - time download to nowhere 
   - time download to file
   - include fixity check
+- reliability
+  - same file
+  - different files
+  - retries
