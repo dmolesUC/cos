@@ -1,3 +1,10 @@
+#### Custom ignores ####
+
+# default compiled binary
+coscheck
+
+#### Generated ignores ####
+
 #### joe made this: http://goel.io/joe
 
 #### go ####

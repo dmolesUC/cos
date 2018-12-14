@@ -21,3 +21,24 @@ A tool for checking cloud object storage.
   - same file
   - different files
   - retries
+
+## For developers
+
+`coscheck` is a [Go 1.11 module](https://github.com/golang/go/wiki/Modules). 
+
+As such, it requires Go 1.11 or later, and should be cloned _outside_
+`$GOPATH/src`.
+
+### Building
+
+From the project root:
+
+- to build `coscheck`, writing the executable to the source directory, use `go build`.
+- to build `coscheck` and install it in `$GOPATH/bin`, use `go install`.
+
+### Configuring JetBrains GoLand IDE
+
+In **Preferences > Go > Go Modules (vgo)**, check “Enable Go Modules (vgo)
+integration“. The “Vgo Executable” field should default to “Project SDK”
+(1.11.x).
+
