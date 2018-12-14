@@ -11,30 +11,27 @@ import (
 )
 
 const longDescription = `
-Verify the checksum of a file
+Verify the digest of a file
 [TODO: long description]
 `
 
-// fixityCmd represents the fixity command
+var expected *[]byte
+
 var fixityCmd = &cobra.Command{
-	Use:   "fixity",
-	Short: "Verify the checksum of a file",
+	Use: "fixity URL",
+	Short: "Verify the checksum of an object",
 	Long: strings.TrimSpace(longDescription),
+	Args: cobra.ExactArgs(1),
+	Example: "fixity s3://mybucket/myprefix/myobject --expected ec57cd0008c934e61b30635efa6964cc3de8574b669175028069c459eeb01510",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("fixity called")
+		fmt.Printf("expected: %x\n", *expected);
+		fmt.Println("URL: " + strings.Join(args, " "))
 	},
 }
 
+
 func init() {
 	rootCmd.AddCommand(fixityCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// fixityCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// fixityCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// TODO: add algorithm, & validate it (default SHA256, support SHA256 or MD5, but case-insensitive)
+	expected = fixityCmd.Flags().BytesHexP("expected", "e", nil, "Expected digest value")
 }
