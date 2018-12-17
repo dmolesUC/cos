@@ -5,9 +5,10 @@ package cmd
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/spf13/cobra"
+	"log"
+	"net/url"
+	"strings"
 )
 
 const longDescription = `
@@ -15,23 +16,41 @@ Verify the digest of a file
 [TODO: long description]
 `
 
-var expected *[]byte
+var expectedDigest *[]byte
+var digestAlgorithm *string
 
 var fixityCmd = &cobra.Command{
-	Use: "fixity URL",
-	Short: "Verify the checksum of an object",
+	Use: "fixity <URL>",
+	Short: "Verify the digest of an object",
 	Long: strings.TrimSpace(longDescription),
 	Args: cobra.ExactArgs(1),
-	Example: "fixity s3://mybucket/myprefix/myobject --expected ec57cd0008c934e61b30635efa6964cc3de8574b669175028069c459eeb01510",
+	Example: `
+      fixity s3://mybucket/myprefix/myobject
+      fixity s3://mybucket/myprefix/myobject -e 9f1d6f7b77f74a091c7734ae15f394be3f67c73a8568d623197c01ba4f05e9ff
+      fixity s3://mybucket/myprefix/myobject -a md5 f7f647f7d9338fb16ba3a1da8453fee3
+    `,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("expected: %x\n", *expected);
-		fmt.Println("URL: " + strings.Join(args, " "))
+		checkFixity(args[0])
 	},
+}
+
+func checkFixity(objUrlStr string) {
+	fmt.Printf("expectedDigest  : %x\n", *expectedDigest)
+	fmt.Printf("digestAlgorithm : %s\n", *digestAlgorithm)
+	objUrl, err := url.Parse(objUrlStr)
+	if err != nil {
+		log.Fatal(err) // TODO: figure out why url.Parse never fails
+	}
+	fmt.Println("Object URL: " + objUrl.String())
 }
 
 
 func init() {
+	// TODO: add download option
+	// TODO: validate algorithm
+	flags := fixityCmd.Flags()
+	expectedDigest = flags.BytesHexP("expected", "e", nil, "Expected digest value")
+	digestAlgorithm = flags.StringP("algorithm", "a", "sha256", "Digest algorithm (md5, sha256; default is sha256)")
+
 	rootCmd.AddCommand(fixityCmd)
-	// TODO: add algorithm, & validate it (default SHA256, support SHA256 or MD5, but case-insensitive)
-	expected = fixityCmd.Flags().BytesHexP("expected", "e", nil, "Expected digest value")
 }
