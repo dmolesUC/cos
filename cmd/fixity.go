@@ -1,8 +1,9 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
-	"net/url"
+	. "net/url"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -22,6 +23,7 @@ const example = `
   fixity s3://www.dmoles.net/images/fa/archive.svg -e https://s3.us-west-2.amazonaws.com/ -a md5 -x eac8a75e3b3023e98003f1c24137ebbd
 `
 
+var objectUrl *URL
 var verbose *bool
 var expected *[]byte
 var algorithm *string
@@ -36,53 +38,74 @@ var fixityCmd = &cobra.Command{
 	SilenceErrors: true,
 	Example:       "  " + strings.TrimSpace(example),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return checkFixity(args[0])
+		objUrlStr := args[0]
+		if *verbose {
+			fmt.Printf("object URL: %v\n", objUrlStr)
+			fmt.Printf("verbose   : %v\n", *verbose)
+			fmt.Printf("algorithm : %v\n", *algorithm)
+			fmt.Printf("expected  : %x\n", *expected)
+			fmt.Printf("endpoint  : %v\n", *endpoint)
+		}
+
+		objUrl, err := validUrl(objUrlStr)
+		if err != nil {
+			return err
+		}
+		objectUrl = objUrl
+
+		fmt.Println(objectUrl.Scheme)
+
+		return nil
 	},
 }
 
-func checkFixity(objUrlStr string) error {
-	objUrl, err := url.Parse(objUrlStr)
-	if err == nil {
-		return checkFixityUrl(objUrl)
+func validUrl(objUrlStr string) (*URL, error) {
+	objUrl, err := Parse(objUrlStr)
+	if err != nil {
+		return nil, err
 	}
-	return err
+	if !objUrl.IsAbs() {
+		return nil, errors.New("object URL #{objUrlStr} must have a scheme")
+	}
+	return objUrl, nil
 }
 
-func checkFixityUrl(objUrl *url.URL) error {
-	if *verbose {
-		fmt.Printf("object URL: %v\n", objUrl)
-		fmt.Printf("verbose   : %v\n", *verbose)
-		fmt.Printf("algorithm : %v\n", *algorithm)
-		fmt.Printf("expected  : %x\n", *expected)
-		fmt.Printf("endpoint  : %v\n", *endpoint)
-	}
-
-	//s3Config := aws.Config{
-	//	Endpoint: aws.String(objUrl.String()),
-	//}
-	//
-	//s3Opts := session.Options{
-	//	Config:            s3Config,
-	//	SharedConfigState: session.SharedConfigEnable,
-	//}
-	//
-	//sess, err := session.NewSessionWithOptions(s3Opts)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//svc := s3.New(sess)
-	//result, err := svc.ListBuckets(nil)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//for _, b := range result.Buckets {
-	//	fmt.Printf("* %s created on %s\n", aws.StringValue(b.Name), aws.TimeValue(b.CreationDate))
-	//}
-
-	return nil
-}
+//func checkFixity(objUrlStr string) error {
+//	objUrl, err := Parse(objUrlStr)
+//	if err == nil {
+//		return checkFixityUrl(objUrl)
+//	}
+//	return err
+//}
+//
+//func checkFixityUrl(objUrl *URL) error {
+//
+//	//s3Config := aws.Config{
+//	//	Endpoint: aws.String(objUrl.String()),
+//	//}
+//	//
+//	//s3Opts := session.Options{
+//	//	Config:            s3Config,
+//	//	SharedConfigState: session.SharedConfigEnable,
+//	//}
+//	//
+//	//sess, err := session.NewSessionWithOptions(s3Opts)
+//	//if err != nil {
+//	//	return err
+//	//}
+//	//
+//	//svc := s3.New(sess)
+//	//result, err := svc.ListBuckets(nil)
+//	//if err != nil {
+//	//	return err
+//	//}
+//	//
+//	//for _, b := range result.Buckets {
+//	//	fmt.Printf("* %s created on %s\n", aws.StringValue(b.Name), aws.TimeValue(b.CreationDate))
+//	//}
+//
+//	return nil
+//}
 
 func init() {
 	flags := fixityCmd.Flags()
