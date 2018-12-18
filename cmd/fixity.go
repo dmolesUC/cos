@@ -5,9 +5,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/spf13/cobra"
 )
 
@@ -17,14 +14,18 @@ const longDescription = shortDescription + `
 [TODO: long description]
 `
 
+// TODO: replace with fake regions, buckets, prefixes, objects
 const example = `
-  fixity http://s3-myregion.amazonaws.com/mybucket/myprefix/myobject
-  fixity http://s3-myregion.amazonaws.com/mybucket/myprefix/myobject -e 9f1d6f7b77f74a091c7734ae15f394be3f67c73a8568d623197c01ba4f05e9ff
-  fixity http://s3-myregion.amazonaws.com/mybucket/myprefix/myobject -a md5 f7f647f7d9338fb16ba3a1da8453fee3
+  fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg
+  fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -x c99ad299fa53d5d9688909164cf25b386b33bea8d4247310d80f615be29978f5
+  fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -a md5 -x eac8a75e3b3023e98003f1c24137ebbd
+  fixity s3://www.dmoles.net/images/fa/archive.svg -e https://s3.us-west-2.amazonaws.com/ -a md5 -x eac8a75e3b3023e98003f1c24137ebbd
 `
 
-var expectedDigest *[]byte
-var digestAlgorithm *string
+var verbose *bool
+var expected *[]byte
+var algorithm *string
+var endpoint *string
 
 var fixityCmd = &cobra.Command{
 	Use:           "fixity <OBJECT-URL>",
@@ -48,43 +49,48 @@ func checkFixity(objUrlStr string) error {
 }
 
 func checkFixityUrl(objUrl *url.URL) error {
-	fmt.Printf("Object URL: %v\n", objUrl)
-	fmt.Printf("expectedDigest  : %x\n", *expectedDigest)
-	fmt.Printf("digestAlgorithm : %s\n", *digestAlgorithm)
-
-	s3Config := &aws.Config{
-		/*
-		   coscheck fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/favicon.png \
-		     --expected 8d3496edee4a8a1bb3ba54e8f762aa9a6be9ce69f84a0e8fec0e4809deaaf804
-		 */
-		Endpoint: aws.String(objUrl.String()), // TODO: decompose into endpoint + region + bucket + key
+	if *verbose {
+		fmt.Printf("object URL: %v\n", objUrl)
+		fmt.Printf("verbose   : %v\n", *verbose)
+		fmt.Printf("algorithm : %v\n", *algorithm)
+		fmt.Printf("expected  : %x\n", *expected)
+		fmt.Printf("endpoint  : %v\n", *endpoint)
 	}
 
-	sess, err := session.NewSession(s3Config)
-	if err != nil {
-		return err
-	}
-
-	svc := s3.New(sess)
-	result, err := svc.ListBuckets(nil)
-	if err != nil {
-		return err
-	}
-
-	for _, b := range result.Buckets {
-		fmt.Printf("* %s created on %s\n", aws.StringValue(b.Name), aws.TimeValue(b.CreationDate))
-	}
+	//s3Config := aws.Config{
+	//	Endpoint: aws.String(objUrl.String()),
+	//}
+	//
+	//s3Opts := session.Options{
+	//	Config:            s3Config,
+	//	SharedConfigState: session.SharedConfigEnable,
+	//}
+	//
+	//sess, err := session.NewSessionWithOptions(s3Opts)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//svc := s3.New(sess)
+	//result, err := svc.ListBuckets(nil)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//for _, b := range result.Buckets {
+	//	fmt.Printf("* %s created on %s\n", aws.StringValue(b.Name), aws.TimeValue(b.CreationDate))
+	//}
 
 	return nil
 }
 
 func init() {
-	// TODO: region, endpoint, auth?
-	// TODO: add download option
-	// TODO: validate algorithm
 	flags := fixityCmd.Flags()
-	expectedDigest = flags.BytesHexP("expected", "e", nil, "Expected digest value")
-	digestAlgorithm = flags.StringP("algorithm", "a", "sha256", "Digest algorithm (md5, sha256; default is sha256)")
+
+	expected = flags.BytesHexP("expected", "x", nil, "Expected digest value")
+	algorithm = flags.StringP("algorithm", "a", "sha256", "Algorithm (md5, sha256; default is sha256)")
+	endpoint = flags.StringP("endpoint", "e", "", "S3 endpoint")
+	verbose = flags.BoolP("verbose", "v", false, "Verbose output")
 
 	rootCmd.AddCommand(fixityCmd)
 }
