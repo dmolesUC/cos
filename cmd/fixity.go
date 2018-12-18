@@ -1,5 +1,3 @@
-// Copyright © 2018 David Moles <david.moles@ucop.edu>
-
 package cmd
 
 import (
