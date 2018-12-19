@@ -9,6 +9,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// ------------------------------------------------------------
+// Constants: Help Text
+
 const shortDescription = "Verify the digest of an object"
 
 const longDescription = shortDescription + `
@@ -23,51 +26,85 @@ const example = `
   fixity s3://www.dmoles.net/images/fa/archive.svg -e https://s3.us-west-2.amazonaws.com/ -a md5 -x eac8a75e3b3023e98003f1c24137ebbd
 `
 
+// ------------------------------------------------------------
+// Global variables
+
 var objectUrl *URL
 var verbose *bool
 var expected *[]byte
 var algorithm *string
 var endpoint *string
 
-var fixityCmd = &cobra.Command{
-	Use:           "fixity <OBJECT-URL>",
-	Short:         shortDescription,
-	Long:          strings.TrimSpace(longDescription),
-	Args:          cobra.ExactArgs(1),
-	SilenceUsage:  true,
-	SilenceErrors: true,
-	Example:       "  " + strings.TrimSpace(example),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		objUrlStr := args[0]
-		if *verbose {
-			fmt.Printf("object URL: %v\n", objUrlStr)
-			fmt.Printf("verbose   : %v\n", *verbose)
-			fmt.Printf("algorithm : %v\n", *algorithm)
-			fmt.Printf("expected  : %x\n", *expected)
-			fmt.Printf("endpoint  : %v\n", *endpoint)
-		}
+// ------------------------------------------------------------
+// Output
 
-		objUrl, err := validUrl(objUrlStr)
-		if err != nil {
-			return err
-		}
-		objectUrl = objUrl
-
-		fmt.Println(objectUrl.Scheme)
-
-		return nil
-	},
+func maybePrintArgs(args []string) {
+	if !*verbose {
+		return
+	}
+	fmt.Printf("object URL: %v\n", args[0])
+	fmt.Printf("verbose   : %v\n", *verbose)
+	fmt.Printf("algorithm : %v\n", *algorithm)
+	fmt.Printf("expected  : %x\n", *expected)
+	fmt.Printf("endpoint  : %v\n", *endpoint)
 }
 
-func validUrl(objUrlStr string) (*URL, error) {
+// ------------------------------------------------------------
+// Validators
+
+func initObjectUrl(objUrlStr string) error {
 	objUrl, err := Parse(objUrlStr)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if !objUrl.IsAbs() {
-		return nil, errors.New("object URL #{objUrlStr} must have a scheme")
+		msg := fmt.Sprintf("object URL '%v' must have a scheme", objUrlStr)
+		return errors.New(msg)
 	}
-	return objUrl, nil
+	objectUrl = objUrl
+	return nil
+}
+
+// ------------------------------------------------------------
+// Command
+
+func cmdMain(cmd *cobra.Command, args []string) error {
+	if *verbose {
+		maybePrintArgs(args)
+	}
+
+	err := initObjectUrl(args[0])
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(objectUrl.Scheme)
+
+	return nil
+}
+
+// ------------------------------------------------------------
+// Command initialization
+
+func init() {
+	fixityCmd := &cobra.Command{
+		Use:           "fixity <OBJECT-URL>",
+		Short:         shortDescription,
+		Long:          strings.TrimSpace(longDescription),
+		Args:          cobra.ExactArgs(1),
+		SilenceUsage:  true,
+		SilenceErrors: true,
+		Example:       "  " + strings.TrimSpace(example),
+		RunE:          cmdMain,
+	}
+
+	flags := fixityCmd.Flags()
+	expected = flags.BytesHexP("expected", "x", nil, "Expected digest value")
+	algorithm = flags.StringP("algorithm", "a", "sha256", "Algorithm (md5, sha256; default is sha256)")
+	endpoint = flags.StringP("endpoint", "e", "", "S3 endpoint")
+	verbose = flags.BoolP("verbose", "v", false, "Verbose output")
+
+	rootCmd.AddCommand(fixityCmd)
 }
 
 //func checkFixity(objUrlStr string) error {
@@ -106,14 +143,3 @@ func validUrl(objUrlStr string) (*URL, error) {
 //
 //	return nil
 //}
-
-func init() {
-	flags := fixityCmd.Flags()
-
-	expected = flags.BytesHexP("expected", "x", nil, "Expected digest value")
-	algorithm = flags.StringP("algorithm", "a", "sha256", "Algorithm (md5, sha256; default is sha256)")
-	endpoint = flags.StringP("endpoint", "e", "", "S3 endpoint")
-	verbose = flags.BoolP("verbose", "v", false, "Verbose output")
-
-	rootCmd.AddCommand(fixityCmd)
-}
