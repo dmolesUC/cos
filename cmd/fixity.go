@@ -71,7 +71,7 @@ func initObjectUrl(objUrlStr string) error {
 // ------------------------------------------------------------
 // Command
 
-func cmdMain(cmd *cobra.Command, args []string) error {
+func cmdMain(_ *cobra.Command, args []string) error {
 	if *verbose {
 		maybePrintArgs(args)
 	}
