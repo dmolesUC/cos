@@ -52,9 +52,10 @@ func maybePrintArgs(args []string) {
 // ------------------------------------------------------------
 // Validators
 
-// TODO: 1) decompose HTTP(S) URLs into endpoint URL + host
-// TODO: 2) fail on S3 URLs w/o specified endpoint
-// TODO:    2a) or look up default endpoint in S3 config / environment variables?
+// TODO:
+//   1) decompose HTTP(S) URLs into endpoint URL + host
+//   2) fail on S3 URLs w/o specified endpoint
+//      2a) or look up default endpoint in S3 config / environment variables?
 func initObjectUrl(objUrlStr string) error {
 	objUrl, err := Parse(objUrlStr)
 	if err != nil {
