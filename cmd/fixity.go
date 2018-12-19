@@ -12,87 +12,85 @@ import (
 // ------------------------------------------------------------
 // Constants: Help Text
 
-const shortDescription = "Verify the digest of an object"
-
-const longDescription = shortDescription + `
+const (
+	shortDescription = "Verify the digest of an object"
+	longDescription  = shortDescription + `
 [TODO: long description]
 `
-
-// TODO: replace with fake regions, buckets, prefixes, objects
-const example = `
-  fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg
-  fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -x c99ad299fa53d5d9688909164cf25b386b33bea8d4247310d80f615be29978f5
-  fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -a md5 -x eac8a75e3b3023e98003f1c24137ebbd
-  fixity s3://www.dmoles.net/images/fa/archive.svg -e https://s3.us-west-2.amazonaws.com/ -a md5 -x eac8a75e3b3023e98003f1c24137ebbd
+	example = `
+  coscheck fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg
+  coscheck fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -x c99ad299fa53d5d9688909164cf25b386b33bea8d4247310d80f615be29978f5
+  coscheck fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -a md5 -x eac8a75e3b3023e98003f1c24137ebbd
+  coscheck fixity s3://www.dmoles.net/images/fa/archive.svg -e https://s3.us-west-2.amazonaws.com/ -a md5 -x eac8a75e3b3023e98003f1c24137ebbd
 `
+)
 
 // ------------------------------------------------------------
-// Global variables
+// Fixity type
 
-// TODO: move these into command struct
-var objectUrl *URL
-var verbose *bool
-var expected *[]byte
-var algorithm *string
-var endpoint *string
-
-// ------------------------------------------------------------
-// Output
-
-func maybePrintArgs(args []string) {
-	if !*verbose {
-		return
-	}
-	fmt.Printf("object URL: %v\n", args[0])
-	fmt.Printf("verbose   : %v\n", *verbose)
-	fmt.Printf("algorithm : %v\n", *algorithm)
-	fmt.Printf("expected  : %x\n", *expected)
-	fmt.Printf("endpoint  : %v\n", *endpoint)
+type Fixity struct {
+	Verbose   bool
+	Expected  []byte
+	Algorithm string
+	Endpoint  string
+	ObjectUrlStr string
+	ObjectUrl URL
 }
 
-// ------------------------------------------------------------
-// Validators
+// ------------------------------
+// Methods
 
 // TODO:
 //   1) decompose HTTP(S) URLs into endpoint URL + host
 //   2) fail on S3 URLs w/o specified endpoint
 //      2a) or look up default endpoint in S3 config / environment variables?
-func initObjectUrl(objUrlStr string) error {
-	objUrl, err := Parse(objUrlStr)
+func (f *Fixity) runWith(_ *cobra.Command, args []string) error {
+	f.ObjectUrlStr = args[0]
+	f.maybePrintArgs()
+	return f.initObjectUrl()
+}
+
+func (f *Fixity) initObjectUrl() error {
+	objUrl, err := validUrl(f.ObjectUrlStr)
 	if err != nil {
 		return err
 	}
-	if !objUrl.IsAbs() {
-		msg := fmt.Sprintf("object URL '%v' must have a scheme", objUrlStr)
-		return errors.New(msg)
-	}
-	objectUrl = objUrl
+	f.ObjectUrl = *objUrl
 	return nil
 }
 
+func (f *Fixity) maybePrintArgs() {
+	if f.Verbose {
+		fmt.Printf("object URL: %v\n", f.ObjectUrlStr)
+		fmt.Printf("verbose   : %v\n", f.Verbose)
+		fmt.Printf("algorithm : %v\n", f.Algorithm)
+		fmt.Printf("expected  : %x\n", f.Expected)
+		fmt.Printf("endpoint  : %v\n", f.Endpoint)
+	}
+}
+
 // ------------------------------------------------------------
-// Command
+// Global functions
 
-func cmdMain(_ *cobra.Command, args []string) error {
-	if *verbose {
-		maybePrintArgs(args)
-	}
-
-	err := initObjectUrl(args[0])
+func validUrl(objUrlStr string) (*URL, error) {
+	objUrl, err := Parse(objUrlStr)
 	if err != nil {
-		return err
+		return objUrl, err
 	}
-
-	fmt.Println(objectUrl.Scheme)
-
-	return nil
+	if !objUrl.IsAbs() {
+		msg := fmt.Sprintf("object URL '%v' must have a scheme", objUrlStr)
+		return nil, errors.New(msg)
+	}
+	return objUrl, nil
 }
 
 // ------------------------------------------------------------
 // Command initialization
 
 func init() {
-	fixityCmd := &cobra.Command{
+	fixity := Fixity{}
+
+	cmd := &cobra.Command{
 		Use:           "fixity <OBJECT-URL>",
 		Short:         shortDescription,
 		Long:          strings.TrimSpace(longDescription),
@@ -100,16 +98,14 @@ func init() {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		Example:       "  " + strings.TrimSpace(example),
-		RunE:          cmdMain,
+		RunE:          fixity.runWith,
 	}
+	cmd.Flags().BoolVarP(&fixity.Verbose, "verbose", "v", false, "Verbose output")
+	cmd.Flags().BytesHexVarP(&fixity.Expected, "expected", "x", nil, "Expected digest value")
+	cmd.Flags().StringVarP(&fixity.Algorithm, "algorithm", "a", "sha256", "Algorithm (md5, sha256; default is sha256)")
+	cmd.Flags().StringVarP(&fixity.Endpoint, "endpoint", "e", "", "S3 endpoint")
 
-	flags := fixityCmd.Flags()
-	expected = flags.BytesHexP("expected", "x", nil, "Expected digest value")
-	algorithm = flags.StringP("algorithm", "a", "sha256", "Algorithm (md5, sha256; default is sha256)")
-	endpoint = flags.StringP("endpoint", "e", "", "S3 endpoint")
-	verbose = flags.BoolP("verbose", "v", false, "Verbose output")
-
-	rootCmd.AddCommand(fixityCmd)
+	rootCmd.AddCommand(cmd)
 }
 
 //func checkFixity(objUrlStr string) error {
