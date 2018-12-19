@@ -12,6 +12,7 @@ import (
 // ------------------------------------------------------------
 // Constants: Help Text
 
+// TODO: format these with something like https://play.golang.org/p/EGaSR0TmMy-
 const (
 	shortDescription = "Verify the digest of an object"
 	longDescription  = shortDescription + `
