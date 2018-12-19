@@ -29,6 +29,7 @@ const example = `
 // ------------------------------------------------------------
 // Global variables
 
+// TODO: move these into command struct
 var objectUrl *URL
 var verbose *bool
 var expected *[]byte
