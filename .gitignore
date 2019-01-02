@@ -1,5 +1,8 @@
 #### Custom ignores ####
 
+# github-markdown-preview previews
+*.md.html
+
 # default compiled binary
 coscheck
 
@@ -150,7 +153,8 @@ flycheck_*.el
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
+
 
 # Thumbnails
 ._*
