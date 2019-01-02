@@ -67,7 +67,7 @@ func NewObjectLocationFromHttpUrl(objUrl *URL) (*ObjectLocation, error) {
 		return nil, err
 	}
 
-	s3ObjUrl, err := toS3ObjUrl(objUrl.EscapedPath())
+	s3ObjUrl, err := toS3ObjUrl(objUrl.Path)
 	if err != nil {
 		return nil, err
 	}
@@ -78,8 +78,8 @@ func NewObjectLocationFromHttpUrl(objUrl *URL) (*ObjectLocation, error) {
 	return &objLoc, nil
 }
 
-func toS3ObjUrl(escapedPath string) (*URL, error) {
-	s3ObjUrlStr := fmt.Sprintf("s3:/%v", escapedPath)
+func toS3ObjUrl(path string) (*URL, error) {
+	s3ObjUrlStr := fmt.Sprintf("s3:/%v", path)
 	return Parse(s3ObjUrlStr)
 }
 
