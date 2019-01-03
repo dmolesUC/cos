@@ -60,8 +60,11 @@ func runWith(objUrlStr string, f fixityFlags) error {
 	}
 	// TODO: look up default endpoint in S3 config / environment variables?
 	objLoc, err := NewObjectLocationFromStrings(&objUrlStr, &f.Endpoint)
+	if err != nil {
+		return err
+	}
 	fmt.Printf("ObjectLocation: %v\n", objLoc)
-	return err
+	return nil
 }
 
 // ------------------------------------------------------------
