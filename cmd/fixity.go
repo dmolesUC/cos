@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	. "net/url"
-	"strings"
+	"regexp"
 
 	"github.com/spf13/cobra"
 )
@@ -12,18 +12,25 @@ import (
 // ------------------------------------------------------------
 // Constants: Help Text
 
-// TODO: format these with something like https://play.golang.org/p/EGaSR0TmMy-
 const (
-	shortDescription = "Verify the digest of an object"
+	usage = "fixity <OBJECT-URL>"
+
+	shortDescription = "fixity: verify the digest of an object"
+
 	longDescription  = shortDescription + `
-[TODO: long description]
-`
-	example = `
-  coscheck fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg
-  coscheck fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -x c99ad299fa53d5d9688909164cf25b386b33bea8d4247310d80f615be29978f5
-  coscheck fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -a md5 -x eac8a75e3b3023e98003f1c24137ebbd
-  coscheck fixity s3://www.dmoles.net/images/fa/archive.svg -e https://s3.us-west-2.amazonaws.com/ -a md5 -x eac8a75e3b3023e98003f1c24137ebbd
-`
+
+		Verifies the digest of an object in cloud object storage, using SHA-256 (by
+		default) or MD5 (optionally). The object location can be specified either
+		as a complete HTTP(S) URL, https://<endpoint>/<bucket>/<key>, or using
+		separate URLs for the endpoint (HTTP(S)) and bucket/key (s3://).
+	`
+
+	example = ` 
+		coscheck fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg
+		coscheck fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -x c99ad299fa53d5d9688909164cf25b386b33bea8d4247310d80f615be29978f5
+		coscheck fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -a md5 -x eac8a75e3b3023e98003f1c24137ebbd
+		coscheck fixity s3://www.dmoles.net/images/fa/archive.svg -e https://s3.us-west-2.amazonaws.com/ -a md5 -x eac8a75e3b3023e98003f1c24137ebbd
+	`
 )
 
 // ------------------------------------------------------------
@@ -85,6 +92,10 @@ func validUrl(objUrlStr string) (*URL, error) {
 	return objUrl, nil
 }
 
+func formatHelp(text string, indent string) string {
+	return regexp.MustCompile(`(?m)^[\t ]+`).ReplaceAllString(text, indent)
+}
+
 // ------------------------------------------------------------
 // Command initialization
 
@@ -92,19 +103,19 @@ func init() {
 	fixity := Fixity{}
 
 	cmd := &cobra.Command{
-		Use:           "fixity <OBJECT-URL>",
+		Use:           usage,
 		Short:         shortDescription,
-		Long:          strings.TrimSpace(longDescription),
+		Long:          formatHelp(longDescription, ""),
 		Args:          cobra.ExactArgs(1),
 		SilenceUsage:  true,
 		SilenceErrors: true,
-		Example:       "  " + strings.TrimSpace(example),
+		Example:       formatHelp(example, "  "),
 		RunE:          fixity.runWith,
 	}
 	cmd.Flags().BoolVarP(&fixity.Verbose, "verbose", "v", false, "Verbose output")
-	cmd.Flags().BytesHexVarP(&fixity.Expected, "expected", "x", nil, "Expected digest value")
-	cmd.Flags().StringVarP(&fixity.Algorithm, "algorithm", "a", "sha256", "Algorithm (md5, sha256; default is sha256)")
-	cmd.Flags().StringVarP(&fixity.Endpoint, "endpoint", "e", "", "S3 endpoint")
+	cmd.Flags().BytesHexVarP(&fixity.Expected, "expected", "x", nil, "Expected digest value (exit with error if not matched)")
+	cmd.Flags().StringVarP(&fixity.Algorithm, "algorithm", "a", "sha256", "Algorithm: md5 or sha256")
+	cmd.Flags().StringVarP(&fixity.Endpoint, "endpoint", "e", "", "S3 endpoint: HTTP(S) URL")
 
 	rootCmd.AddCommand(cmd)
 }
