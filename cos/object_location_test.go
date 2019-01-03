@@ -171,7 +171,7 @@ func (s *NewFromStrings) TestHttpsObjectUrl(c *C) {
 	expectedObjectUrlStr := "s3://www.dmoles.net/images/fa/archive.svg"
 	expectedEndpointUrlStr := "https://s3-us-west-2.amazonaws.com/"
 
-	objLoc, err := NewObjectLocationFromStrings(inputUrlStr)
+	objLoc, err := NewObjectLocationFromStrings(&inputUrlStr)
 	c.Assert(err, IsNil)
 
 	c.Assert(objLoc.ObjectUrl.String(), Equals, expectedObjectUrlStr)
@@ -183,18 +183,31 @@ func (s *NewFromStrings) TestHttpObjectUrl(c *C) {
 	expectedObjectUrlStr := "s3://www.dmoles.net/images/fa/archive.svg"
 	expectedEndpointUrlStr := "http://s3-us-west-2.amazonaws.com/"
 
-	objLoc, err := NewObjectLocationFromStrings(inputUrlStr)
+	objLoc, err := NewObjectLocationFromStrings(&inputUrlStr)
 	c.Assert(err, IsNil)
 
 	c.Assert(objLoc.ObjectUrl.String(), Equals, expectedObjectUrlStr)
 	c.Assert(objLoc.EndpointUrl.String(), Equals, expectedEndpointUrlStr)
 }
 
+func (s *NewFromStrings) TestHttpsObjectUrlWithNilEndpoint(c *C) {
+	inputUrlStr := "https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg"
+	expectedObjectUrlStr := "s3://www.dmoles.net/images/fa/archive.svg"
+	expectedEndpointUrlStr := "https://s3-us-west-2.amazonaws.com/"
+
+	objLoc, err := NewObjectLocationFromStrings(&inputUrlStr, nil)
+	c.Assert(err, IsNil)
+
+	c.Assert(objLoc.ObjectUrl.String(), Equals, expectedObjectUrlStr)
+	c.Assert(objLoc.EndpointUrl.String(), Equals, expectedEndpointUrlStr)
+}
+
+
 func (s *NewFromStrings) TestHttpsEndpointUrl(c *C) {
 	objectUrlStr := "s3://www.dmoles.net/images/fa/archive.svg"
 	endpointUrlStr := "https://s3-us-west-2.amazonaws.com/"
 
-	objLoc, err := NewObjectLocationFromStrings(objectUrlStr, endpointUrlStr)
+	objLoc, err := NewObjectLocationFromStrings(&objectUrlStr, &endpointUrlStr)
 	c.Assert(err, IsNil)
 
 	c.Assert(objLoc.ObjectUrl.String(), Equals, objectUrlStr)
@@ -205,7 +218,7 @@ func (s *NewFromStrings) TestHttpEndpointUrl(c *C) {
 	objectUrlStr := "s3://www.dmoles.net/images/fa/archive.svg"
 	endpointUrlStr := "http://s3-us-west-2.amazonaws.com/"
 
-	objLoc, err := NewObjectLocationFromStrings(objectUrlStr, endpointUrlStr)
+	objLoc, err := NewObjectLocationFromStrings(&objectUrlStr, &endpointUrlStr)
 	c.Assert(err, IsNil)
 
 	c.Assert(objLoc.ObjectUrl.String(), Equals, objectUrlStr)

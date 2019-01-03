@@ -10,14 +10,18 @@ import (
 // Exported types
 
 type ObjectLocation struct {
-	ObjectUrl URL
+	ObjectUrl   URL
 	EndpointUrl URL
+}
+
+func (ol *ObjectLocation) String() string {
+	return fmt.Sprintf("%v @ %v", ol.ObjectUrl.String(), ol.EndpointUrl.String())
 }
 
 // ------------------------------------------------------------
 // Exported functions
 
-func NewObjectLocationFromStrings(params... string) (*ObjectLocation, error) {
+func NewObjectLocationFromStrings(params ...*string) (*ObjectLocation, error) {
 	paramLen := len(params)
 	if paramLen < 1 {
 		return nil, errors.New("no object or endpoint URL provided")
@@ -26,7 +30,7 @@ func NewObjectLocationFromStrings(params... string) (*ObjectLocation, error) {
 		return nil, errors.New(fmt.Sprintf("too many params: expected [object-url <endpoint-url>], got %v", params))
 	}
 
-	objUrlStr := params[0]
+	objUrlStr := *params[0]
 	objUrl, err := validUrl(objUrlStr)
 	if err != nil {
 		return nil, err
@@ -36,7 +40,7 @@ func NewObjectLocationFromStrings(params... string) (*ObjectLocation, error) {
 		if paramLen < 2 {
 			return nil, errors.New(fmt.Sprintf("s3 object URL '%v' requires an endpoint URL", objUrl))
 		}
-		endpointUrlStr := params[1]
+		endpointUrlStr := *params[1]
 		endpointUrl, err := validUrl(endpointUrlStr)
 		if err != nil {
 			return nil, err
@@ -53,7 +57,7 @@ func NewObjectLocationFromObjectAndEndpointUrls(objUrl *URL, endpointUrl *URL) (
 	}
 	if endpointUrl.Scheme == "http" || endpointUrl.Scheme == "https" {
 		objLoc := ObjectLocation{
-			ObjectUrl: *objUrl,
+			ObjectUrl:   *objUrl,
 			EndpointUrl: *endpointUrl,
 		}
 		return &objLoc, nil
