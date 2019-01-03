@@ -10,12 +10,12 @@ import (
 // Exported types
 
 type ObjectLocation struct {
-	ObjectUrl   URL
-	EndpointUrl URL
+	S3Uri    URL
+	Endpoint URL
 }
 
-func (ol *ObjectLocation) String() string {
-	return fmt.Sprintf("%v @ %v", ol.ObjectUrl.String(), ol.EndpointUrl.String())
+func (ol ObjectLocation) String() string {
+	return fmt.Sprintf("%#v@%#v", ol.S3Uri.String(), ol.Endpoint.String())
 }
 
 // ------------------------------------------------------------
@@ -40,50 +40,50 @@ func NewObjectLocationFromStrings(params ...*string) (*ObjectLocation, error) {
 		if paramLen < 2 {
 			return nil, errors.New(fmt.Sprintf("s3 object URL '%v' requires an endpoint URL", objUrl))
 		}
-		endpointUrlStr := *params[1]
-		endpointUrl, err := validUrl(endpointUrlStr)
+		endpointStr := *params[1]
+		endpoint, err := validUrl(endpointStr)
 		if err != nil {
 			return nil, err
 		}
-		return NewObjectLocationFromObjectAndEndpointUrls(objUrl, endpointUrl)
+		return NewObjectLocationFromS3UriAndEndpoint(objUrl, endpoint)
 	}
 
 	return NewObjectLocationFromHttpUrl(objUrl)
 }
 
-func NewObjectLocationFromObjectAndEndpointUrls(objUrl *URL, endpointUrl *URL) (*ObjectLocation, error) {
-	if objUrl.Scheme != "s3" {
-		return nil, errors.New(fmt.Sprintf("object URL '%v' relative to endpoint '%v' must be S3", objUrl, endpointUrl))
+func NewObjectLocationFromS3UriAndEndpoint(s3Uri *URL, endpoint *URL) (*ObjectLocation, error) {
+	if s3Uri.Scheme != "s3" {
+		return nil, errors.New(fmt.Sprintf("object URL '%v' relative to endpoint '%v' must be S3", s3Uri, endpoint))
 	}
-	if endpointUrl.Scheme == "http" || endpointUrl.Scheme == "https" {
+	if endpoint.Scheme == "http" || endpoint.Scheme == "https" {
 		objLoc := ObjectLocation{
-			ObjectUrl:   *objUrl,
-			EndpointUrl: *endpointUrl,
+			S3Uri:    *s3Uri,
+			Endpoint: *endpoint,
 		}
 		return &objLoc, nil
 	} else {
-		return nil, errors.New(fmt.Sprintf("endpoint URL '%v' must be HTTP or HTTPS", endpointUrl))
+		return nil, errors.New(fmt.Sprintf("endpoint URL '%v' must be HTTP or HTTPS", endpoint))
 	}
 }
 
-func NewObjectLocationFromHttpUrl(objUrl *URL) (*ObjectLocation, error) {
-	objUrlScheme := objUrl.Scheme
-	if objUrl.Scheme != "http" && objUrl.Scheme != "https" {
-		return nil, errors.New(fmt.Sprintf("absolute object URL '%v' must be HTTP or HTTPS", objUrl))
+func NewObjectLocationFromHttpUrl(s3Uri *URL) (*ObjectLocation, error) {
+	s3UriScheme := s3Uri.Scheme
+	if s3Uri.Scheme != "http" && s3Uri.Scheme != "https" {
+		return nil, errors.New(fmt.Sprintf("absolute object URL '%v' must be HTTP or HTTPS", s3Uri))
 	}
 
-	endpointUrl, err := toEndpointUrl(objUrlScheme, objUrl.Host)
+	endpoint, err := toEndpoint(s3UriScheme, s3Uri.Host)
 	if err != nil {
 		return nil, err
 	}
 
-	s3ObjUrl, err := toS3ObjUrl(objUrl.Path)
+	s3S3Uri, err := toS3S3Uri(s3Uri.Path)
 	if err != nil {
 		return nil, err
 	}
 	objLoc := ObjectLocation{
-		ObjectUrl:   *s3ObjUrl,
-		EndpointUrl: *endpointUrl,
+		S3Uri:    *s3S3Uri,
+		Endpoint: *endpoint,
 	}
 	return &objLoc, nil
 }
@@ -91,14 +91,14 @@ func NewObjectLocationFromHttpUrl(objUrl *URL) (*ObjectLocation, error) {
 // ------------------------------------------------------------
 // Unexported functions
 
-func toS3ObjUrl(path string) (*URL, error) {
-	s3ObjUrlStr := fmt.Sprintf("s3:/%v", path)
-	return Parse(s3ObjUrlStr)
+func toS3S3Uri(path string) (*URL, error) {
+	s3S3UriStr := fmt.Sprintf("s3:/%v", path)
+	return Parse(s3S3UriStr)
 }
 
-func toEndpointUrl(scheme string, host string) (*URL, error) {
-	endpointUrlStr := fmt.Sprintf("%v://%v/", scheme, host)
-	return Parse(endpointUrlStr)
+func toEndpoint(scheme string, host string) (*URL, error) {
+	endpointStr := fmt.Sprintf("%v://%v/", scheme, host)
+	return Parse(endpointStr)
 }
 
 func validUrl(urlStr string) (*URL, error) {
