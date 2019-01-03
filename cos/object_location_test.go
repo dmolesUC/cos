@@ -11,6 +11,73 @@ import (
 func Test(t *testing.T) { TestingT(t) }
 
 // ------------------------------------------------------------
+// NewFromObjectAndEndpointUrls
+
+type NewFromObjectAndEndpointUrls struct{}
+
+var _ = Suite(&NewFromObjectAndEndpointUrls{})
+
+func (s *NewFromObjectAndEndpointUrls) TestHttpsEndpointUrl(c *C) {
+	objectUrlStr := "s3://www.dmoles.net/images/fa/archive.svg"
+	objUrl, err := Parse(objectUrlStr)
+	c.Assert(err, IsNil) // just to be sure
+
+	endpointUrlStr := "https://s3-us-west-2.amazonaws.com/"
+	endpointUrl, err := Parse(endpointUrlStr)
+	c.Assert(err, IsNil) // just to be sure
+
+	objLoc, err := NewObjectLocationFromObjectAndEndpointUrls(objUrl, endpointUrl)
+	c.Assert(err, IsNil)
+
+	c.Assert(&objLoc.ObjectUrl, DeepEquals, objUrl)
+	c.Assert(&objLoc.EndpointUrl, DeepEquals,endpointUrl)
+}
+
+func (s *NewFromObjectAndEndpointUrls) TestHttpEndpointUrl(c *C) {
+	objectUrlStr := "s3://www.dmoles.net/images/fa/archive.svg"
+	objUrl, err := Parse(objectUrlStr)
+	c.Assert(err, IsNil) // just to be sure
+
+	endpointUrlStr := "http://s3-us-west-2.amazonaws.com/"
+	endpointUrl, err := Parse(endpointUrlStr)
+	c.Assert(err, IsNil) // just to be sure
+
+	objLoc, err := NewObjectLocationFromObjectAndEndpointUrls(objUrl, endpointUrl)
+	c.Assert(err, IsNil)
+
+	c.Assert(&objLoc.ObjectUrl, DeepEquals, objUrl)
+	c.Assert(&objLoc.EndpointUrl, DeepEquals,endpointUrl)
+}
+
+func (s *NewFromObjectAndEndpointUrls) TestBadEndpointUrl(c *C) {
+	objectUrlStr := "s3://www.dmoles.net/images/fa/archive.svg"
+	objUrl, err := Parse(objectUrlStr)
+	c.Assert(err, IsNil) // just to be sure
+
+	endpointUrlStr := "s3://us-west-2.amazonaws.com/"
+	endpointUrl, err := Parse(endpointUrlStr)
+	c.Assert(err, IsNil) // just to be sure
+
+	objLoc, err := NewObjectLocationFromObjectAndEndpointUrls(objUrl, endpointUrl)
+	c.Assert(objLoc, IsNil)
+	c.Assert(err, ErrorMatches, fmt.Sprintf(".*%v.*", endpointUrlStr))
+}
+
+func (s *NewFromObjectAndEndpointUrls) TestBadObjectUrl(c *C) {
+	objectUrlStr := "http://www.dmoles.net/images/fa/archive.svg"
+	objUrl, err := Parse(objectUrlStr)
+	c.Assert(err, IsNil) // just to be sure
+
+	endpointUrlStr := "https://s3-us-west-2.amazonaws.com/"
+	endpointUrl, err := Parse(endpointUrlStr)
+	c.Assert(err, IsNil) // just to be sure
+
+	objLoc, err := NewObjectLocationFromObjectAndEndpointUrls(objUrl, endpointUrl)
+	c.Assert(objLoc, IsNil)
+	c.Assert(err, ErrorMatches, fmt.Sprintf(".*%v.*", objectUrlStr))
+}
+
+// ------------------------------------------------------------
 // NewFromHttpUrl
 
 type NewFromHttpUrl struct{}
@@ -90,4 +157,57 @@ func (s *NewFromHttpUrl) TestInvalidCharsInBucketName(c *C) {
 	objLoc, err := NewObjectLocationFromHttpUrl(objUrl)
 	c.Assert(objLoc, IsNil)
 	c.Assert(err, ErrorMatches, fmt.Sprintf(".*%v.*", expectedObjUrlStr))
+}
+
+// ------------------------------------------------------------
+// NewFromStrings
+
+type NewFromStrings struct{}
+
+var _ = Suite(&NewFromStrings{})
+
+func (s *NewFromStrings) TestHttpsObjectUrl(c *C) {
+	inputUrlStr := "https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg"
+	expectedObjectUrlStr := "s3://www.dmoles.net/images/fa/archive.svg"
+	expectedEndpointUrlStr := "https://s3-us-west-2.amazonaws.com/"
+
+	objLoc, err := NewObjectLocationFromStrings(inputUrlStr)
+	c.Assert(err, IsNil)
+
+	c.Assert(objLoc.ObjectUrl.String(), Equals, expectedObjectUrlStr)
+	c.Assert(objLoc.EndpointUrl.String(), Equals, expectedEndpointUrlStr)
+}
+
+func (s *NewFromStrings) TestHttpObjectUrl(c *C) {
+	inputUrlStr := "http://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg"
+	expectedObjectUrlStr := "s3://www.dmoles.net/images/fa/archive.svg"
+	expectedEndpointUrlStr := "http://s3-us-west-2.amazonaws.com/"
+
+	objLoc, err := NewObjectLocationFromStrings(inputUrlStr)
+	c.Assert(err, IsNil)
+
+	c.Assert(objLoc.ObjectUrl.String(), Equals, expectedObjectUrlStr)
+	c.Assert(objLoc.EndpointUrl.String(), Equals, expectedEndpointUrlStr)
+}
+
+func (s *NewFromStrings) TestHttpsEndpointUrl(c *C) {
+	objectUrlStr := "s3://www.dmoles.net/images/fa/archive.svg"
+	endpointUrlStr := "https://s3-us-west-2.amazonaws.com/"
+
+	objLoc, err := NewObjectLocationFromStrings(objectUrlStr, endpointUrlStr)
+	c.Assert(err, IsNil)
+
+	c.Assert(objLoc.ObjectUrl.String(), Equals, objectUrlStr)
+	c.Assert(objLoc.EndpointUrl.String(), Equals,endpointUrlStr)
+}
+
+func (s *NewFromStrings) TestHttpEndpointUrl(c *C) {
+	objectUrlStr := "s3://www.dmoles.net/images/fa/archive.svg"
+	endpointUrlStr := "http://s3-us-west-2.amazonaws.com/"
+
+	objLoc, err := NewObjectLocationFromStrings(objectUrlStr, endpointUrlStr)
+	c.Assert(err, IsNil)
+
+	c.Assert(objLoc.ObjectUrl.String(), Equals, objectUrlStr)
+	c.Assert(objLoc.EndpointUrl.String(), Equals,endpointUrlStr)
 }

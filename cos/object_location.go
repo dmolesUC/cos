@@ -6,10 +6,16 @@ import (
 	. "net/url"
 )
 
+// ------------------------------------------------------------
+// Exported types
+
 type ObjectLocation struct {
 	ObjectUrl URL
 	EndpointUrl URL
 }
+
+// ------------------------------------------------------------
+// Exported functions
 
 func NewObjectLocationFromStrings(params... string) (*ObjectLocation, error) {
 	paramLen := len(params)
@@ -52,7 +58,7 @@ func NewObjectLocationFromObjectAndEndpointUrls(objUrl *URL, endpointUrl *URL) (
 		}
 		return &objLoc, nil
 	} else {
-		return nil, errors.New(fmt.Sprintf("endpoint URL '%v' must be HTTP or HTTPS", objUrl))
+		return nil, errors.New(fmt.Sprintf("endpoint URL '%v' must be HTTP or HTTPS", endpointUrl))
 	}
 }
 
@@ -77,6 +83,9 @@ func NewObjectLocationFromHttpUrl(objUrl *URL) (*ObjectLocation, error) {
 	}
 	return &objLoc, nil
 }
+
+// ------------------------------------------------------------
+// Unexported functions
 
 func toS3ObjUrl(path string) (*URL, error) {
 	s3ObjUrlStr := fmt.Sprintf("s3:/%v", path)
