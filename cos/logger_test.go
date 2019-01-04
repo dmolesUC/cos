@@ -2,15 +2,12 @@ package cos
 
 import (
 	"strings"
-	"testing"
 
 	. "gopkg.in/check.v1"
 )
 
 // ------------------------------------------------------------
 // Fixture
-
-func TestLogger(t *testing.T) { TestingT(t) }
 
 type LoggerSuite struct {
 	out *strings.Builder

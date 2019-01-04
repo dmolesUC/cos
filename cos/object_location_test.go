@@ -3,12 +3,9 @@ package cos
 import (
 	"fmt"
 	. "net/url"
-	"testing"
 
 	. "gopkg.in/check.v1"
 )
-
-func TestObjectLocation(t *testing.T) { TestingT(t) }
 
 // ------------------------------------------------------------
 // NewFromS3UriAndEndpoint
