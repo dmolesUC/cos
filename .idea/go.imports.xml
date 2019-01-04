@@ -5,5 +5,6 @@
     <option name="groupStdlibImports" value="true" />
     <option name="importSorting" value="GOIMPORTS" />
     <option name="moveAllStdlibImportsInOneGroup" value="true" />
+    <option name="optimizeImportsOnTheFly" value="false" />
   </component>
 </project>

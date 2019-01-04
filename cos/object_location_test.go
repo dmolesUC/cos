@@ -8,7 +8,7 @@ import (
 	. "gopkg.in/check.v1"
 )
 
-func Test(t *testing.T) { TestingT(t) }
+func TestObjectLocation(t *testing.T) { TestingT(t) }
 
 // ------------------------------------------------------------
 // NewFromS3UriAndEndpoint
