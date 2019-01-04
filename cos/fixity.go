@@ -12,6 +12,8 @@ import (
 	"path"
 	"regexp"
 
+	. "github.com/dmolesUC3/coscheck/util"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"

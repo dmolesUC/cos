@@ -4,6 +4,7 @@ import (
 	"regexp"
 
 	. "github.com/dmolesUC3/coscheck/cos"
+	. "github.com/dmolesUC3/coscheck/util"
 
 	"github.com/spf13/cobra"
 )
