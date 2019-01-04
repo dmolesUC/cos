@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
+const DefaultAwsRegion = "us-west-2"
 var awsRegionRegexp = regexp.MustCompile("https?://s3-([^.]+)\\.amazonaws\\.com/")
 
 type Fixity struct {
@@ -23,6 +24,7 @@ type Fixity struct {
 	ObjLoc    ObjectLocation
 	Expected  []byte
 	Algorithm string
+	Region    string
 }
 
 
@@ -88,6 +90,7 @@ func (f Fixity) initSession() (*session.Session, error) {
 	s3Config := aws.Config{
 		Endpoint: endpointP,
 		Region: f.regionStrP(),
+		S3ForcePathStyle: aws.Bool(true),
 	}
 	s3Opts := session.Options{
 		Config:            s3Config,
@@ -97,14 +100,19 @@ func (f Fixity) initSession() (*session.Session, error) {
 }
 
 func (f Fixity) regionStrP() *string {
+	if f.Region != "" {
+		f.Logger.Detailf("Using specified AWS region: %v\n", f.Region)
+		return &f.Region
+	}
 	endpoint := f.endpointStr()
 	matches := awsRegionRegexp.FindStringSubmatch(endpoint)
-	if len(matches) != 2 {
-		f.Logger.Detailf("No AWS region found in endpoint URL %v\n", endpoint)
-		return nil
+	regionStr := DefaultAwsRegion
+	if len(matches) == 2 {
+		f.Logger.Detailf("Found AWS region in endpoint URL %v: %v\n", endpoint, regionStr)
+		regionStr = matches[1]
+	} else {
+		f.Logger.Detailf("No AWS region found in endpoint URL %v; using default region %v\n", endpoint, DefaultAwsRegion)
 	}
-	regionStr := matches[1]
-	f.Logger.Detailf("Found AWS region: %v\n", regionStr)
 	return &regionStr
 }
 

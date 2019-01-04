@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	//"fmt"
 	"regexp"
 
 	. "github.com/dmolesUC3/coscheck/cos"
@@ -31,6 +30,7 @@ const (
 		variables.
 	`
 
+	// TODO: add Minio example(s)
 	example = ` 
 		coscheck fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg
 		coscheck fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -x c99ad299fa53d5d9688909164cf25b386b33bea8d4247310d80f615be29978f5
@@ -47,6 +47,7 @@ type fixityFlags struct {
 	Expected  []byte
 	Algorithm string
 	Endpoint  string
+	Region string
 }
 
 func (f fixityFlags) logTo(logger Logger) {
@@ -54,6 +55,7 @@ func (f fixityFlags) logTo(logger Logger) {
 	logger.Detailf("algorithm : %v\n", f.Algorithm)
 	logger.Detailf("expected  : %x\n", f.Expected)
 	logger.Detailf("endpoint  : %v\n", f.Endpoint)
+	logger.Detailf("region    : %v\n", f.Region)
 }
 
 // ------------------------------------------------------------
@@ -80,6 +82,7 @@ func runWith(objUrlStr string, f fixityFlags) error {
 		ObjLoc: *objLoc,
 		Expected: f.Expected,
 		Algorithm: f.Algorithm,
+		Region: f.Region,
 	}
 
 	digest, err := fixity.GetDigest()
@@ -113,6 +116,7 @@ func init() {
 	cmd.Flags().BytesHexVarP(&fixity.Expected, "expected", "x", nil, "Expected digest value (exit with error if not matched)")
 	cmd.Flags().StringVarP(&fixity.Algorithm, "algorithm", "a", "sha256", "Algorithm: md5 or sha256")
 	cmd.Flags().StringVarP(&fixity.Endpoint, "endpoint", "e", "", "S3 endpoint: HTTP(S) URL")
+	cmd.Flags().StringVarP(&fixity.Endpoint, "region", "r", "", "S3 region (if not in endpoint URL; default \"" + DefaultAwsRegion + "\")")
 
 	rootCmd.AddCommand(cmd)
 }
