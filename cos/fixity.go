@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"regexp"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -15,12 +16,15 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
+var awsRegionRegexp = regexp.MustCompile("https?://s3-([^.]+)\\.amazonaws\\.com/")
+
 type Fixity struct {
 	Logger    Logger
 	ObjLoc    ObjectLocation
 	Expected  []byte
 	Algorithm string
 }
+
 
 func (f Fixity) GetDigest() ([]byte, error) {
 	sess, err := f.initSession()
@@ -83,13 +87,25 @@ func (f Fixity) initSession() (*session.Session, error) {
 	endpointP := f.endpointP()
 	s3Config := aws.Config{
 		Endpoint: endpointP,
-		Region: aws.String("us-west-2"), // TODO: don't hard-code
+		Region: f.regionStrP(),
 	}
 	s3Opts := session.Options{
 		Config:            s3Config,
 		SharedConfigState: session.SharedConfigEnable,
 	}
 	return session.NewSessionWithOptions(s3Opts)
+}
+
+func (f Fixity) regionStrP() *string {
+	endpoint := f.endpointStr()
+	matches := awsRegionRegexp.FindStringSubmatch(endpoint)
+	if len(matches) != 2 {
+		f.Logger.Detailf("No AWS region found in endpoint URL %v\n", endpoint)
+		return nil
+	}
+	regionStr := matches[1]
+	f.Logger.Detailf("Found AWS region: %v\n", regionStr)
+	return &regionStr
 }
 
 func (f Fixity) endpointStr() string {
