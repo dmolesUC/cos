@@ -16,6 +16,8 @@ import (
 type Logger interface {
 	Info(a ...interface{})
 	Detail(a ...interface{})
+	Infof(format string, a ...interface{})
+	Detailf(format string, a ...interface{})
 }
 
 func NewLogger(verbose bool) Logger {
@@ -44,6 +46,14 @@ func (l infoLogger) Info(a ...interface{}) {
 	}
 }
 
+// Logger.Infof() implementation: log to stderr
+func (l infoLogger) Infof(format string, a ...interface{}) {
+	_, err := fmt.Fprintf(l.out, format, a...)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 // ------------------------------
 // terseLogger
 
@@ -54,6 +64,11 @@ type terseLogger struct {
 
 // No-op Logger.Detail() impelementation
 func (l terseLogger) Detail(a ...interface{}) {
+	// does nothing
+}
+
+// No-op Logger.Detailf() impelementation
+func (l terseLogger) Detailf(format string, a ...interface{}) {
 	// does nothing
 }
 
@@ -68,4 +83,9 @@ type verboseLogger struct {
 // Logger.Detail() implementation: forward to Info()
 func (l verboseLogger) Detail(a ...interface{}) {
 	l.Info(a...)
+}
+
+// Logger.Detailf() implementation: forward to Infof()
+func (l verboseLogger) Detailf(format string, a ...interface{}) {
+	l.Infof(format, a...)
 }

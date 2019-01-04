@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"fmt"
+	//"fmt"
 	"regexp"
 
 	. "github.com/dmolesUC3/coscheck/cos"
@@ -43,6 +43,13 @@ type fixityFlags struct {
 	Endpoint  string
 }
 
+func (f fixityFlags) logTo(logger Logger) {
+	logger.Detailf("verbose   : %v\n", f.Verbose)
+	logger.Detailf("algorithm : %v\n", f.Algorithm)
+	logger.Detailf("expected  : %x\n", f.Expected)
+	logger.Detailf("endpoint  : %v\n", f.Endpoint)
+}
+
 // ------------------------------------------------------------
 // Functions
 
@@ -51,19 +58,16 @@ func formatHelp(text string, indent string) string {
 }
 
 func runWith(objUrlStr string, f fixityFlags) error {
-	if f.Verbose {
-		fmt.Printf("object URL: %v\n", objUrlStr)
-		fmt.Printf("verbose   : %v\n", f.Verbose)
-		fmt.Printf("algorithm : %v\n", f.Algorithm)
-		fmt.Printf("expected  : %x\n", f.Expected)
-		fmt.Printf("endpoint  : %v\n", f.Endpoint)
-	}
+	var logger = NewLogger(f.Verbose)
+	f.logTo(logger)
+	logger.Detailf("object URL: %v\n", objUrlStr)
+
 	// TODO: look up default endpoint in S3 config / environment variables?
 	objLoc, err := NewObjectLocationFromStrings(&objUrlStr, &f.Endpoint)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("ObjectLocation: %v\n", objLoc)
+	logger.Detailf("ObjectLocation: %v\n", objLoc)
 	return nil
 }
 

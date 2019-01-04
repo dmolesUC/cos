@@ -2,6 +2,7 @@ package cos
 
 import (
 	"strings"
+	"fmt"
 
 	. "gopkg.in/check.v1"
 )
@@ -52,6 +53,21 @@ func (s *LoggerSuite) TestTerseDetail(c *C) {
 	c.Assert(s.out.String(), Equals, "")
 }
 
+func (s *LoggerSuite) TestTerseInfof(c *C) {
+	var format = "I am a log message: %v %d"
+	var expected = fmt.Sprintf(format, "text", 123)
+	var logger = s.newTerseLogger()
+	logger.Infof(format, "text", 123)
+	c.Assert(s.out.String(), Equals, expected)
+}
+
+func (s *LoggerSuite) TestTerseDetailf(c *C) {
+	var format = "I am a log message: %v %d"
+	var logger = s.newTerseLogger()
+	logger.Detailf(format, "text", 123)
+	c.Assert(s.out.String(), Equals, "")
+}
+
 func (s *LoggerSuite) TestVerboseInfo(c *C) {
 	var msg = "I am a log message"
 	var logger = s.newVerboseLogger()
@@ -64,4 +80,20 @@ func (s *LoggerSuite) TestVerboseDetail(c *C) {
 	var logger = s.newVerboseLogger()
 	logger.Detail(msg)
 	c.Assert(s.out.String(), Equals, msg+"\n")
+}
+
+func (s *LoggerSuite) TestVerboseInfof(c *C) {
+	var format = "I am a log message: %v %d"
+	var expected = fmt.Sprintf(format, "text", 123)
+	var logger = s.newVerboseLogger()
+	logger.Infof(format, "text", 123)
+	c.Assert(s.out.String(), Equals, expected)
+}
+
+func (s *LoggerSuite) TestVerboseDetailf(c *C) {
+	var format = "I am a log message: %v %d"
+	var expected = fmt.Sprintf(format, "text", 123)
+	var logger = s.newVerboseLogger()
+	logger.Detailf(format, "text", 123)
+	c.Assert(s.out.String(), Equals, expected)
 }
