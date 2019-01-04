@@ -18,6 +18,14 @@ func (ol ObjectLocation) String() string {
 	return fmt.Sprintf("%#v@%#v", ol.S3Uri.String(), ol.Endpoint.String())
 }
 
+func (ol ObjectLocation) Bucket() string {
+	return ol.S3Uri.Host
+}
+
+func (ol ObjectLocation) Key() string {
+	return ol.S3Uri.Path
+}
+
 // ------------------------------------------------------------
 // Exported functions
 

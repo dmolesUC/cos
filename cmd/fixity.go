@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	//"fmt"
 	"regexp"
 
@@ -23,6 +24,11 @@ const (
 		default) or MD5 (optionally). The object location can be specified either
 		as a complete HTTP(S) URL, https://<endpoint>/<bucket>/<key>, or using
 		separate URLs for the endpoint (HTTP(S)) and bucket/key (s3://).
+
+		Uses AWS credentials from ~/.aws/config, or other config file specified
+		with the AWS_CONFIG_FILE environment variable. Credentials can also be
+		specified with the AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment
+		variables.
 	`
 
 	example = ` 
@@ -68,6 +74,20 @@ func runWith(objUrlStr string, f fixityFlags) error {
 		return err
 	}
 	logger.Detailf("ObjectLocation: %v\n", objLoc)
+
+	var fixity = Fixity {
+		Logger: logger,
+		ObjLoc: *objLoc,
+		Expected: f.Expected,
+		Algorithm: f.Algorithm,
+	}
+
+	digest, err := fixity.GetDigest()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%x\n", digest)
+
 	return nil
 }
 
@@ -96,40 +116,3 @@ func init() {
 
 	rootCmd.AddCommand(cmd)
 }
-
-//func checkFixity(objUrlStr string) error {
-//	objUrl, err := Parse(objUrlStr)
-//	if err == nil {
-//		return checkFixityUrl(objUrl)
-//	}
-//	return err
-//}
-//
-//func checkFixityUrl(objUrl *URL) error {
-//
-//	//s3Config := aws.Config{
-//	//	Endpoint: aws.String(objUrl.String()),
-//	//}
-//	//
-//	//s3Opts := session.Options{
-//	//	Config:            s3Config,
-//	//	SharedConfigState: session.SharedConfigEnable,
-//	//}
-//	//
-//	//sess, err := session.NewSessionWithOptions(s3Opts)
-//	//if err != nil {
-//	//	return err
-//	//}
-//	//
-//	//svc := s3.New(sess)
-//	//result, err := svc.ListBuckets(nil)
-//	//if err != nil {
-//	//	return err
-//	//}
-//	//
-//	//for _, b := range result.Buckets {
-//	//	fmt.Printf("* %s created on %s\n", aws.StringValue(b.Name), aws.TimeValue(b.CreationDate))
-//	//}
-//
-//	return nil
-//}

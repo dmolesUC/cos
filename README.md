@@ -36,6 +36,16 @@ From the project root:
 - to build `coscheck`, writing the executable to the source directory, use `go build`.
 - to build `coscheck` and install it in `$GOPATH/bin`, use `go install`.
 
+### Running
+
+Example with credentials:
+
+```
+AWS_ACCESS_KEY_ID=<access key> \
+AWS_SECRET_ACCESS_KEY=<secret access key> \
+coscheck fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -a md5
+```
+
 ### Configuring JetBrains GoLand IDE
 
 In **Preferences > Go > Go Modules (vgo)**, check “Enable Go Modules (vgo)
