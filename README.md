@@ -38,13 +38,23 @@ From the project root:
 
 ### Running
 
-Example with credentials:
+Amazon example with credentials:
 
 ```
 AWS_ACCESS_KEY_ID=<access key> \
 AWS_SECRET_ACCESS_KEY=<secret access key> \
 coscheck fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -a md5
 ```
+
+Minio example with credentials:
+
+```
+AWS_ACCESS_KEY_ID=<access key> \
+AWS_SECRET_ACCESS_KEY=<secret access key> \
+coscheck fixity http://127.0.0.1:9000/mrt-test/inusitatum.png -a md5
+```
+
+> **TODO:** Figure out why the S3 API converts this to http://mrt-test.127.0.0.1:9000/inusitatum.png
 
 ### Configuring JetBrains GoLand IDE
 

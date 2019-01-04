@@ -92,10 +92,6 @@ func (f Fixity) initSession() (*session.Session, error) {
 	return session.NewSessionWithOptions(s3Opts)
 }
 
-//func (f Fixity) regionStr() string {
-//
-//}
-
 func (f Fixity) endpointStr() string {
 	return f.ObjLoc.Endpoint.String()
 }
