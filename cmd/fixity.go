@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"regexp"
 
 	. "github.com/dmolesUC3/coscheck/cos"
@@ -89,7 +90,7 @@ func runWith(objUrlStr string, f fixityFlags) error {
 	if err != nil {
 		return err
 	}
-	logger.Infof("digest matched: expected: %x, actual: %x\n", f.Expected, digest)
+	fmt.Printf("%x\n", digest)
 	return nil
 }
 
