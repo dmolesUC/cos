@@ -1,8 +1,10 @@
 package cos
 
 import (
+	"bytes"
 	"crypto/md5"
 	"crypto/sha256"
+	"fmt"
 	"hash"
 	"io"
 	"io/ioutil"
@@ -17,6 +19,7 @@ import (
 )
 
 const DefaultAwsRegion = "us-west-2"
+
 var awsRegionRegexp = regexp.MustCompile("https?://s3-([^.]+)\\.amazonaws\\.com/")
 
 type Fixity struct {
@@ -26,7 +29,6 @@ type Fixity struct {
 	Algorithm string
 	Region    string
 }
-
 
 func (f Fixity) GetDigest() ([]byte, error) {
 	sess, err := f.initSession()
@@ -74,7 +76,15 @@ func (f Fixity) GetDigest() ([]byte, error) {
 		return nil, err
 	}
 
-	return h.Sum(nil), nil
+	digest := h.Sum(nil)
+
+	if len(f.Expected) > 0 {
+		if !bytes.Equal(f.Expected, digest) {
+			err = fmt.Errorf("digest mismatch: expected: %x, actual: %x", f.Expected, digest)
+		}
+	}
+
+	return digest, err
 }
 
 func (f Fixity) newHash() hash.Hash {
@@ -88,8 +98,8 @@ func (f Fixity) initSession() (*session.Session, error) {
 	f.Logger.Detail("Initializing session")
 	endpointP := f.endpointP()
 	s3Config := aws.Config{
-		Endpoint: endpointP,
-		Region: f.regionStrP(),
+		Endpoint:         endpointP,
+		Region:           f.regionStrP(),
 		S3ForcePathStyle: aws.Bool(true),
 	}
 	s3Opts := session.Options{

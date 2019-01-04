@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"regexp"
 
 	. "github.com/dmolesUC3/coscheck/cos"
@@ -47,7 +46,7 @@ type fixityFlags struct {
 	Expected  []byte
 	Algorithm string
 	Endpoint  string
-	Region string
+	Region    string
 }
 
 func (f fixityFlags) logTo(logger Logger) {
@@ -77,20 +76,19 @@ func runWith(objUrlStr string, f fixityFlags) error {
 	}
 	logger.Detailf("ObjectLocation: %v\n", objLoc)
 
-	var fixity = Fixity {
-		Logger: logger,
-		ObjLoc: *objLoc,
-		Expected: f.Expected,
+	var fixity = Fixity{
+		Logger:    logger,
+		ObjLoc:    *objLoc,
+		Expected:  f.Expected,
 		Algorithm: f.Algorithm,
-		Region: f.Region,
+		Region:    f.Region,
 	}
 
 	digest, err := fixity.GetDigest()
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%x\n", digest)
-
+	logger.Infof("digest matched: expected: %x, actual: %x\n", f.Expected, digest)
 	return nil
 }
 
@@ -116,7 +114,7 @@ func init() {
 	cmd.Flags().BytesHexVarP(&fixity.Expected, "expected", "x", nil, "Expected digest value (exit with error if not matched)")
 	cmd.Flags().StringVarP(&fixity.Algorithm, "algorithm", "a", "sha256", "Algorithm: md5 or sha256")
 	cmd.Flags().StringVarP(&fixity.Endpoint, "endpoint", "e", "", "S3 endpoint: HTTP(S) URL")
-	cmd.Flags().StringVarP(&fixity.Endpoint, "region", "r", "", "S3 region (if not in endpoint URL; default \"" + DefaultAwsRegion + "\")")
+	cmd.Flags().StringVarP(&fixity.Endpoint, "region", "r", "", "S3 region (if not in endpoint URL; default \""+DefaultAwsRegion+"\")")
 
 	rootCmd.AddCommand(cmd)
 }
