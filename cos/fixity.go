@@ -43,13 +43,12 @@ func (f Fixity) GetDigest() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	// TODO: uncomment this
-	//defer func() {
-	//	err := os.Remove(outfile.Name())
-	//	if err != nil {
-	//		f.Logger.Info(err)
-	//	}
-	//}()
+	defer func() {
+		err := os.Remove(outfile.Name())
+		if err != nil {
+			f.Logger.Info(err)
+		}
+	}()
 	f.Logger.Detailf("Downloading to tempfile: %v\n", outfile.Name())
 
 	downloader := s3manager.NewDownloader(sess)
