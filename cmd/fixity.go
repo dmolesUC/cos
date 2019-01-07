@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"regexp"
 
-	. "github.com/dmolesUC3/coscheck/cos"
-	. "github.com/dmolesUC3/coscheck/util"
+	. "github.com/dmolesUC3/cos/cos"
+	. "github.com/dmolesUC3/cos/util"
 
 	"github.com/spf13/cobra"
 )
@@ -33,10 +33,10 @@ const (
 
 	// TODO: add Minio example(s)
 	example = ` 
-		coscheck fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg
-		coscheck fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -x c99ad299fa53d5d9688909164cf25b386b33bea8d4247310d80f615be29978f5
-		coscheck fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -a md5 -x eac8a75e3b3023e98003f1c24137ebbd
-		coscheck fixity s3://www.dmoles.net/images/fa/archive.svg -e https://s3.us-west-2.amazonaws.com/ -a md5 -x eac8a75e3b3023e98003f1c24137ebbd
+		cos fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg
+		cos fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -x c99ad299fa53d5d9688909164cf25b386b33bea8d4247310d80f615be29978f5
+		cos fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -a md5 -x eac8a75e3b3023e98003f1c24137ebbd
+		cos fixity s3://www.dmoles.net/images/fa/archive.svg -e https://s3.us-west-2.amazonaws.com/ -a md5 -x eac8a75e3b3023e98003f1c24137ebbd
 	`
 )
 

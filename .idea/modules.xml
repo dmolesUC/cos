@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/coscheck.iml" filepath="$PROJECT_DIR$/.idea/coscheck.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/cos.iml" filepath="$PROJECT_DIR$/.idea/cos.iml" />
     </modules>
   </component>
 </project>

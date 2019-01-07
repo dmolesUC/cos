@@ -1,4 +1,4 @@
-# coscheck
+# cos
 
 A tool for checking cloud object storage.
 
@@ -24,7 +24,7 @@ A tool for checking cloud object storage.
 
 ## For developers
 
-`coscheck` is a [Go 1.11 module](https://github.com/golang/go/wiki/Modules). 
+`cos` is a [Go 1.11 module](https://github.com/golang/go/wiki/Modules). 
 
 As such, it requires Go 1.11 or later, and should be cloned _outside_
 `$GOPATH/src`.
@@ -33,8 +33,8 @@ As such, it requires Go 1.11 or later, and should be cloned _outside_
 
 From the project root:
 
-- to build `coscheck`, writing the executable to the source directory, use `go build`.
-- to build `coscheck` and install it in `$GOPATH/bin`, use `go install`.
+- to build `cos`, writing the executable to the source directory, use `go build`.
+- to build `cos` and install it in `$GOPATH/bin`, use `go install`.
 
 ### Running
 
@@ -43,7 +43,7 @@ Amazon example with credentials:
 ```
 AWS_ACCESS_KEY_ID=<access key> \
 AWS_SECRET_ACCESS_KEY=<secret access key> \
-coscheck fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -a md5
+cos fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -a md5
 ```
 
 Minio example with credentials:
@@ -51,7 +51,7 @@ Minio example with credentials:
 ```
 AWS_ACCESS_KEY_ID=<access key> \
 AWS_SECRET_ACCESS_KEY=<secret access key> \
-coscheck fixity http://127.0.0.1:9000/mrt-test/inusitatum.png -a md5
+cos fixity http://127.0.0.1:9000/mrt-test/inusitatum.png -a md5
 ```
 
 ### Configuring JetBrains GoLand IDE

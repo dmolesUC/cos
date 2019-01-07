@@ -13,9 +13,9 @@ var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "coscheck",
+	Use:   "cos",
 	Short: "Cloud object storage checker",
-	Long: `coscheck is a tool for checking cloud object storage`,
+	Long: `cos is a tool for checking cloud object storage`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	//	Run: func(cmd *cobra.Command, args []string) { },
@@ -36,7 +36,7 @@ func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
-	//rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.coscheck.yaml)")
+	//rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.cos.yaml)")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -56,9 +56,9 @@ func initConfig() {
 			os.Exit(1)
 		}
 
-		// Search config in home directory with name ".coscheck" (without extension).
+		// Search config in home directory with name ".cos" (without extension).
 		viper.AddConfigPath(home)
-		viper.SetConfigName(".coscheck")
+		viper.SetConfigName(".cos")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match

@@ -1,4 +1,4 @@
-module github.com/dmolesUC3/coscheck
+module github.com/dmolesUC3/cos
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect

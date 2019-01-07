@@ -4,7 +4,7 @@
 *.md.html
 
 # default compiled binary
-coscheck
+cos
 
 #### Generated ignores ####
 
