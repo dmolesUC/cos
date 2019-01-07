@@ -14,9 +14,9 @@ import (
 // Constants: Help Text
 
 const (
-	usage = "fixity <OBJECT-URL>"
+	usage = "check <OBJECT-URL>"
 
-	shortDescription = "fixity: verify the digest of an object"
+	shortDescription = "check: verify the digest of an object"
 
 	longDescription = shortDescription + `
 
@@ -33,17 +33,17 @@ const (
 
 	// TODO: add Minio example(s)
 	example = ` 
-		cos fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg
-		cos fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -x c99ad299fa53d5d9688909164cf25b386b33bea8d4247310d80f615be29978f5
-		cos fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -a md5 -x eac8a75e3b3023e98003f1c24137ebbd
-		cos fixity s3://www.dmoles.net/images/fa/archive.svg -e https://s3.us-west-2.amazonaws.com/ -a md5 -x eac8a75e3b3023e98003f1c24137ebbd
+		cos check https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg
+		cos check https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -x c99ad299fa53d5d9688909164cf25b386b33bea8d4247310d80f615be29978f5
+		cos check https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -a md5 -x eac8a75e3b3023e98003f1c24137ebbd
+		cos check s3://www.dmoles.net/images/fa/archive.svg -e https://s3.us-west-2.amazonaws.com/ -a md5 -x eac8a75e3b3023e98003f1c24137ebbd
 	`
 )
 
 // ------------------------------------------------------------
-// fixityFlags type
+// checkFlags type
 
-type fixityFlags struct {
+type checkFlags struct {
 	Verbose   bool
 	Expected  []byte
 	Algorithm string
@@ -51,7 +51,7 @@ type fixityFlags struct {
 	Region    string
 }
 
-func (f fixityFlags) logTo(logger Logger) {
+func (f checkFlags) logTo(logger Logger) {
 	logger.Detailf("verbose   : %v\n", f.Verbose)
 	logger.Detailf("algorithm : %v\n", f.Algorithm)
 	logger.Detailf("expected  : %x\n", f.Expected)
@@ -66,7 +66,7 @@ func formatHelp(text string, indent string) string {
 	return regexp.MustCompile(`(?m)^[\t ]+`).ReplaceAllString(text, indent)
 }
 
-func runWith(objUrlStr string, f fixityFlags) error {
+func runWith(objUrlStr string, f checkFlags) error {
 	var logger = NewLogger(f.Verbose)
 	f.logTo(logger)
 	logger.Detailf("object URL: %v\n", objUrlStr)
@@ -78,7 +78,7 @@ func runWith(objUrlStr string, f fixityFlags) error {
 	}
 	logger.Detailf("ObjectLocation: %v\n", objLoc)
 
-	var fixity = Fixity{
+	var check = Check{
 		Logger:    logger,
 		ObjLoc:    *objLoc,
 		Expected:  f.Expected,
@@ -86,7 +86,7 @@ func runWith(objUrlStr string, f fixityFlags) error {
 		Region:    f.Region,
 	}
 
-	digest, err := fixity.GetDigest()
+	digest, err := check.GetDigest()
 	if err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func runWith(objUrlStr string, f fixityFlags) error {
 // Command initialization
 
 func init() {
-	fixity := fixityFlags{}
+	check := checkFlags{}
 
 	cmd := &cobra.Command{
 		Use:           usage,
@@ -109,14 +109,14 @@ func init() {
 		SilenceErrors: true,
 		Example:       formatHelp(example, "  "),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runWith(args[0], fixity)
+			return runWith(args[0], check)
 		},
 	}
-	cmd.Flags().BoolVarP(&fixity.Verbose, "verbose", "v", false, "Verbose output")
-	cmd.Flags().BytesHexVarP(&fixity.Expected, "expected", "x", nil, "Expected digest value (exit with error if not matched)")
-	cmd.Flags().StringVarP(&fixity.Algorithm, "algorithm", "a", "sha256", "Algorithm: md5 or sha256")
-	cmd.Flags().StringVarP(&fixity.Endpoint, "endpoint", "e", "", "S3 endpoint: HTTP(S) URL")
-	cmd.Flags().StringVarP(&fixity.Endpoint, "region", "r", "", "S3 region (if not in endpoint URL; default \""+DefaultAwsRegion+"\")")
+	cmd.Flags().BoolVarP(&check.Verbose, "verbose", "v", false, "Verbose output")
+	cmd.Flags().BytesHexVarP(&check.Expected, "expected", "x", nil, "Expected digest value (exit with error if not matched)")
+	cmd.Flags().StringVarP(&check.Algorithm, "algorithm", "a", "sha256", "Algorithm: md5 or sha256")
+	cmd.Flags().StringVarP(&check.Endpoint, "endpoint", "e", "", "S3 endpoint: HTTP(S) URL")
+	cmd.Flags().StringVarP(&check.Endpoint, "region", "r", "", "S3 region (if not in endpoint URL; default \""+DefaultAwsRegion+"\")")
 
 	rootCmd.AddCommand(cmd)
 }

@@ -24,7 +24,7 @@ const DefaultAwsRegion = "us-west-2"
 
 var awsRegionRegexp = regexp.MustCompile("https?://s3-([^.]+)\\.amazonaws\\.com/")
 
-type Fixity struct {
+type Check struct {
 	Logger    Logger
 	ObjLoc    ObjectLocation
 	Expected  []byte
@@ -32,7 +32,7 @@ type Fixity struct {
 	Region    string
 }
 
-func (f Fixity) GetDigest() ([]byte, error) {
+func (f Check) GetDigest() ([]byte, error) {
 	sess, err := f.initSession()
 	if err != nil {
 		return nil, err
@@ -88,14 +88,14 @@ func (f Fixity) GetDigest() ([]byte, error) {
 	return digest, err
 }
 
-func (f Fixity) newHash() hash.Hash {
+func (f Check) newHash() hash.Hash {
 	if f.Algorithm == "sha256" {
 		return sha256.New()
 	}
 	return md5.New()
 }
 
-func (f Fixity) initSession() (*session.Session, error) {
+func (f Check) initSession() (*session.Session, error) {
 	f.Logger.Detail("Initializing session")
 	endpointP := f.endpointP()
 	s3Config := aws.Config{
@@ -110,7 +110,7 @@ func (f Fixity) initSession() (*session.Session, error) {
 	return session.NewSessionWithOptions(s3Opts)
 }
 
-func (f Fixity) regionStrP() *string {
+func (f Check) regionStrP() *string {
 	if f.Region != "" {
 		f.Logger.Detailf("Using specified AWS region: %v\n", f.Region)
 		return &f.Region
@@ -127,25 +127,25 @@ func (f Fixity) regionStrP() *string {
 	return &regionStr
 }
 
-func (f Fixity) endpointStr() string {
+func (f Check) endpointStr() string {
 	return f.ObjLoc.Endpoint.String()
 }
 
-func (f Fixity) endpointP() *string {
+func (f Check) endpointP() *string {
 	endpointUrlStr := f.endpointStr()
 	return &endpointUrlStr
 }
 
-func (f Fixity) objFilename() string {
+func (f Check) objFilename() string {
 	return path.Base(f.ObjLoc.Key())
 }
 
-func (f Fixity) bucketP() *string {
+func (f Check) bucketP() *string {
 	bucket := f.ObjLoc.Bucket()
 	return &bucket
 }
 
-func (f Fixity) keyP() *string {
+func (f Check) keyP() *string {
 	key := f.ObjLoc.Key()
 	return &key
 }

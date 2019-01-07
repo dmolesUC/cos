@@ -43,7 +43,7 @@ Amazon example with credentials:
 ```
 AWS_ACCESS_KEY_ID=<access key> \
 AWS_SECRET_ACCESS_KEY=<secret access key> \
-cos fixity https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -a md5
+cos check https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -a md5
 ```
 
 Minio example with credentials:
@@ -51,7 +51,7 @@ Minio example with credentials:
 ```
 AWS_ACCESS_KEY_ID=<access key> \
 AWS_SECRET_ACCESS_KEY=<secret access key> \
-cos fixity http://127.0.0.1:9000/mrt-test/inusitatum.png -a md5
+cos check http://127.0.0.1:9000/mrt-test/inusitatum.png -a md5
 ```
 
 ### Configuring JetBrains GoLand IDE
