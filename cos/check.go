@@ -10,7 +10,11 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"reflect"
 	"regexp"
+	"unsafe"
+
+	"github.com/aws/aws-sdk-go/aws/credentials"
 
 	. "github.com/dmolesUC3/cos/util"
 
@@ -108,7 +112,29 @@ func (f Check) initSession() (*session.Session, error) {
 		Config:            s3Config,
 		SharedConfigState: session.SharedConfigEnable,
 	}
-	return session.NewSessionWithOptions(s3Opts)
+	sess, err := session.NewSessionWithOptions(s3Opts)
+	if err != nil {
+		return nil, err
+	}
+	return validateCredentials(sess)
+}
+
+// TODO: https://github.com/aws/aws-sdk-go/issues/2392
+func validateCredentials(sess *session.Session) (*session.Session, error) {
+	providerVal := reflect.ValueOf(*sess.Config.Credentials).FieldByName("provider").Elem()
+	if providerVal.Type() == reflect.TypeOf((*credentials.ChainProvider)(nil)) {
+		chainProvider := (*credentials.ChainProvider)(unsafe.Pointer(providerVal.Pointer()))
+		providers := chainProvider.Providers
+		if len(providers) > 0 {
+			err := reflect.ValueOf(providers[0]).Elem().FieldByName("Err")
+			if err.IsValid() {
+				if e2, ok := err.Interface().(error); ok {
+					return nil, e2
+				}
+			}
+		}
+	}
+	return sess, nil
 }
 
 func (f Check) regionStrP() *string {
