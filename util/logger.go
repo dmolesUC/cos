@@ -18,6 +18,7 @@ type Logger interface {
 	Detail(a ...interface{})
 	Infof(format string, a ...interface{})
 	Detailf(format string, a ...interface{})
+	Verbose() bool
 }
 
 func NewLogger(verbose bool) Logger {
@@ -72,6 +73,11 @@ func (l terseLogger) Detailf(format string, a ...interface{}) {
 	// does nothing
 }
 
+// Logger.Verbose() implementation
+func (l terseLogger) Verbose() bool {
+	return false
+}
+
 // ------------------------------
 // verboseLogger
 
@@ -88,4 +94,9 @@ func (l verboseLogger) Detail(a ...interface{}) {
 // Logger.Detailf() implementation: forward to Infof()
 func (l verboseLogger) Detailf(format string, a ...interface{}) {
 	l.Infof(format, a...)
+}
+
+// Logger.Verbose() implementation
+func (l verboseLogger) Verbose() bool {
+	return true
 }

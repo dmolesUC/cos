@@ -102,6 +102,7 @@ func (f Check) initSession() (*session.Session, error) {
 		Endpoint:         endpointP,
 		Region:           f.regionStrP(),
 		S3ForcePathStyle: aws.Bool(true),
+		CredentialsChainVerboseErrors: aws.Bool(f.Logger.Verbose()),
 	}
 	s3Opts := session.Options{
 		Config:            s3Config,
