@@ -11,23 +11,26 @@ import (
 	"os"
 	"path"
 
-	. "github.com/dmolesUC3/cos/util"
+	"github.com/dmolesUC3/cos/util"
 
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
+// Check represents a fixity check operation
 type Check struct {
-	Logger    Logger
-	ObjLoc    ObjectLocation
+	Logger    util.Logger
+	ObjLoc    util.ObjectLocation
 	Expected  []byte
 	Algorithm string
 	Region    string
 }
 
+// GetDigest gets the digest, returning an error if the object cannot be retrieved or,
+// when an expected digest is provided, if the calculated digest does not match.
 func (c Check) GetDigest() ([]byte, error) {
 	c.Logger.Detail("Initializing session")
-	sess, err := InitSession(c.endpointP(), c.regionStrP(), c.Logger.Verbose())
+	sess, err := util.InitSession(c.endpointP(), c.regionStrP(), c.Logger.Verbose())
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +95,7 @@ func (c Check) regionStrP() *string {
 		return &c.Region
 	}
 	endpoint := c.endpointStr()
-	regionStr := ExtractRegion(endpoint, c.Logger)
+	regionStr := util.ExtractRegion(endpoint, c.Logger)
 	return &regionStr
 }
 
@@ -101,8 +104,8 @@ func (c Check) endpointStr() string {
 }
 
 func (c Check) endpointP() *string {
-	endpointUrlStr := c.endpointStr()
-	return &endpointUrlStr
+	endpointStr := c.endpointStr()
+	return &endpointStr
 }
 
 func (c Check) objFilename() string {
