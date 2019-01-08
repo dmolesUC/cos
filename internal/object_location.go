@@ -9,6 +9,7 @@ import (
 // ------------------------------------------------------------
 // Exported types
 
+// Deprecated: Use Object instead
 type ObjectLocation struct {
 	S3Uri    URL
 	Endpoint URL
