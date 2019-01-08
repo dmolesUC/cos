@@ -37,7 +37,7 @@ const (
 		cos check https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -x c99ad299fa53d5d9688909164cf25b386b33bea8d4247310d80f615be29978f5
 		cos check https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -a md5 -x eac8a75e3b3023e98003f1c24137ebbd
 		cos check s3://www.dmoles.net/images/fa/archive.svg -e https://s3.us-west-2.amazonaws.com/ -a md5 -x eac8a75e3b3023e98003f1c24137ebbd
-	`
+		cos check s3://mrt-test/inusitatum.png --endpoint http://127.0.0.1:9000/ --algorithm md5 --expected cadf871cd4135212419f488f42c62482`
 )
 
 // ------------------------------------------------------------
