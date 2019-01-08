@@ -10,8 +10,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 )
 
-const DefaultAwsRegion = "us-west-2"
-var awsRegionRegexp = regexp.MustCompile("https?://s3-([^.]+)\\.amazonaws\\.com/")
+const (
+	DefaultAwsRegion     = "us-west-2"
+	DefaultS3EndpointUrl = "https://s3-us-west-2.amazonaws.com"
+	awsRegionRegexpStr = "https?://s3-([^.]+)\\.amazonaws\\.com/"
+)
+var awsRegionRegexp = regexp.MustCompile(awsRegionRegexpStr)
 
 func ExtractRegion(endpoint string, logger Logger) string {
 	matches := awsRegionRegexp.FindStringSubmatch(endpoint)
@@ -60,5 +64,3 @@ func validateCredentials(sess *session.Session) (*session.Session, error) {
 	}
 	return sess, nil
 }
-
-

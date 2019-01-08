@@ -6,10 +6,6 @@ import (
 	. "net/url"
 )
 
-const (
-	defaultS3EndpointUrl = "https://s3-us-west-2.amazonaws.com"
-)
-
 // ------------------------------------------------------------
 // Exported types
 
@@ -61,7 +57,7 @@ func NewObjectLocationFromStrings(params ...*string) (*ObjectLocation, error) {
 				return NewObjectLocationFromS3UriAndEndpoint(objUrl, endpoint)
 			}
 		}
-		return nil, fmt.Errorf("s3 object URL '%v' requires an endpoint URL (e.g. '%v')", objUrl, defaultS3EndpointUrl)
+		return nil, fmt.Errorf("s3 object URL '%v' requires an endpoint URL (e.g. '%v')", objUrl, DefaultS3EndpointUrl)
 	}
 
 	return NewObjectLocationFromHttpUrl(objUrl)
