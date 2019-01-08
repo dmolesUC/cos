@@ -38,29 +38,29 @@ func NewObjectLocationFromStrings(params ...*string) (*ObjectLocation, error) {
 		return nil, errors.New(fmt.Sprintf("too many params: expected [object-url <endpoint-url>], got %v", params))
 	}
 
-	objUrlStr := *params[0]
-	objUrl, err := validUrl(objUrlStr)
+	objURLStr := *params[0]
+	objURL, err := ValidAbsURL(objURLStr)
 	if err != nil {
 		err = fmt.Errorf("error parsing object URL: %v", err)
 		return nil, err
 	}
 
-	if objUrl.Scheme == "s3" {
+	if objURL.Scheme == "s3" {
 		if paramLen > 1 {
 			endpointStr := *params[1]
 			if endpointStr != "" {
-				endpoint, err := validUrl(endpointStr)
+				endpoint, err := ValidAbsURL(endpointStr)
 				if err != nil {
 					err = fmt.Errorf("error parsing endpoint URL: %v", err)
 					return nil, err
 				}
-				return NewObjectLocationFromS3UriAndEndpoint(objUrl, endpoint)
+				return NewObjectLocationFromS3UriAndEndpoint(objURL, endpoint)
 			}
 		}
-		return nil, fmt.Errorf("s3 object URL '%v' requires an endpoint URL (e.g. '%v')", objUrl, DefaultS3EndpointUrl)
+		return nil, fmt.Errorf("s3 object URL '%v' requires an endpoint URL (e.g. '%v')", objURL, DefaultS3EndpointURL)
 	}
 
-	return NewObjectLocationFromHttpUrl(objUrl)
+	return NewObjectLocationFromHttpURL(objURL)
 }
 
 func NewObjectLocationFromS3UriAndEndpoint(s3Uri *URL, endpoint *URL) (*ObjectLocation, error) {
@@ -78,7 +78,7 @@ func NewObjectLocationFromS3UriAndEndpoint(s3Uri *URL, endpoint *URL) (*ObjectLo
 	}
 }
 
-func NewObjectLocationFromHttpUrl(s3Uri *URL) (*ObjectLocation, error) {
+func NewObjectLocationFromHttpURL(s3Uri *URL) (*ObjectLocation, error) {
 	s3UriScheme := s3Uri.Scheme
 	if s3Uri.Scheme != "http" && s3Uri.Scheme != "https" {
 		return nil, errors.New(fmt.Sprintf("absolute object URL '%v' must be HTTP or HTTPS", s3Uri))
@@ -113,14 +113,3 @@ func toEndpoint(scheme string, host string) (*URL, error) {
 	return Parse(endpointStr)
 }
 
-func validUrl(urlStr string) (*URL, error) {
-	url, err := Parse(urlStr)
-	if err != nil {
-		return url, err
-	}
-	if !url.IsAbs() {
-		msg := fmt.Sprintf("URL '%v' must have a scheme", urlStr)
-		return nil, errors.New(msg)
-	}
-	return url, nil
-}

@@ -66,13 +66,13 @@ func formatHelp(text string, indent string) string {
 	return regexp.MustCompile(`(?m)^[\t ]+`).ReplaceAllString(text, indent)
 }
 
-func runWith(objUrlStr string, f checkFlags) error {
+func runWith(objURLStr string, f checkFlags) error {
 	var logger = NewLogger(f.Verbose)
 	f.logTo(logger)
-	logger.Detailf("object URL: %v\n", objUrlStr)
+	logger.Detailf("object URL: %v\n", objURLStr)
 
 	// TODO: look up default endpoint in S3 config / environment variables?
-	objLoc, err := NewObjectLocationFromStrings(&objUrlStr, &f.Endpoint)
+	objLoc, err := NewObjectLocationFromStrings(&objURLStr, &f.Endpoint)
 	if err != nil {
 		return err
 	}

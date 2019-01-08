@@ -75,21 +75,21 @@ func (s *NewFromS3UriAndEndpoint) TestBadS3Uri(c *C) {
 }
 
 // ------------------------------------------------------------
-// NewFromHttpUrl
+// NewFromHttpURL
 
-type NewFromHttpUrl struct{}
+type NewFromHttpURL struct{}
 
-var _ = Suite(&NewFromHttpUrl{})
+var _ = Suite(&NewFromHttpURL{})
 
-func (s *NewFromHttpUrl) TestHttpsUrl(c *C) {
-	inputUrlStr := "https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg"
+func (s *NewFromHttpURL) TestHttpsURL(c *C) {
+	inputURLStr := "https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg"
 	expectedS3UriStr := "s3://www.dmoles.net/images/fa/archive.svg"
 	expectedEndpointStr := "https://s3-us-west-2.amazonaws.com/"
 
-	s3Uri, err := Parse(inputUrlStr)
+	s3Uri, err := Parse(inputURLStr)
 	c.Assert(err, IsNil) // just to be sure
 
-	objLoc, err := NewObjectLocationFromHttpUrl(s3Uri)
+	objLoc, err := NewObjectLocationFromHttpURL(s3Uri)
 	c.Assert(err, IsNil)
 
 	s3UriStr := objLoc.S3Uri.String()
@@ -99,15 +99,15 @@ func (s *NewFromHttpUrl) TestHttpsUrl(c *C) {
 	c.Assert(endpointStr, Equals, expectedEndpointStr)
 }
 
-func (s *NewFromHttpUrl) TestHttpUrl(c *C) {
-	inputUrlStr := "http://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg"
+func (s *NewFromHttpURL) TestHttpURL(c *C) {
+	inputURLStr := "http://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg"
 	expectedS3UriStr := "s3://www.dmoles.net/images/fa/archive.svg"
 	expectedEndpointStr := "http://s3-us-west-2.amazonaws.com/"
 
-	s3Uri, err := Parse(inputUrlStr)
+	s3Uri, err := Parse(inputURLStr)
 	c.Assert(err, IsNil) // just to be sure
 
-	objLoc, err := NewObjectLocationFromHttpUrl(s3Uri)
+	objLoc, err := NewObjectLocationFromHttpURL(s3Uri)
 	c.Assert(err, IsNil)
 
 	s3UriStr := objLoc.S3Uri.String()
@@ -117,15 +117,15 @@ func (s *NewFromHttpUrl) TestHttpUrl(c *C) {
 	c.Assert(endpointStr, Equals, expectedEndpointStr)
 }
 
-func (s *NewFromHttpUrl) TestEscapedCharsInObjectPath(c *C) {
-	inputUrlStr := "http://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive%201.svg"
+func (s *NewFromHttpURL) TestEscapedCharsInObjectPath(c *C) {
+	inputURLStr := "http://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive%201.svg"
 	expectedS3UriStr := "s3://www.dmoles.net/images/fa/archive%201.svg"
 	expectedEndpointStr := "http://s3-us-west-2.amazonaws.com/"
 
-	s3Uri, err := Parse(inputUrlStr)
+	s3Uri, err := Parse(inputURLStr)
 	c.Assert(err, IsNil) // just to be sure
 
-	objLoc, err := NewObjectLocationFromHttpUrl(s3Uri)
+	objLoc, err := NewObjectLocationFromHttpURL(s3Uri)
 	c.Assert(err, IsNil)
 
 	s3UriStr := objLoc.S3Uri.String()
@@ -135,23 +135,23 @@ func (s *NewFromHttpUrl) TestEscapedCharsInObjectPath(c *C) {
 	c.Assert(endpointStr, Equals, expectedEndpointStr)
 }
 
-func (s *NewFromHttpUrl) TestNonHttpUrl(c *C) {
+func (s *NewFromHttpURL) TestNonHttpURL(c *C) {
 	s3Uri, err := Parse("s3://www.dmoles.net/images/fa/archive.svg")
 	c.Assert(err, IsNil) // just to be sure
 
-	objLoc, err := NewObjectLocationFromHttpUrl(s3Uri)
+	objLoc, err := NewObjectLocationFromHttpURL(s3Uri)
 	c.Assert(objLoc, IsNil)
 	c.Assert(err, ErrorMatches, fmt.Sprintf(".*%v.*", s3Uri))
 }
 
-func (s *NewFromHttpUrl) TestInvalidCharsInBucketName(c *C) {
-	inputUrlStr := "https://example.org/{}/images/fa/archive.svg"
+func (s *NewFromHttpURL) TestInvalidCharsInBucketName(c *C) {
+	inputURLStr := "https://example.org/{}/images/fa/archive.svg"
 	expectedS3UriStr := "s3://{}/images/fa/archive.svg"
 
-	s3Uri, err := Parse(inputUrlStr)
+	s3Uri, err := Parse(inputURLStr)
 	c.Assert(err, IsNil) // just to be sure
 
-	objLoc, err := NewObjectLocationFromHttpUrl(s3Uri)
+	objLoc, err := NewObjectLocationFromHttpURL(s3Uri)
 	c.Assert(objLoc, IsNil)
 	c.Assert(err, ErrorMatches, fmt.Sprintf(".*%v.*", expectedS3UriStr))
 }
@@ -164,11 +164,11 @@ type NewFromStrings struct{}
 var _ = Suite(&NewFromStrings{})
 
 func (s *NewFromStrings) TestHttpsS3Uri(c *C) {
-	inputUrlStr := "https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg"
+	inputURLStr := "https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg"
 	expectedS3UriStr := "s3://www.dmoles.net/images/fa/archive.svg"
 	expectedEndpointStr := "https://s3-us-west-2.amazonaws.com/"
 
-	objLoc, err := NewObjectLocationFromStrings(&inputUrlStr)
+	objLoc, err := NewObjectLocationFromStrings(&inputURLStr)
 	c.Assert(err, IsNil)
 
 	c.Assert(objLoc.S3Uri.String(), Equals, expectedS3UriStr)
@@ -176,11 +176,11 @@ func (s *NewFromStrings) TestHttpsS3Uri(c *C) {
 }
 
 func (s *NewFromStrings) TestHttpS3Uri(c *C) {
-	inputUrlStr := "http://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg"
+	inputURLStr := "http://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg"
 	expectedS3UriStr := "s3://www.dmoles.net/images/fa/archive.svg"
 	expectedEndpointStr := "http://s3-us-west-2.amazonaws.com/"
 
-	objLoc, err := NewObjectLocationFromStrings(&inputUrlStr)
+	objLoc, err := NewObjectLocationFromStrings(&inputURLStr)
 	c.Assert(err, IsNil)
 
 	c.Assert(objLoc.S3Uri.String(), Equals, expectedS3UriStr)
@@ -188,11 +188,11 @@ func (s *NewFromStrings) TestHttpS3Uri(c *C) {
 }
 
 func (s *NewFromStrings) TestHttpsS3UriWithNilEndpoint(c *C) {
-	inputUrlStr := "https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg"
+	inputURLStr := "https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg"
 	expectedS3UriStr := "s3://www.dmoles.net/images/fa/archive.svg"
 	expectedEndpointStr := "https://s3-us-west-2.amazonaws.com/"
 
-	objLoc, err := NewObjectLocationFromStrings(&inputUrlStr, nil)
+	objLoc, err := NewObjectLocationFromStrings(&inputURLStr, nil)
 	c.Assert(err, IsNil)
 
 	c.Assert(objLoc.S3Uri.String(), Equals, expectedS3UriStr)

@@ -1,6 +1,9 @@
 package internal
 
 import (
+	"errors"
+	"fmt"
+	"net/url"
 	"reflect"
 	"regexp"
 	"unsafe"
@@ -12,11 +15,24 @@ import (
 
 const (
 	DefaultAwsRegion     = "us-west-2"
-	DefaultS3EndpointUrl = "https://s3-us-west-2.amazonaws.com"
+	DefaultS3EndpointURL = "https://s3-us-west-2.amazonaws.com"
 	awsRegionRegexpStr = "https?://s3-([^.]+)\\.amazonaws\\.com/"
 )
 var awsRegionRegexp = regexp.MustCompile(awsRegionRegexpStr)
 
+func RegionFromEndpoint(endpoint *url.URL) (*string, error) {
+	if endpoint == nil {
+		return nil, fmt.Errorf("can't extract region from nil endpoint")
+	}
+	matches := awsRegionRegexp.FindStringSubmatch(endpoint.String())
+	if len(matches) == 2 {
+		regionStr := matches[1]
+		return &regionStr, nil
+	}
+	return nil, fmt.Errorf("no AWS region found in endpoint URL %v", endpoint)
+}
+
+// Deprecated: use RegionFromEndpoint instaed.
 func ExtractRegion(endpoint string, logger Logger) string {
 	matches := awsRegionRegexp.FindStringSubmatch(endpoint)
 	regionStr := DefaultAwsRegion
@@ -63,4 +79,16 @@ func validateCredentials(sess *session.Session) (*session.Session, error) {
 		}
 	}
 	return sess, nil
+}
+
+func ValidAbsURL(urlStr string) (*url.URL, error) {
+	u, err := url.Parse(urlStr)
+	if err != nil {
+		return u, err
+	}
+	if !u.IsAbs() {
+		msg := fmt.Sprintf("URL '%v' must have a scheme", urlStr)
+		return nil, errors.New(msg)
+	}
+	return u, nil
 }
