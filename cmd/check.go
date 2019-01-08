@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
-	. "github.com/dmolesUC3/cos/cos"
+	. "github.com/dmolesUC3/cos/pkg"
 	. "github.com/dmolesUC3/cos/util"
 
 	"github.com/spf13/cobra"

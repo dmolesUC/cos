@@ -1,4 +1,4 @@
-package cos
+package pkg
 
 import (
 	"bytes"
