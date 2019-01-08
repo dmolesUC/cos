@@ -6,6 +6,10 @@ import (
 	. "net/url"
 )
 
+const (
+	defaultS3EndpointUrl = "https://s3-us-west-2.amazonaws.com"
+)
+
 // ------------------------------------------------------------
 // Exported types
 
@@ -41,19 +45,23 @@ func NewObjectLocationFromStrings(params ...*string) (*ObjectLocation, error) {
 	objUrlStr := *params[0]
 	objUrl, err := validUrl(objUrlStr)
 	if err != nil {
+		err = fmt.Errorf("error parsing object URL: %v", err)
 		return nil, err
 	}
 
 	if objUrl.Scheme == "s3" {
-		if paramLen < 2 {
-			return nil, errors.New(fmt.Sprintf("s3 object URL '%v' requires an endpoint URL", objUrl))
+		if paramLen > 1 {
+			endpointStr := *params[1]
+			if endpointStr != "" {
+				endpoint, err := validUrl(endpointStr)
+				if err != nil {
+					err = fmt.Errorf("error parsing endpoint URL: %v", err)
+					return nil, err
+				}
+				return NewObjectLocationFromS3UriAndEndpoint(objUrl, endpoint)
+			}
 		}
-		endpointStr := *params[1]
-		endpoint, err := validUrl(endpointStr)
-		if err != nil {
-			return nil, err
-		}
-		return NewObjectLocationFromS3UriAndEndpoint(objUrl, endpoint)
+		return nil, fmt.Errorf("s3 object URL '%v' requires an endpoint URL (e.g. '%v')", objUrl, defaultS3EndpointUrl)
 	}
 
 	return NewObjectLocationFromHttpUrl(objUrl)
