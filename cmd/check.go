@@ -5,7 +5,7 @@ import (
 	"regexp"
 
 	. "github.com/dmolesUC3/cos/pkg"
-	. "github.com/dmolesUC3/cos/util"
+	. "github.com/dmolesUC3/cos/internal"
 
 	"github.com/spf13/cobra"
 )

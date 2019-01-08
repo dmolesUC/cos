@@ -11,7 +11,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/dmolesUC3/cos/util"
+	"github.com/dmolesUC3/cos/internal"
 
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
@@ -19,8 +19,8 @@ import (
 
 // Check represents a fixity check operation
 type Check struct {
-	Logger    util.Logger
-	ObjLoc    util.ObjectLocation
+	Logger    internal.Logger
+	ObjLoc    internal.ObjectLocation
 	Expected  []byte
 	Algorithm string
 	Region    string
@@ -30,7 +30,7 @@ type Check struct {
 // when an expected digest is provided, if the calculated digest does not match.
 func (c Check) GetDigest() ([]byte, error) {
 	c.Logger.Detail("Initializing session")
-	sess, err := util.InitSession(c.endpointP(), c.regionStrP(), c.Logger.Verbose())
+	sess, err := internal.InitSession(c.endpointP(), c.regionStrP(), c.Logger.Verbose())
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (c Check) regionStrP() *string {
 		return &c.Region
 	}
 	endpoint := c.endpointStr()
-	regionStr := util.ExtractRegion(endpoint, c.Logger)
+	regionStr := internal.ExtractRegion(endpoint, c.Logger)
 	return &regionStr
 }
 
