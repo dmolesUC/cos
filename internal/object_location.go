@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+
+	"github.com/aws/aws-sdk-go/aws/session"
 )
 
 // ------------------------------------------------------------
@@ -15,11 +17,7 @@ type ObjectLocation interface {
 	Endpoint() *url.URL
 	Bucket() *string
 	Key() *string
-}
-
-func EndpointP(o ObjectLocation) *string {
-	endpointStr := o.Endpoint().String()
-	return &endpointStr
+	NewSession(verboseErrors bool) (*session.Session, error)
 }
 
 // An ObjectLocationBuilder builds an ObjectLocation
@@ -77,19 +75,19 @@ func (b ObjectLocationBuilder) WithObjectURLStr(objURLStr string) ObjectLocation
 
 // Build builds a new ObjectLocation from the state of this ObjectLocationBuilder
 func (b ObjectLocationBuilder) Build(logger Logger) (ObjectLocation, error) {
-	b, err := b.parsingObjURLStr(logger)
+	builder, err := b.parsingObjURLStr(logger)
 	if err != nil {
-		return object{}, err
+		return objLoc{}, err
 	}
-	b, err = b.parsingEndpointStr()
+	builder, err = builder.parsingEndpointStr()
 	if err != nil {
-		return object{}, err
+		return objLoc{}, err
 	}
-	b = b.ensureRegion(logger)
-	if err = b.validate(); err != nil {
-		return object{}, err
+	builder = builder.ensureRegion(logger)
+	if err = builder.validate(); err != nil {
+		return objLoc{}, err
 	}
-	return object{b.region, b.endpoint, b.bucket, b.key}, nil
+	return objLoc{builder.region, builder.endpoint, builder.bucket, builder.key}, nil
 }
 
 func (b ObjectLocationBuilder) validate() error {
@@ -109,7 +107,7 @@ func (b ObjectLocationBuilder) validate() error {
 	if len(missing) == 0 {
 		return nil
 	}
-	return fmt.Errorf("missing object fields: %v", strings.Join(missing, ", "))
+	return fmt.Errorf("missing fields: %v", strings.Join(missing, ", "))
 }
 
 func (b ObjectLocationBuilder) withS3Uri(s3Uri *url.URL, logger Logger) (ObjectLocationBuilder, error) {
@@ -182,35 +180,41 @@ func (b ObjectLocationBuilder) ensureRegion(logger Logger) ObjectLocationBuilder
 // ------------------------------------------------------------
 // Unexported implementation
 
-type object struct {
+type objLoc struct {
 	region   string
 	endpoint *url.URL
 	bucket   string
 	key      string
 }
 
-func (b object) Region() *string {
+func (b objLoc) NewSession(verboseErrors bool) (*session.Session, error) {
+	endpointStr := b.endpoint.String()
+	return InitSession(&endpointStr, b.Region(), verboseErrors)
+}
+
+func (b objLoc) Region() *string {
 	if b.region == "" {
 		return nil
 	}
 	return &b.region
 }
 
-func (b object) Endpoint() *url.URL {
+func (b objLoc) Endpoint() *url.URL {
 	return b.endpoint
 }
 
-func (b object) Bucket() *string {
+func (b objLoc) Bucket() *string {
 	if b.bucket == "" {
 		return nil
 	}
 	return &b.bucket
 }
 
-func (b object) Key() *string {
+func (b objLoc) Key() *string {
 	if b.key == "" {
 		return nil
 	}
 	return &b.key
 }
+
 

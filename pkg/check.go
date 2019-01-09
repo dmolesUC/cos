@@ -31,10 +31,9 @@ type Check struct {
 func (c Check) GetDigest() ([]byte, error) {
 	logger := c.Logger
 	objLoc := c.ObjLoc
-	endpoint := internal.EndpointP(c.ObjLoc)
 
 	logger.Detail("Initializing session")
-	sess, err := internal.InitSession(endpoint, objLoc.Region(), logger.Verbose())
+	sess, err := objLoc.NewSession(logger.Verbose())
 	if err != nil {
 		return nil, err
 	}
