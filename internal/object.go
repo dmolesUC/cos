@@ -3,6 +3,7 @@ package internal
 import (
 	"fmt"
 	"net/url"
+	"strings"
 )
 
 // ------------------------------------------------------------
@@ -18,11 +19,11 @@ type Object interface {
 
 // An ObjectBuilder builds an Object
 type ObjectBuilder struct {
-	region *string
-	endpoint *url.URL
-	bucket *string
-	key *string
-	objURLStr *string
+	region      *string
+	endpoint    *url.URL
+	bucket      *string
+	key         *string
+	objURLStr   *string
 	endpointStr *string
 }
 
@@ -92,14 +93,38 @@ func (b ObjectBuilder) WithObjectURLStr(objURLStr string) ObjectBuilder {
 // Build builds a new Object from the state of this ObjectBuilder
 func (b ObjectBuilder) Build(logger Logger) (Object, error) {
 	b, err := b.parsingObjURLStr(logger)
-	if err == nil {
-		b, err = b.parsingEndpointStr()
+	if err != nil {
+		return object{}, err
 	}
-	if err == nil {
-		b = b.ensureRegion(logger)
+	b, err = b.parsingEndpointStr()
+	if err != nil {
+		return object{}, err
 	}
-	// TODO: validate everything
-	return object{b.region, b.endpoint, b.bucket, b.key}, err
+	b = b.ensureRegion(logger)
+	if err = b.validate(); err != nil {
+		return object{}, err
+	}
+	return object{b.region, b.endpoint, b.bucket, b.key}, nil
+}
+
+func (b ObjectBuilder) validate() error {
+	var missing []string
+	if b.region == nil {
+		missing = append(missing, "region")
+	}
+	if b.endpoint == nil {
+		missing = append(missing, "endpoint")
+	}
+	if b.bucket == nil {
+		missing = append(missing, "bucket")
+	}
+	if b.key == nil {
+		missing = append(missing, "key")
+	}
+	if len(missing) == 0 {
+		return nil
+	}
+	return fmt.Errorf("missing object fields: %v", strings.Join(missing, ", "))
 }
 
 func (b ObjectBuilder) withS3Uri(s3Uri *url.URL, logger Logger) (ObjectBuilder, error) {
@@ -169,15 +194,14 @@ func (b ObjectBuilder) ensureRegion(logger Logger) ObjectBuilder {
 	return b
 }
 
-
 // ------------------------------------------------------------
 // Unexported implementation
 
 type object struct {
-	region *string
+	region   *string
 	endpoint *url.URL
-	bucket *string
-	key *string
+	bucket   *string
+	key      *string
 }
 
 func (b object) Region() *string {
