@@ -19,7 +19,21 @@ A tool for checking cloud object storage.
 
 ### Fixity checking with `cos check`
 
-Amazon example with explicit credentials:
+#### Amazon (Merrit Stage) example with implicit credentials:
+
+S3 keys for Merritt objects are of the form `<ark>|<version>|<pathname>`. 
+
+`cos check 'https://s3-us-west-2.amazonaws.com/uc3-s3mrt5001-stg/ark:/99999/fk46w9nc06|1|producer/1500MBTestObject.blob' -v -x d0487cf92819b6f70a4769419348ab51ed77c519664a6262283e0016b9a6235c`
+
+#### Minio example with explicit credentials:
+
+```
+AWS_ACCESS_KEY_ID=<access key> \
+AWS_SECRET_ACCESS_KEY=<secret access key> \
+cos check http://127.0.0.1:9000/mrt-test/inusitatum.png -a md5 -x cadf871cd4135212419f488f42c62482`
+```
+
+#### Amazon example with explicit credentials:
 
 ```
 AWS_ACCESS_KEY_ID=<access key> \
@@ -27,19 +41,7 @@ AWS_SECRET_ACCESS_KEY=<secret access key> \
 cos check https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg
 ```
 
-Amazon (Merrit Stage) example with implicit credentials:
 
-```
-cos check 's3://uc3-s3mrt5001-stg/ark:/99999/fk4zp58j8g|1|producer/robot-e1415282398456.jpg' -e 'https://s3-us-west-2.amazonaws.com' -v
-```
-
-Minio example with explicit credentials:
-
-```
-AWS_ACCESS_KEY_ID=<access key> \
-AWS_SECRET_ACCESS_KEY=<secret access key> \
-cos check http://127.0.0.1:9000/mrt-test/inusitatum.png -a md5 -x cadf871cd4135212419f488f42c62482`
-```
 
 ## For developers
 
