@@ -21,6 +21,7 @@ const (
 var awsRegionRegexp = regexp.MustCompile(awsRegionRegexpStr)
 
 func RegionFromEndpoint(endpoint *url.URL) (*string, error) {
+	// TODO: figure out why this isn't working
 	if endpoint == nil {
 		return nil, fmt.Errorf("can't extract region from nil endpoint")
 	}
