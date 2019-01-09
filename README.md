@@ -19,7 +19,7 @@ A tool for checking cloud object storage.
 
 ### Fixity checking with `cos check`
 
-Amazon example with credentials:
+Amazon example with explicit credentials:
 
 ```
 AWS_ACCESS_KEY_ID=<access key> \
@@ -27,7 +27,13 @@ AWS_SECRET_ACCESS_KEY=<secret access key> \
 cos check https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg
 ```
 
-Minio example with credentials:
+Amazon (Merrit Stage) example with implicit credentials:
+
+```
+cos check 's3://uc3-s3mrt5001-stg/ark:/99999/fk4zp58j8g|1|producer/robot-e1415282398456.jpg' -e 'https://s3-us-west-2.amazonaws.com' -v
+```
+
+Minio example with explicit credentials:
 
 ```
 AWS_ACCESS_KEY_ID=<access key> \
