@@ -49,6 +49,14 @@ From the project root:
 - to build `cos`, writing the executable to the source directory, use `go build`.
 - to build `cos` and install it in `$GOPATH/bin`, use `go install`.
 
+#### Cross-compiling
+
+To cross-compile for Linux (Intel, 64-bit):
+
+```
+GOOS=linux GOARCH=amd64 go build -o <output file>
+```
+
 ### Configuring JetBrains GoLand IDE
 
 In **Preferences > Go > Go Modules (vgo)**, check “Enable Go Modules (vgo)
