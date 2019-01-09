@@ -27,12 +27,12 @@ type ObjectLocation interface {
 
 // An ObjectLocationBuilder builds an ObjectLocation
 type ObjectLocationBuilder struct {
-	region         string
-	endpoint       *url.URL
-	bucket         string
-	key            string
-	objURLStr      string
-	endpointStr    string
+	region      string
+	endpoint    *url.URL
+	bucket      string
+	key         string
+	objURLStr   string
+	endpointStr string
 }
 
 // NewObjectLocationBuilder Returns a new empty ObjectLocationBuilder
@@ -82,24 +82,23 @@ func (b ObjectLocationBuilder) WithObjectURLStr(objURLStr string) ObjectLocation
 func (b ObjectLocationBuilder) Build(logger Logger) (ObjectLocation, error) {
 	builder, err := b.parsingObjURLStr(logger)
 	if err != nil {
-		return objLoc{}, err
+		return nil, err
 	}
 	builder, err = builder.parsingEndpointStr()
 	if err != nil {
-		return objLoc{}, err
+		return nil, err
 	}
 	builder = builder.ensureRegion(logger)
 	if err = builder.validate(); err != nil {
-		return objLoc{}, err
+		return nil, err
 	}
-	ol := objLoc{
-		region:         builder.region,
-		endpoint:       builder.endpoint,
-		bucket:         builder.bucket,
-		key:            builder.key,
-		verboseLogging: logger.Verbose(),
-	}
-	return ol, nil
+	return &objLoc{
+		region:   builder.region,
+		endpoint: builder.endpoint,
+		bucket:   builder.bucket,
+		key:      builder.key,
+		logger:   logger,
+	}, nil
 }
 
 func (b ObjectLocationBuilder) validate() error {
@@ -193,49 +192,62 @@ func (b ObjectLocationBuilder) ensureRegion(logger Logger) ObjectLocationBuilder
 // Unexported implementation
 
 type objLoc struct {
-	region         string
-	endpoint       *url.URL
-	bucket         string
-	key            string
-	verboseLogging bool
-	awsSession     *session.Session
+	region     string
+	endpoint   *url.URL
+	bucket     string
+	key        string
+	logger     Logger
+	awsSession *session.Session
 }
 
-func (ol objLoc) Region() *string {
+func (ol *objLoc) Region() *string {
 	if ol.region == "" {
 		return nil
 	}
 	return &ol.region
 }
 
-func (ol objLoc) Endpoint() *url.URL {
+func (ol *objLoc) Endpoint() *url.URL {
 	return ol.endpoint
 }
 
-func (ol objLoc) Bucket() *string {
+func (ol *objLoc) Bucket() *string {
 	if ol.bucket == "" {
 		return nil
 	}
 	return &ol.bucket
 }
 
-func (ol objLoc) Key() *string {
+func (ol *objLoc) Key() *string {
 	if ol.key == "" {
 		return nil
 	}
 	return &ol.key
 }
 
-func (ol objLoc) Session() (*session.Session, error) {
+func (ol *objLoc) Session() (*session.Session, error) {
 	var err error
 	if ol.awsSession == nil {
 		endpointStr := ol.endpoint.String()
-		ol.awsSession, err = InitSession(&endpointStr, ol.Region(), ol.verboseLogging)
+		verboseLogging := ol.logger.Verbose()
+		ol.awsSession, err = InitSession(&endpointStr, ol.Region(), verboseLogging)
+		isEC2, err := IsEC2()
+		if err != nil {
+			ol.logger.Detailf("Rrror trying to determine whether we're running in EC2 (assume we're not): %v", err)
+			isEC2 = false
+		}
+		if isEC2 {
+			ol.logger.Detailf("Running in EC2; allowing IAM role credentials\n")
+		} else {
+			// TODO: https://github.com/aws/aws-sdk-go/issues/2392
+			ol.logger.Detailf("Not running in EC2; disallowing IAM role credentials\n")
+			return ValidateCredentials(ol.awsSession)
+		}
 	}
 	return ol.awsSession, err
 }
 
-func (ol objLoc) GetObject() (*s3.GetObjectOutput, error) {
+func (ol *objLoc) GetObject() (*s3.GetObjectOutput, error) {
 	awsSession, err := ol.Session()
 	if err != nil {
 		return nil, err
@@ -244,7 +256,7 @@ func (ol objLoc) GetObject() (*s3.GetObjectOutput, error) {
 	return s3Svc.GetObject(ol.toGetObjectInput())
 }
 
-func (ol objLoc) DownloadTo(w io.WriterAt) (int64, error) {
+func (ol *objLoc) DownloadTo(w io.WriterAt) (int64, error) {
 	awsSession, err := ol.Session()
 	if err != nil {
 		return 0, err
@@ -256,10 +268,10 @@ func (ol objLoc) DownloadTo(w io.WriterAt) (int64, error) {
 // ------------------------------------------------------------
 // Unexported functions
 
-func (ol objLoc) toGetObjectInput() *s3.GetObjectInput {
+func (ol *objLoc) toGetObjectInput() *s3.GetObjectInput {
 	goInput := s3.GetObjectInput{
 		Bucket: ol.Bucket(),
-		Key: ol.Key(),
+		Key:    ol.Key(),
 	}
 	return &goInput
 }

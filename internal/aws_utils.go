@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"os/exec"
 	"reflect"
 	"regexp"
+	"strings"
 	"unsafe"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -32,6 +34,20 @@ func RegionFromEndpoint(endpoint *url.URL) (*string, error) {
 	return nil, fmt.Errorf("no AWS region found in endpoint URL %v", endpoint)
 }
 
+func IsEC2() (bool, error) {
+	// TODO: something less dumb
+	// - https://stackoverflow.com/questions/54119890/how-do-i-determine-whether-my-application-is-running-in-amazon-ec2-without-net
+	out, err := exec.Command("uname", "-a").Output()
+	if err != nil {
+		return false, err
+	}
+	uname := string(out)
+	if strings.Contains(uname, "amzn") {
+		return true, nil
+	}
+	return false, nil
+}
+
 func InitSession(endpointP *string, regionStrP *string, verbose bool) (*session.Session, error) {
 	s3Config := aws.Config{
 		Endpoint:                      endpointP,
@@ -43,16 +59,16 @@ func InitSession(endpointP *string, regionStrP *string, verbose bool) (*session.
 		Config:            s3Config,
 		SharedConfigState: session.SharedConfigEnable,
 	}
-	sess, err := session.NewSessionWithOptions(s3Opts)
+	awsSession, err := session.NewSessionWithOptions(s3Opts)
 	if err != nil {
 		return nil, err
 	}
-	return validateCredentials(sess)
+	return awsSession, nil
 }
 
 // TODO: https://github.com/aws/aws-sdk-go/issues/2392
-func validateCredentials(sess *session.Session) (*session.Session, error) {
-	providerVal := reflect.ValueOf(*sess.Config.Credentials).FieldByName("provider").Elem()
+func ValidateCredentials(awsSession *session.Session) (*session.Session, error) {
+	providerVal := reflect.ValueOf(*awsSession.Config.Credentials).FieldByName("provider").Elem()
 	if providerVal.Type() == reflect.TypeOf((*credentials.ChainProvider)(nil)) {
 		chainProvider := (*credentials.ChainProvider)(unsafe.Pointer(providerVal.Pointer()))
 		providers := chainProvider.Providers
@@ -65,7 +81,7 @@ func validateCredentials(sess *session.Session) (*session.Session, error) {
 			}
 		}
 	}
-	return sess, nil
+	return awsSession, nil
 }
 
 func ValidAbsURL(urlStr string) (*url.URL, error) {
