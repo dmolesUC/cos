@@ -33,12 +33,12 @@ func (c Check) GetDigest() ([]byte, error) {
 	objLoc := c.ObjLoc
 
 	logger.Detail("Initializing session")
-	sess, err := objLoc.GetSession()
+	sess, err := objLoc.Session()
 	if err != nil {
 		return nil, err
 	}
 
-	s3Object, err := objLoc.GetS3Object()
+	s3Object, err := objLoc.Get()
 	if err != nil {
 		return nil, err
 	}
@@ -57,15 +57,13 @@ func (c Check) GetDigest() ([]byte, error) {
 		}
 	}()
 	logger.Detailf("Downloading to tempfile: %v\n", outfile.Name())
-	downloader := s3manager.NewDownloader(sess)
-	bytesDownloaded, err := downloader.Download(outfile, &s3.GetObjectInput{
-		Bucket: objLoc.Bucket(),
-		Key:    objLoc.Key(),
-	})
+
+	bytesDownloaded, err := objLoc.DownloadTo(outfile)
 	logger.Detailf("Downloaded %d bytes\n", bytesDownloaded)
 	if err != nil {
 		return nil, err
 	}
+
 	err = outfile.Close() // TODO is this necessary?
 	if err != nil {
 		return nil, err

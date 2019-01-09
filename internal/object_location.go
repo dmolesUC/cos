@@ -2,11 +2,13 @@ package internal
 
 import (
 	"fmt"
+	"io"
 	"net/url"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
 // ------------------------------------------------------------
@@ -18,8 +20,9 @@ type ObjectLocation interface {
 	Endpoint() *url.URL
 	Bucket() *string
 	Key() *string
-	GetSession() (*session.Session, error)
-	GetS3Object() (*s3.GetObjectOutput, error)
+	Session() (*session.Session, error)
+	Get() (*s3.GetObjectOutput, error)
+	DownloadTo(w io.WriterAt) (int64, error)
 }
 
 // An ObjectLocationBuilder builds an ObjectLocation
@@ -223,7 +226,7 @@ func (ol objLoc) Key() *string {
 	return &ol.key
 }
 
-func (ol objLoc) GetSession() (*session.Session, error) {
+func (ol objLoc) Session() (*session.Session, error) {
 	var err error
 	if ol.awsSession == nil {
 		endpointStr := ol.endpoint.String()
@@ -232,16 +235,31 @@ func (ol objLoc) GetSession() (*session.Session, error) {
 	return ol.awsSession, err
 }
 
-func (ol objLoc) GetS3Object() (*s3.GetObjectOutput, error) {
-	awsSession, err := ol.GetSession()
+func (ol objLoc) Get() (*s3.GetObjectOutput, error) {
+	awsSession, err := ol.Session()
 	if err != nil {
 		return nil, err
 	}
+	s3Svc := s3.New(awsSession)
+	return s3Svc.GetObject(ol.toGetObjectInput())
+}
+
+func (ol objLoc) DownloadTo(w io.WriterAt) (int64, error) {
+	awsSession, err := ol.Session()
+	if err != nil {
+		return 0, err
+	}
+	downloader := s3manager.NewDownloader(awsSession)
+	return downloader.Download(w, ol.toGetObjectInput())
+}
+
+// ------------------------------------------------------------
+// Unexported functions
+
+func (ol objLoc) toGetObjectInput() *s3.GetObjectInput {
 	goInput := s3.GetObjectInput{
 		Bucket: ol.Bucket(),
 		Key: ol.Key(),
 	}
-
-	s3Svc := s3.New(awsSession)
-	return s3Svc.GetObject(&goInput)
+	return &goInput
 }
