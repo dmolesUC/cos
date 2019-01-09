@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 )
 
 // ------------------------------------------------------------
@@ -17,17 +18,18 @@ type ObjectLocation interface {
 	Endpoint() *url.URL
 	Bucket() *string
 	Key() *string
-	NewSession(verboseErrors bool) (*session.Session, error)
+	GetSession() (*session.Session, error)
+	GetS3Object() (*s3.GetObjectOutput, error)
 }
 
 // An ObjectLocationBuilder builds an ObjectLocation
 type ObjectLocationBuilder struct {
-	region      string
-	endpoint    *url.URL
-	bucket      string
-	key         string
-	objURLStr   string
-	endpointStr string
+	region         string
+	endpoint       *url.URL
+	bucket         string
+	key            string
+	objURLStr      string
+	endpointStr    string
 }
 
 // NewObjectLocationBuilder Returns a new empty ObjectLocationBuilder
@@ -87,7 +89,14 @@ func (b ObjectLocationBuilder) Build(logger Logger) (ObjectLocation, error) {
 	if err = builder.validate(); err != nil {
 		return objLoc{}, err
 	}
-	return objLoc{builder.region, builder.endpoint, builder.bucket, builder.key}, nil
+	ol := objLoc{
+		region:         builder.region,
+		endpoint:       builder.endpoint,
+		bucket:         builder.bucket,
+		key:            builder.key,
+		verboseLogging: logger.Verbose(),
+	}
+	return ol, nil
 }
 
 func (b ObjectLocationBuilder) validate() error {
@@ -181,40 +190,58 @@ func (b ObjectLocationBuilder) ensureRegion(logger Logger) ObjectLocationBuilder
 // Unexported implementation
 
 type objLoc struct {
-	region   string
-	endpoint *url.URL
-	bucket   string
-	key      string
+	region         string
+	endpoint       *url.URL
+	bucket         string
+	key            string
+	verboseLogging bool
+	awsSession     *session.Session
 }
 
-func (b objLoc) NewSession(verboseErrors bool) (*session.Session, error) {
-	endpointStr := b.endpoint.String()
-	return InitSession(&endpointStr, b.Region(), verboseErrors)
-}
-
-func (b objLoc) Region() *string {
-	if b.region == "" {
+func (ol objLoc) Region() *string {
+	if ol.region == "" {
 		return nil
 	}
-	return &b.region
+	return &ol.region
 }
 
-func (b objLoc) Endpoint() *url.URL {
-	return b.endpoint
+func (ol objLoc) Endpoint() *url.URL {
+	return ol.endpoint
 }
 
-func (b objLoc) Bucket() *string {
-	if b.bucket == "" {
+func (ol objLoc) Bucket() *string {
+	if ol.bucket == "" {
 		return nil
 	}
-	return &b.bucket
+	return &ol.bucket
 }
 
-func (b objLoc) Key() *string {
-	if b.key == "" {
+func (ol objLoc) Key() *string {
+	if ol.key == "" {
 		return nil
 	}
-	return &b.key
+	return &ol.key
 }
 
+func (ol objLoc) GetSession() (*session.Session, error) {
+	var err error
+	if ol.awsSession == nil {
+		endpointStr := ol.endpoint.String()
+		ol.awsSession, err = InitSession(&endpointStr, ol.Region(), ol.verboseLogging)
+	}
+	return ol.awsSession, err
+}
 
+func (ol objLoc) GetS3Object() (*s3.GetObjectOutput, error) {
+	awsSession, err := ol.GetSession()
+	if err != nil {
+		return nil, err
+	}
+	goInput := s3.GetObjectInput{
+		Bucket: ol.Bucket(),
+		Key: ol.Key(),
+	}
+
+	s3Svc := s3.New(awsSession)
+	return s3Svc.GetObject(&goInput)
+}

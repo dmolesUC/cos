@@ -33,10 +33,16 @@ func (c Check) GetDigest() ([]byte, error) {
 	objLoc := c.ObjLoc
 
 	logger.Detail("Initializing session")
-	sess, err := objLoc.NewSession(logger.Verbose())
+	sess, err := objLoc.GetSession()
 	if err != nil {
 		return nil, err
 	}
+
+	s3Object, err := objLoc.GetS3Object()
+	if err != nil {
+		return nil, err
+	}
+	logger.Detailf("Expected ContentLength: %d\n", *s3Object.ContentLength)
 
 	// TODO: don't write to tempfile
 	filename := path.Base(*objLoc.Key())
