@@ -21,7 +21,7 @@ type ObjectLocation interface {
 	Bucket() *string
 	Key() *string
 	Session() (*session.Session, error)
-	Get() (*s3.GetObjectOutput, error)
+	GetObject() (*s3.GetObjectOutput, error)
 	DownloadTo(w io.WriterAt) (int64, error)
 }
 
@@ -235,7 +235,7 @@ func (ol objLoc) Session() (*session.Session, error) {
 	return ol.awsSession, err
 }
 
-func (ol objLoc) Get() (*s3.GetObjectOutput, error) {
+func (ol objLoc) GetObject() (*s3.GetObjectOutput, error) {
 	awsSession, err := ol.Session()
 	if err != nil {
 		return nil, err
