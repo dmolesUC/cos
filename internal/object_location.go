@@ -9,22 +9,22 @@ import (
 // ------------------------------------------------------------
 // Exported types
 
-// The Object type represents an object in cloud storage.
+// The ObjectLocation type represents the location of an object in cloud storage.
 // TODO: don't use string pointers just b/c Amazon likes them
-type Object interface {
+type ObjectLocation interface {
 	Region() *string
 	Endpoint() *url.URL
 	Bucket() *string
 	Key() *string
 }
 
-func EndpointP(o Object) *string {
+func EndpointP(o ObjectLocation) *string {
 	endpointStr := o.Endpoint().String()
 	return &endpointStr
 }
 
-// An ObjectBuilder builds an Object
-type ObjectBuilder struct {
+// An ObjectLocationBuilder builds an ObjectLocation
+type ObjectLocationBuilder struct {
 	region      *string
 	endpoint    *url.URL
 	bucket      *string
@@ -33,13 +33,13 @@ type ObjectBuilder struct {
 	endpointStr *string
 }
 
-// NewObjectBuilder Returns a new empty ObjectBuilder
-func NewObjectBuilder() ObjectBuilder {
-	return ObjectBuilder{}
+// NewObjectLocationBuilder Returns a new empty ObjectLocationBuilder
+func NewObjectLocationBuilder() ObjectLocationBuilder {
+	return ObjectLocationBuilder{}
 }
 
 // WithRegion sets the region, or clears it if the specified region is blank
-func (b ObjectBuilder) WithRegion(region string) ObjectBuilder {
+func (b ObjectLocationBuilder) WithRegion(region string) ObjectLocationBuilder {
 	if region == "" {
 		b.region = nil
 	} else {
@@ -49,14 +49,14 @@ func (b ObjectBuilder) WithRegion(region string) ObjectBuilder {
 }
 
 // WithEndpoint sets the endpoint as a URL
-func (b ObjectBuilder) WithEndpoint(endpoint *url.URL) ObjectBuilder {
+func (b ObjectLocationBuilder) WithEndpoint(endpoint *url.URL) ObjectLocationBuilder {
 	b.endpoint = endpoint
 	return b
 }
 
 // WithEndpointStr sets the endpoint as a string, or clears it if the
 // specified endpoint is blank
-func (b ObjectBuilder) WithEndpointStr(endpointStr string) ObjectBuilder {
+func (b ObjectLocationBuilder) WithEndpointStr(endpointStr string) ObjectLocationBuilder {
 	if endpointStr == "" {
 		b.endpointStr = nil
 	} else {
@@ -66,7 +66,7 @@ func (b ObjectBuilder) WithEndpointStr(endpointStr string) ObjectBuilder {
 }
 
 // WithBucket sets the bucket, or clears it if the specified region is blank
-func (b ObjectBuilder) WithBucket(bucket string) ObjectBuilder {
+func (b ObjectLocationBuilder) WithBucket(bucket string) ObjectLocationBuilder {
 	if bucket == "" {
 		b.bucket = nil
 	} else {
@@ -76,7 +76,7 @@ func (b ObjectBuilder) WithBucket(bucket string) ObjectBuilder {
 }
 
 // WithKey sets the key, or clears it if the specified region is blank
-func (b ObjectBuilder) WithKey(key string) ObjectBuilder {
+func (b ObjectLocationBuilder) WithKey(key string) ObjectLocationBuilder {
 	if key == "" {
 		b.key = nil
 	} else {
@@ -87,7 +87,7 @@ func (b ObjectBuilder) WithKey(key string) ObjectBuilder {
 
 // WithObjectURLStr sets the object URL as a string, or clears it if the
 // specified object URL is blank
-func (b ObjectBuilder) WithObjectURLStr(objURLStr string) ObjectBuilder {
+func (b ObjectLocationBuilder) WithObjectURLStr(objURLStr string) ObjectLocationBuilder {
 	if objURLStr == "" {
 		b.objURLStr = nil
 	} else {
@@ -96,8 +96,8 @@ func (b ObjectBuilder) WithObjectURLStr(objURLStr string) ObjectBuilder {
 	return b
 }
 
-// Build builds a new Object from the state of this ObjectBuilder
-func (b ObjectBuilder) Build(logger Logger) (Object, error) {
+// Build builds a new ObjectLocation from the state of this ObjectLocationBuilder
+func (b ObjectLocationBuilder) Build(logger Logger) (ObjectLocation, error) {
 	b, err := b.parsingObjURLStr(logger)
 	if err != nil {
 		return object{}, err
@@ -113,7 +113,7 @@ func (b ObjectBuilder) Build(logger Logger) (Object, error) {
 	return object{b.region, b.endpoint, b.bucket, b.key}, nil
 }
 
-func (b ObjectBuilder) validate() error {
+func (b ObjectLocationBuilder) validate() error {
 	var missing []string
 	if b.region == nil {
 		missing = append(missing, "region")
@@ -133,7 +133,7 @@ func (b ObjectBuilder) validate() error {
 	return fmt.Errorf("missing object fields: %v", strings.Join(missing, ", "))
 }
 
-func (b ObjectBuilder) withS3Uri(s3Uri *url.URL, logger Logger) (ObjectBuilder, error) {
+func (b ObjectLocationBuilder) withS3Uri(s3Uri *url.URL, logger Logger) (ObjectLocationBuilder, error) {
 	if s3Uri.Scheme != "s3" {
 		return b, fmt.Errorf("not an S3 URL: %v", s3Uri)
 	}
@@ -143,7 +143,7 @@ func (b ObjectBuilder) withS3Uri(s3Uri *url.URL, logger Logger) (ObjectBuilder, 
 	return b, nil
 }
 
-func (b ObjectBuilder) parsingObjURLStr(logger Logger) (ObjectBuilder, error) {
+func (b ObjectLocationBuilder) parsingObjURLStr(logger Logger) (ObjectLocationBuilder, error) {
 	if b.objURLStr == nil {
 		return b, nil
 	}
@@ -174,7 +174,7 @@ func (b ObjectBuilder) parsingObjURLStr(logger Logger) (ObjectBuilder, error) {
 	return b.withS3Uri(s3Uri, logger)
 }
 
-func (b ObjectBuilder) parsingEndpointStr() (ObjectBuilder, error) {
+func (b ObjectLocationBuilder) parsingEndpointStr() (ObjectLocationBuilder, error) {
 	if b.endpointStr == nil {
 		return b, nil
 	}
@@ -183,7 +183,7 @@ func (b ObjectBuilder) parsingEndpointStr() (ObjectBuilder, error) {
 	return b, err
 }
 
-func (b ObjectBuilder) ensureRegion(logger Logger) ObjectBuilder {
+func (b ObjectLocationBuilder) ensureRegion(logger Logger) ObjectLocationBuilder {
 	if b.region == nil {
 		region, err := RegionFromEndpoint(b.endpoint)
 		if err == nil {

@@ -17,10 +17,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
-// Check represents a fixity check operation
+// The Check struct represents a fixity check operation
 type Check struct {
 	Logger    internal.Logger
-	Obj       internal.Object
+	ObjLoc    internal.ObjectLocation
 	Expected  []byte
 	Algorithm string
 	Region    string
@@ -30,17 +30,17 @@ type Check struct {
 // when an expected digest is provided, if the calculated digest does not match.
 func (c Check) GetDigest() ([]byte, error) {
 	logger := c.Logger
-	object := c.Obj
-	endpoint := internal.EndpointP(c.Obj)
+	objLoc := c.ObjLoc
+	endpoint := internal.EndpointP(c.ObjLoc)
 
 	logger.Detail("Initializing session")
-	sess, err := internal.InitSession(endpoint, object.Region(), logger.Verbose())
+	sess, err := internal.InitSession(endpoint, objLoc.Region(), logger.Verbose())
 	if err != nil {
 		return nil, err
 	}
 
 	// TODO: don't write to tempfile
-	filename := path.Base(*object.Key())
+	filename := path.Base(*objLoc.Key())
 	outfile, err := ioutil.TempFile("", filename)
 	if err != nil {
 		return nil, err
@@ -54,8 +54,8 @@ func (c Check) GetDigest() ([]byte, error) {
 	logger.Detailf("Downloading to tempfile: %v\n", outfile.Name())
 	downloader := s3manager.NewDownloader(sess)
 	bytesDownloaded, err := downloader.Download(outfile, &s3.GetObjectInput{
-		Bucket: object.Bucket(),
-		Key:    object.Key(),
+		Bucket: objLoc.Bucket(),
+		Key:    objLoc.Key(),
 	})
 	logger.Detailf("Downloaded %d bytes\n", bytesDownloaded)
 	if err != nil {

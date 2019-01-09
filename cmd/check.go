@@ -72,18 +72,18 @@ func runWith(objURLStr string, f checkFlags) error {
 	logger.Detailf("object URL: %v\n", objURLStr)
 
 	// TODO: look up default endpoint in S3 config / environment variables?
-	obj, err := NewObjectBuilder().
+	obj, err := NewObjectLocationBuilder().
 		WithEndpointStr(f.Endpoint).
 		WithObjectURLStr(objURLStr).
 		Build(logger)
 	if err != nil {
 		return err
 	}
-	logger.Detailf("Object: %v\n", obj)
+	logger.Detailf("ObjectLocation: %v\n", obj)
 
 	var check = Check{
 		Logger:    logger,
-		Obj:       obj,
+		ObjLoc:    obj,
 		Expected:  f.Expected,
 		Algorithm: f.Algorithm,
 		Region:    f.Region,
