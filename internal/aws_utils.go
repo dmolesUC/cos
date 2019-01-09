@@ -32,19 +32,6 @@ func RegionFromEndpoint(endpoint *url.URL) (*string, error) {
 	return nil, fmt.Errorf("no AWS region found in endpoint URL %v", endpoint)
 }
 
-// Deprecated: use RegionFromEndpoint instaed.
-func ExtractRegion(endpoint string, logger Logger) string {
-	matches := awsRegionRegexp.FindStringSubmatch(endpoint)
-	regionStr := DefaultAwsRegion
-	if len(matches) == 2 {
-		regionStr = matches[1]
-		logger.Detailf("Found AWS region in endpoint URL %v: %v\n", endpoint, regionStr)
-	} else {
-		logger.Detailf("No AWS region found in endpoint URL %v; using default region %v\n", endpoint, DefaultAwsRegion)
-	}
-	return regionStr
-}
-
 func InitSession(endpointP *string, regionStrP *string, verbose bool) (*session.Session, error) {
 	s3Config := aws.Config{
 		Endpoint:                      endpointP,
