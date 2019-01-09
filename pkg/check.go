@@ -19,6 +19,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
+// Chunk size for ranged downloads
+const DefaultChunkSize = int64(1024 * 1024 * 5)
+
 // The Check struct represents a fixity check operation
 type Check struct {
 	Logger    internal.Logger
@@ -73,41 +76,44 @@ func (c Check) hashFromRanges() ([] byte, error) {
 	h := c.newHash()
 	downloader := s3manager.NewDownloader(awsSession)
 
-	// TODO: make this a constant
-	chunkSize := int64(128)
+	// TODO: make this configurable
+	chunkSize := DefaultChunkSize
+
 	chunkCount := (contentLength + chunkSize - 1) / chunkSize
 	for chunk := int64(0); chunk < chunkCount; chunk += 1 {
 		// byte ranges are 0-indexed and inclusive
-		start := chunk * chunkSize
-		var end int64
+		startInclusive := chunk * chunkSize
+		var endInclusive int64
 		if chunk + 1 < chunkCount {
-			end = start + chunkSize - 1
+			endInclusive = startInclusive + chunkSize - 1
 		} else {
-			end = contentLength - 1
+			endInclusive = contentLength - 1
 		}
-		expectedBytes := (end + 1) - start
-		logger.Detailf("chunk %d of %d: retrieving %d bytes (%d - %d)\n", chunk, chunkCount, expectedBytes, start, end)
-		rangeStr := fmt.Sprintf("bytes=%d-%d", start, end)
-
-		w := aws.NewWriteAtBuffer(make([]byte, expectedBytes))
+		expectedBytes := (endInclusive + 1) - startInclusive
+		logger.Detailf("chunk %d of %d: retrieving %d bytes (%d - %d)\n", chunk, chunkCount, expectedBytes, startInclusive, endInclusive)
 		goInput := s3.GetObjectInput{
 			Bucket: ol.Bucket(),
 			Key: ol.Key(),
-			Range: &rangeStr,
 		}
+
+		rangeStr := fmt.Sprintf("bytes=%d-%d", startInclusive, endInclusive)
+		w := aws.NewWriteAtBuffer(make([]byte, expectedBytes))
+		goInput.Range = &rangeStr
 		bytesDownloaded, err := downloader.Download(w, &goInput)
 		if err != nil {
 			return nil, err
 		}
 		if bytesDownloaded != expectedBytes {
-			logger.Infof("chunk %d of %d: expected %d bytes (%d - %d), got %d\n", chunk, chunkCount, expectedBytes, start, end, bytesDownloaded)
+			logger.Infof("chunk %d of %d: expected %d bytes (%d - %d), got %d\n", chunk, chunkCount, expectedBytes, startInclusive, endInclusive, bytesDownloaded)
 		}
-		h.Write(w.Bytes())
+		result := w.Bytes()
+		h.Write(result)
 	}
 	digest := h.Sum(nil)
 	return digest, nil
 }
 
+// Deprecated: use hashFromRanges
 func (c Check) hashFromTempFile() ([]byte, error) {
 	objLoc := c.ObjLoc
 	logger := c.Logger
