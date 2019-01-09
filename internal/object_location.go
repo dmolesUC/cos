@@ -176,10 +176,10 @@ func (b ObjectLocationBuilder) ensureRegion(logger Logger) ObjectLocationBuilder
 	if b.region == "" {
 		region, err := RegionFromEndpoint(b.endpoint)
 		if err == nil {
-			logger.Detailf("Found AWS region in endpoint URL %v: %v\n", b.endpoint, region)
+			logger.Detailf("Found AWS region in endpoint URL %v: %v\n", b.endpoint, *region)
 			b.region = *region
 		} else {
-			logger.Detailf("No AWS region found in endpoint URL '%v'; using default region %v\n", b.endpoint, DefaultAwsRegion)
+			logger.Detailf("No AWS region found in endpoint URL '%v' (%v); using default region %v\n", b.endpoint, err, DefaultAwsRegion)
 			regionStr := DefaultAwsRegion
 			b.region = regionStr
 		}

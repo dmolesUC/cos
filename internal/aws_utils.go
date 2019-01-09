@@ -16,12 +16,11 @@ import (
 const (
 	DefaultAwsRegion     = "us-west-2"
 	DefaultS3EndpointURL = "https://s3-us-west-2.amazonaws.com"
-	awsRegionRegexpStr = "https?://s3-([^.]+)\\.amazonaws\\.com/"
+	awsRegionRegexpStr = "https?://s3-([^.]+)\\.amazonaws\\.com"
 )
 var awsRegionRegexp = regexp.MustCompile(awsRegionRegexpStr)
 
 func RegionFromEndpoint(endpoint *url.URL) (*string, error) {
-	// TODO: figure out why this isn't working
 	if endpoint == nil {
 		return nil, fmt.Errorf("can't extract region from nil endpoint")
 	}
