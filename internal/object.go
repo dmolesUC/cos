@@ -10,11 +10,17 @@ import (
 // Exported types
 
 // The Object type represents an object in cloud storage.
+// TODO: don't use string pointers just b/c Amazon likes them
 type Object interface {
 	Region() *string
 	Endpoint() *url.URL
 	Bucket() *string
 	Key() *string
+}
+
+func EndpointP(o Object) *string {
+	endpointStr := o.Endpoint().String()
+	return &endpointStr
 }
 
 // An ObjectBuilder builds an Object
@@ -133,7 +139,7 @@ func (b ObjectBuilder) withS3Uri(s3Uri *url.URL, logger Logger) (ObjectBuilder, 
 	}
 	b.bucket = &s3Uri.Host
 	b.key = &s3Uri.Path
-	logger.Detailf("Parsed bucket '%v' and key '%v' from S3 URL '%v'", b.bucket, b.key, s3Uri)
+	logger.Detailf("Parsed bucket '%v' and key '%v' from S3 URL '%v'\n", *b.bucket, *b.key, s3Uri)
 	return b, nil
 }
 
@@ -219,3 +225,4 @@ func (b object) Bucket() *string {
 func (b object) Key() *string {
 	return b.key
 }
+

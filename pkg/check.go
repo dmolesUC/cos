@@ -20,7 +20,7 @@ import (
 // Check represents a fixity check operation
 type Check struct {
 	Logger    internal.Logger
-	ObjLoc    internal.ObjectLocation
+	Obj       internal.Object
 	Expected  []byte
 	Algorithm string
 	Region    string
@@ -29,30 +29,35 @@ type Check struct {
 // GetDigest gets the digest, returning an error if the object cannot be retrieved or,
 // when an expected digest is provided, if the calculated digest does not match.
 func (c Check) GetDigest() ([]byte, error) {
-	c.Logger.Detail("Initializing session")
-	sess, err := internal.InitSession(c.endpointP(), c.regionStrP(), c.Logger.Verbose())
+	logger := c.Logger
+	object := c.Obj
+	endpoint := internal.EndpointP(c.Obj)
+
+	logger.Detail("Initializing session")
+	sess, err := internal.InitSession(endpoint, object.Region(), logger.Verbose())
 	if err != nil {
 		return nil, err
 	}
 
 	// TODO: don't write to tempfile
-	outfile, err := ioutil.TempFile("", c.objFilename())
+	filename := path.Base(*object.Key())
+	outfile, err := ioutil.TempFile("", filename)
 	if err != nil {
 		return nil, err
 	}
 	defer func() {
 		err := os.Remove(outfile.Name())
 		if err != nil {
-			c.Logger.Info(err)
+			logger.Info(err)
 		}
 	}()
-	c.Logger.Detailf("Downloading to tempfile: %v\n", outfile.Name())
+	logger.Detailf("Downloading to tempfile: %v\n", outfile.Name())
 	downloader := s3manager.NewDownloader(sess)
 	bytesDownloaded, err := downloader.Download(outfile, &s3.GetObjectInput{
-		Bucket: c.bucketP(),
-		Key:    c.keyP(),
+		Bucket: object.Bucket(),
+		Key:    object.Key(),
 	})
-	c.Logger.Detailf("Downloaded %d bytes\n", bytesDownloaded)
+	logger.Detailf("Downloaded %d bytes\n", bytesDownloaded)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +72,7 @@ func (c Check) GetDigest() ([]byte, error) {
 	}
 	h := c.newHash()
 	bytesHashed, err := io.Copy(h, infile)
-	c.Logger.Detailf("Hashed %d bytes\n", bytesHashed)
+	logger.Detailf("Hashed %d bytes\n", bytesHashed)
 	if err != nil {
 		return nil, err
 	}
@@ -89,35 +94,5 @@ func (c Check) newHash() hash.Hash {
 	return md5.New()
 }
 
-func (c Check) regionStrP() *string {
-	if c.Region != "" {
-		c.Logger.Detailf("Using specified AWS region: %v\n", c.Region)
-		return &c.Region
-	}
-	endpoint := c.endpointStr()
-	regionStr := internal.ExtractRegion(endpoint, c.Logger)
-	return &regionStr
-}
 
-func (c Check) endpointStr() string {
-	return c.ObjLoc.Endpoint.String()
-}
 
-func (c Check) endpointP() *string {
-	endpointStr := c.endpointStr()
-	return &endpointStr
-}
-
-func (c Check) objFilename() string {
-	return path.Base(c.ObjLoc.Key())
-}
-
-func (c Check) bucketP() *string {
-	bucket := c.ObjLoc.Bucket()
-	return &bucket
-}
-
-func (c Check) keyP() *string {
-	key := c.ObjLoc.Key()
-	return &key
-}
