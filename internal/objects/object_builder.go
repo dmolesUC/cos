@@ -77,12 +77,12 @@ func (b ObjectBuilder) Build(logger logging.Logger) (Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	builder = builder.ensureRegion(logger)
 	if err = builder.checkRequiredFields(); err != nil {
 		return nil, err
 	}
-	if b.protocol == protocolS3 {
-		if b.region == "" {
+	if builder.protocol == protocolS3 {
+		builder = builder.ensureRegion(logger)
+		if builder.region == "" {
 			return nil, fmt.Errorf("unable to determine region for S3 object")
 		}
 		return &S3Object{
@@ -103,14 +103,18 @@ func (b ObjectBuilder) Build(logger logging.Logger) (Object, error) {
 		return nil, fmt.Errorf("missing environment variable $SWIFT_API_KEY")
 	}
 
+	objName := builder.key
+	if strings.HasPrefix(objName, "/") {
+		objName = objName[1:]
+	}
 	return &SwiftObject{
 		container:  builder.bucket,
-		objectName: builder.key,
+		objectName: objName,
 		logger:     logger,
 		cnxParams: protocols.SwiftConnectionParams{
 			UserName: swiftAPIUser,
 			APIKey:   swiftAPIKey,
-			AuthURL:  b.endpoint,
+			AuthURL:  builder.endpoint,
 		},
 	}, nil
 }

@@ -19,6 +19,16 @@ type SwiftObject struct {
 	swiftConnection *swift.Connection
 }
 
+func (obj *SwiftObject) String() string {
+	return fmt.Sprintf("SwiftObject { container: '%v', objectName: '%v', cnxParams: %v, logger: %v, swiftConnection: %v",
+		obj.container,
+		obj.objectName,
+		obj.cnxParams,
+		obj.logger,
+		obj.swiftConnection,
+	)
+}
+
 // Endpoint returns the Swift authentication URL
 func (obj *SwiftObject) Endpoint() *url.URL {
 	return obj.cnxParams.AuthURL
@@ -97,5 +107,16 @@ func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) err
 // Unexported functions
 
 func (obj *SwiftObject) connection() (*swift.Connection, error) {
-	return nil, fmt.Errorf("connection() not implemented")
+	cnxParams := obj.cnxParams
+	authUrl := cnxParams.AuthURL
+	if authUrl == nil {
+		return nil, fmt.Errorf("authUrl not set in connection parameters: %v", cnxParams)
+	}
+	authUrlStr := authUrl.String()
+	cnx := swift.Connection{
+		UserName: cnxParams.UserName,
+		ApiKey:   cnxParams.APIKey,
+		AuthUrl:  authUrlStr,
+	}
+	return &cnx, nil
 }
