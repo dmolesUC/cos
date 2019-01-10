@@ -2,6 +2,7 @@ package objects
 
 import (
 	"fmt"
+	"io"
 	"net/url"
 
 	"github.com/ncw/swift"
@@ -9,6 +10,8 @@ import (
 	"github.com/dmolesUC3/cos/internal/logging"
 	"github.com/dmolesUC3/cos/internal/protocols"
 )
+
+const defaultRetries = 3
 
 // SwiftObject is an OpenStack Swift implementation of Object
 type SwiftObject struct {
@@ -53,15 +56,20 @@ func (obj *SwiftObject) Key() *string {
 // StreamDown streams the object down in ranged requests of the specified size, passing
 // each byte range retrieved to the specified handler function, in sequence.
 func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) error) (int64, error) {
+	logger := obj.logger
+	totalBytes := int64(0)
+
 	cnx, err := obj.connection()
 	if err != nil {
 		return 0, err
 	}
+	// TODO: try setting range in headers?
 	file, _, err := cnx.ObjectOpen(obj.container, obj.objectName, false, nil)
 	if err != nil {
 		return 0, err
 	}
 	defer func() {
+		logger.Detailf("read %d total bytes", totalBytes)
 		err = file.Close()
 	}()
 
@@ -70,36 +78,51 @@ func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) err
 		return 0, err
 	}
 
-	logger := obj.logger
-	totalBytes := int64(0)
-	rangeCount := (contentLength + rangeSize - 1) / rangeSize
-	for rangeIndex := int64(0); rangeIndex < rangeCount; rangeIndex++ {
-		// byte ranges are 0-indexed and inclusive
-		startInclusive := rangeIndex * rangeSize
-		var endInclusive int64
-		if (rangeIndex + 1) < rangeCount {
-			endInclusive = startInclusive + rangeSize - 1
-		} else {
-			endInclusive = contentLength - 1
-		}
-		expectedBytes := (endInclusive + 1) - startInclusive
-		logger.Detailf("range %d of %d: retrieving %d bytes (%d - %d)\n", rangeIndex, rangeCount, expectedBytes, startInclusive, endInclusive)
-
-		byteRange := make([]byte, expectedBytes)
+	for totalBytes < contentLength {
+		byteRange := make([]byte, rangeSize)
 		actualBytes, err := file.Read(byteRange)
+		logger.Detailf("read %d bytes starting at %d\n", actualBytes, totalBytes)
+
+		eof := err == io.EOF
 		actualBytes64 := int64(actualBytes)
 		totalBytes = totalBytes + actualBytes64
-		if err != nil {
-			return totalBytes, err
-		}
-		if actualBytes64 != expectedBytes {
-			return totalBytes, fmt.Errorf("range %d of %d: expected %d bytes (%d - %d), got %d\n", rangeIndex, rangeCount, expectedBytes, startInclusive, endInclusive, actualBytes)
-		}
 		err = handleBytes(byteRange)
 		if err != nil {
 			return totalBytes, err
 		}
+		if eof {
+			break
+		}
 	}
+
+	//rangeCount := (contentLength + rangeSize - 1) / rangeSize
+	//for rangeIndex := int64(0); rangeIndex < rangeCount; rangeIndex++ {
+	//	// byte ranges are 0-indexed and inclusive
+	//	startInclusive := rangeIndex * rangeSize
+	//	var endInclusive int64
+	//	if (rangeIndex + 1) < rangeCount {
+	//		endInclusive = startInclusive + rangeSize - 1
+	//	} else {
+	//		endInclusive = contentLength - 1
+	//	}
+	//	expectedBytes := (endInclusive + 1) - startInclusive
+	//	logger.Detailf("range %d of %d: retrieving %d bytes (%d - %d)\n", rangeIndex, rangeCount, expectedBytes, startInclusive, endInclusive)
+	//
+	//	byteRange := make([]byte, expectedBytes)
+	//	actualBytes, err := file.Read(byteRange)
+	//	actualBytes64 := int64(actualBytes)
+	//	totalBytes = totalBytes + actualBytes64
+	//	if err != nil {
+	//		return totalBytes, err
+	//	}
+	//	if actualBytes64 != expectedBytes {
+	//		return totalBytes, fmt.Errorf("range %d of %d: expected %d bytes (%d - %d), got %d\n", rangeIndex, rangeCount, expectedBytes, startInclusive, endInclusive, actualBytes)
+	//	}
+	//	err = handleBytes(byteRange)
+	//	if err != nil {
+	//		return totalBytes, err
+	//	}
+	//}
 	return totalBytes, nil
 }
 
@@ -117,6 +140,7 @@ func (obj *SwiftObject) connection() (*swift.Connection, error) {
 		UserName: cnxParams.UserName,
 		ApiKey:   cnxParams.APIKey,
 		AuthUrl:  authUrlStr,
+		Retries:  defaultRetries,
 	}
 	return &cnx, nil
 }
