@@ -51,8 +51,8 @@ cos check https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.sv
 ```
 SWIFT_API_USER=<user> \
 SWIFT_API_KEY=<key> \
-cos check -v
-  -e 'http://cloud.sdsc.edu/auth/v1.0'
+cos check -v \
+  -e 'http://cloud.sdsc.edu/auth/v1.0' \
   'swift://distrib.stage.9001.__c5e/ark:/99999/fk4kw5kc1z|1|producer/6GBZeroFile.txt'
 ```
 
