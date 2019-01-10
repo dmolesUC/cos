@@ -87,13 +87,13 @@ func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) err
 
 		byteRange := make([]byte, expectedBytes)
 		actualBytes, err := file.Read(byteRange)
-		expectedBytes64 := int64(actualBytes)
-		totalBytes = totalBytes + expectedBytes64
+		actualBytes64 := int64(actualBytes)
+		totalBytes = totalBytes + actualBytes64
 		if err != nil {
 			return totalBytes, err
 		}
-		if expectedBytes64 != expectedBytes {
-			logger.Infof("range %d of %d: expected %d bytes (%d - %d), got %d\n", rangeIndex, rangeCount, expectedBytes, startInclusive, endInclusive, actualBytes)
+		if actualBytes64 != expectedBytes {
+			return totalBytes, fmt.Errorf("range %d of %d: expected %d bytes (%d - %d), got %d\n", rangeIndex, rangeCount, expectedBytes, startInclusive, endInclusive, actualBytes)
 		}
 		err = handleBytes(byteRange)
 		if err != nil {
