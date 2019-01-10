@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"regexp"
 
-	. "github.com/dmolesUC3/cos/pkg"
-	. "github.com/dmolesUC3/cos/internal"
+	"github.com/dmolesUC3/cos/internal"
+	"github.com/dmolesUC3/cos/pkg"
 
 	"github.com/spf13/cobra"
 )
@@ -51,7 +51,7 @@ type checkFlags struct {
 	Region    string
 }
 
-func (f checkFlags) logTo(logger Logger) {
+func (f checkFlags) logTo(logger internal.Logger) {
 	logger.Detailf("verbose   : %v\n", f.Verbose)
 	logger.Detailf("algorithm : %v\n", f.Algorithm)
 	logger.Detailf("expected  : %x\n", f.Expected)
@@ -67,29 +67,29 @@ func formatHelp(text string, indent string) string {
 }
 
 func runWith(objURLStr string, f checkFlags) error {
-	var logger = NewLogger(f.Verbose)
+	var logger = internal.NewLogger(f.Verbose)
 	f.logTo(logger)
 	logger.Detailf("object URL: %v\n", objURLStr)
 
 	// TODO: look up default endpoint in S3 config / environment variables?
-	obj, err := NewObjectLocationBuilder().
+	obj, err := internal.NewObjectBuilder().
 		WithEndpointStr(f.Endpoint).
 		WithObjectURLStr(objURLStr).
 		Build(logger)
 	if err != nil {
 		return err
 	}
-	logger.Detailf("ObjectLocation: %v\n", obj)
+	logger.Detailf("Object: %v\n", obj)
 
-	var check = Check{
+	var check = pkg.Check{
 		Logger:    logger,
-		ObjLoc:    obj,
+		Object:    obj,
 		Expected:  f.Expected,
 		Algorithm: f.Algorithm,
 		Region:    f.Region,
 	}
 
-	digest, err := check.GetDigest()
+	digest, err := check.CalcDigest()
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func init() {
 	cmd.Flags().BytesHexVarP(&check.Expected, "expected", "x", nil, "Expected digest value (exit with error if not matched)")
 	cmd.Flags().StringVarP(&check.Algorithm, "algorithm", "a", "sha256", "Algorithm: md5 or sha256")
 	cmd.Flags().StringVarP(&check.Endpoint, "endpoint", "e", "", "S3 endpoint: HTTP(S) URL")
-	cmd.Flags().StringVarP(&check.Endpoint, "region", "r", "", "S3 region (if not in endpoint URL; default \""+DefaultAwsRegion+"\")")
+	cmd.Flags().StringVarP(&check.Endpoint, "region", "r", "", "S3 region (if not in endpoint URL; default \""+internal.DefaultAwsRegion+"\")")
 
 	rootCmd.AddCommand(cmd)
 }

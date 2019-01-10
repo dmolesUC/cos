@@ -10,7 +10,7 @@ import (
 // ------------------------------------------------------------
 // Exported symbols
 
-// Minimalist logger inspired by:
+// The Logger interface represents a minimalist logger, inspired by:
 // - https://dave.cheney.net/2015/11/05/lets-talk-about-logging
 // - https://dave.cheney.net/2017/01/23/the-package-level-logger-anti-pattern
 type Logger interface {
@@ -21,6 +21,7 @@ type Logger interface {
 	Verbose() bool
 }
 
+// NewLogger returns a new logger, either verbose or not, as specified
 func NewLogger(verbose bool) Logger {
 	if verbose {
 		return verboseLogger{ infoLogger {out: os.Stderr} }

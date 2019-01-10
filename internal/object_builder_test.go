@@ -22,7 +22,7 @@ func (s *ObjectSuite) TestBuild(c *C) {
 	expectedBucket := "example.org"
 	expectedEndpoint, _ := url.Parse("https://s3-cn-north-1.amazonaws.com/")
 
-	b := NewObjectLocationBuilder().
+	b := NewObjectBuilder().
 		WithRegion(expectedRegion).
 		WithEndpoint(expectedEndpoint).
 		WithKey(expectedKey).
@@ -42,7 +42,7 @@ func (s *ObjectSuite) TestRegionFromEndpoint(c *C) {
 	expectedBucket := "example.org"
 	expectedEndpoint, _ := url.Parse("https://s3-cn-north-1.amazonaws.com/")
 
-	b := NewObjectLocationBuilder().
+	b := NewObjectBuilder().
 		WithEndpoint(expectedEndpoint).
 		WithKey(expectedKey).
 		WithBucket(expectedBucket)
@@ -57,7 +57,7 @@ func (s *ObjectSuite) TestRegionDefault(c *C) {
 	expectedBucket := "example.org"
 	expectedEndpoint, _ := url.Parse("https://endpoint.example.org/")
 
-	b := NewObjectLocationBuilder().
+	b := NewObjectBuilder().
 		WithEndpoint(expectedEndpoint).
 		WithKey(expectedKey).
 		WithBucket(expectedBucket)
@@ -74,7 +74,7 @@ func (s *ObjectSuite) TestParsingHttpObjectURL(c *C) {
 	expectedBucket := "example.org"
 	expectedEndpoint, _ := url.Parse("https://s3-cn-north-1.amazonaws.com/")
 
-	b := NewObjectLocationBuilder().WithObjectURLStr(inputURLStr)
+	b := NewObjectBuilder().WithObjectURLStr(inputURLStr)
 	o, err := b.Build(s.logger)
 	c.Assert(err, IsNil)
 	c.Assert(*o.Region(), Equals, expectedRegion)
@@ -90,7 +90,7 @@ func (s *ObjectSuite) TestParsingHttpObjectURLEmptyEndpoint(c *C) {
 	expectedBucket := "example.org"
 	expectedEndpoint, _ := url.Parse("https://s3-cn-north-1.amazonaws.com/")
 
-	b := NewObjectLocationBuilder().
+	b := NewObjectBuilder().
 		WithObjectURLStr(inputURLStr).
 		WithEndpointStr("")
 	o, err := b.Build(s.logger)
@@ -108,7 +108,7 @@ func (s *ObjectSuite) TestParsingS3ObjectURL(c *C) {
 	expectedBucket := "example.org"
 	expectedEndpoint, _ := url.Parse("https://s3-cn-north-1.amazonaws.com/")
 
-	b := NewObjectLocationBuilder().
+	b := NewObjectBuilder().
 		WithObjectURLStr(inputURLStr).
 		WithEndpoint(expectedEndpoint)
 
@@ -124,7 +124,7 @@ func (s *ObjectSuite) TestValidationFailureNoEndpoint(c *C) {
 	expectedKey := "/foo/bar/baz.qux"
 	expectedBucket := "example.org"
 
-	b := NewObjectLocationBuilder().
+	b := NewObjectBuilder().
 		WithKey(expectedKey).
 		WithBucket(expectedBucket)
 
@@ -136,7 +136,7 @@ func (s *ObjectSuite) TestValidationFailureNoBucket(c *C) {
 	expectedKey := "/foo/bar/baz.qux"
 	expectedEndpoint, _ := url.Parse("https://s3-cn-north-1.amazonaws.com/")
 
-	b := NewObjectLocationBuilder().
+	b := NewObjectBuilder().
 		WithKey(expectedKey).
 		WithEndpoint(expectedEndpoint)
 
@@ -148,7 +148,7 @@ func (s *ObjectSuite) TestValidationFailureNoKey(c *C) {
 	expectedBucket := "example.org"
 	expectedEndpoint, _ := url.Parse("https://s3-cn-north-1.amazonaws.com/")
 
-	b := NewObjectLocationBuilder().
+	b := NewObjectBuilder().
 		WithBucket(expectedBucket).
 		WithEndpoint(expectedEndpoint)
 
