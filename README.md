@@ -23,7 +23,12 @@ A tool for checking cloud object storage.
 
 S3 keys for Merritt objects are of the form `<ark>|<version>|<pathname>`. 
 
-`cos check 'https://s3-us-west-2.amazonaws.com/uc3-s3mrt5001-stg/ark:/99999/fk46w9nc06|1|producer/1500MBTestObject.blob' -v -x d0487cf92819b6f70a4769419348ab51ed77c519664a6262283e0016b9a6235c`
+```
+cos check -v \
+  's3://uc3-s3mrt5001-stg/ark:/99999/fk46w9nc06|1|producer/1500MBTestObject.blob' \
+  -e 'https://s3-us-west-2.amazonaws.com/' \
+  -x d0487cf92819b6f70a4769419348ab51ed77c519664a6262283e0016b9a6235c
+```
 
 #### Minio example with explicit credentials:
 
