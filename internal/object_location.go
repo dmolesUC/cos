@@ -265,6 +265,25 @@ func (ol *objLoc) DownloadTo(w io.WriterAt) (int64, error) {
 	return downloader.Download(w, ol.toGetObjectInput())
 }
 
+func (ol *objLoc) String() string {
+	var endpointStr string
+	if ol.endpoint == nil {
+		endpointStr = "<nil>"
+	} else {
+		endpointStr = ol.Endpoint().String()
+	}
+	var sessionStr string
+	if ol.awsSession == nil {
+		sessionStr = "<nil>"
+	} else {
+		sessionStr = "(initialized)"
+	}
+	return fmt.Sprintf(
+		"{region: %v, endpoint: %v, bucket: %v, key: %v, logger: %v, awsSession: %v}",
+		ol.region, endpointStr, ol.bucket, ol.key, ol.logger, sessionStr,
+	)
+}
+
 // ------------------------------------------------------------
 // Unexported functions
 

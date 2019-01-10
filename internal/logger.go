@@ -78,6 +78,10 @@ func (l terseLogger) Verbose() bool {
 	return false
 }
 
+func (l terseLogger) String() string {
+	return "terse"
+}
+
 // ------------------------------
 // verboseLogger
 
@@ -99,4 +103,8 @@ func (l verboseLogger) Detailf(format string, a ...interface{}) {
 // Logger.Verbose() implementation
 func (l verboseLogger) Verbose() bool {
 	return true
+}
+
+func (l verboseLogger) String() string {
+	return "verbose"
 }
