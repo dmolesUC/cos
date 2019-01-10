@@ -1,4 +1,4 @@
-package internal
+package objects
 
 import (
 	"fmt"
@@ -8,6 +8,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+
+	"github.com/dmolesUC3/cos/internal/logging"
+	"github.com/dmolesUC3/cos/internal/protocols"
 )
 
 // S3Object is an S3 implementation of Object
@@ -16,7 +19,7 @@ type S3Object struct {
 	endpoint   *url.URL
 	bucket     string
 	key        string
-	logger     Logger
+	logger     logging.Logger
 	awsSession *session.Session
 	goOutput   *s3.GetObjectOutput
 }
@@ -78,21 +81,6 @@ func (obj *S3Object) ContentLength() (int64, error) {
 		return 0, err
 	}
 	return *goOutput.ContentLength, nil
-}
-
-// CalcDigest calculates the digest of the object using the specified algorithm
-// (md5 or sha256), using ranged downloads of the specified size.
-func (obj *S3Object) CalcDigest(downloadRangeSize int64, algorithm string) ([] byte, error) {
-	hash := NewHash(algorithm)
-	_, err := obj.StreamDown(downloadRangeSize, func(bytes []byte) error {
-		_, err := hash.Write(bytes)
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-	digest := hash.Sum(nil)
-	return digest, nil
 }
 
 // SupportsRanges returns true if the object supports ranged downloads,
@@ -181,8 +169,9 @@ func (obj *S3Object) session() (*session.Session, error) {
 	if obj.awsSession == nil {
 		endpointStr := obj.endpoint.String()
 		verboseLogging := obj.logger.Verbose()
-		obj.awsSession, err = InitS3Session(&endpointStr, obj.Region(), verboseLogging)
-		isEC2, err := IsEC2()
+		// TODO: move this all back to s3_utils
+		obj.awsSession, err = protocols.InitS3Session(&endpointStr, obj.Region(), verboseLogging)
+		isEC2, err := protocols.IsEC2()
 		if err != nil {
 			obj.logger.Detailf("Rrror trying to determine whether we're running in EC2 (assume we're not): %v", err)
 			isEC2 = false
@@ -192,7 +181,7 @@ func (obj *S3Object) session() (*session.Session, error) {
 		} else {
 			// TODO: https://github.com/aws/aws-sdk-go/issues/2392
 			obj.logger.Detailf("Not running in EC2; disallowing IAM role credentials\n")
-			return validateCredentials(obj.awsSession)
+			return protocols.ValidateCredentials(obj.awsSession)
 		}
 	}
 	return obj.awsSession, err

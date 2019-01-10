@@ -1,7 +1,6 @@
-package internal
+package protocols
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
 	"os/exec"
@@ -73,22 +72,9 @@ func InitS3Session(endpointP *string, regionStrP *string, credentialsChainVerbos
 	return awsSession, nil
 }
 
-// ValidAbsURL parses the specified URL string, returning an error if the
-// URL cannot be parsed, or is not absolute (i.e., does not have a scheme)
-func ValidAbsURL(urlStr string) (*url.URL, error) {
-	u, err := url.Parse(urlStr)
-	if err != nil {
-		return u, err
-	}
-	if !u.IsAbs() {
-		msg := fmt.Sprintf("URL '%v' must have a scheme", urlStr)
-		return nil, errors.New(msg)
-	}
-	return u, nil
-}
-
+// ValidateCredentials uses reflection to check whether we're falling back to IAM credentials
 // TODO: https://github.com/aws/aws-sdk-go/issues/2392
-func validateCredentials(awsSession *session.Session) (*session.Session, error) {
+func ValidateCredentials(awsSession *session.Session) (*session.Session, error) {
 	providerVal := reflect.ValueOf(*awsSession.Config.Credentials).FieldByName("provider").Elem()
 	if providerVal.Type() == reflect.TypeOf((*credentials.ChainProvider)(nil)) {
 		chainProvider := (*credentials.ChainProvider)(unsafe.Pointer(providerVal.Pointer()))

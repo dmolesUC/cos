@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/dmolesUC3/cos/internal"
+	"github.com/dmolesUC3/cos/internal/logging"
+	"github.com/dmolesUC3/cos/internal/objects"
+	"github.com/dmolesUC3/cos/internal/protocols"
 	"github.com/dmolesUC3/cos/pkg"
 
 	"github.com/spf13/cobra"
@@ -66,11 +68,11 @@ func formatHelp(text string, indent string) string {
 }
 
 func runWith(objURLStr string, flags checkFlags) error {
-	var logger = internal.NewLogger(flags.Verbose)
+	var logger = logging.NewLogger(flags.Verbose)
 	logger.Detailf("flags: %v\n", flags)
 	logger.Detailf("object URL: %v\n", objURLStr)
 
-	obj, err := internal.NewObjectBuilder().
+	obj, err := objects.NewObjectBuilder().
 		WithObjectURLStr(objURLStr).
 		WithEndpointStr(flags.Endpoint).
 		WithRegion(flags.Region).
@@ -115,7 +117,7 @@ func init() {
 	cmd.Flags().BytesHexVarP(&flags.Expected, "expected", "x", nil, "Expected digest value (exit with error if not matched)")
 	cmd.Flags().StringVarP(&flags.Algorithm, "algorithm", "a", "sha256", "Algorithm: md5 or sha256")
 	cmd.Flags().StringVarP(&flags.Endpoint, "endpoint", "e", "", "S3 endpoint: HTTP(S) URL")
-	cmd.Flags().StringVarP(&flags.Endpoint, "region", "r", "", "S3 region (if not in endpoint URL; default \""+internal.DefaultAwsRegion+"\")")
+	cmd.Flags().StringVarP(&flags.Endpoint, "region", "r", "", "S3 region (if not in endpoint URL; default \""+protocols.DefaultAwsRegion+"\")")
 
 	rootCmd.AddCommand(cmd)
 }

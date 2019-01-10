@@ -1,16 +1,22 @@
-package internal
+package objects
 
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"strings"
 
-	"github.com/dmolesUC3/cos/pkg"
+	"github.com/dmolesUC3/cos/internal/logging"
+	"github.com/dmolesUC3/cos/internal/protocols"
 )
+
+const protocolSwift = "swift"
+const protocolS3 = "s3"
 
 // An ObjectBuilder builds an Object
 type ObjectBuilder struct {
 	region      string
+	protocol    string
 	endpoint    *url.URL
 	bucket      string
 	key         string
@@ -62,7 +68,7 @@ func (b ObjectBuilder) WithObjectURLStr(objURLStr string) ObjectBuilder {
 }
 
 // Build builds a new Object from the state of this ObjectBuilder
-func (b ObjectBuilder) Build(logger Logger) (pkg.Object, error) {
+func (b ObjectBuilder) Build(logger logging.Logger) (Object, error) {
 	builder, err := b.parsingObjURLStr(logger)
 	if err != nil {
 		return nil, err
@@ -72,22 +78,47 @@ func (b ObjectBuilder) Build(logger Logger) (pkg.Object, error) {
 		return nil, err
 	}
 	builder = builder.ensureRegion(logger)
-	if err = builder.validate(); err != nil {
+	if err = builder.checkRequiredFields(); err != nil {
 		return nil, err
 	}
-	return &S3Object{
-		region:   builder.region,
-		endpoint: builder.endpoint,
-		bucket:   builder.bucket,
-		key:      builder.key,
-		logger:   logger,
+	if b.protocol == protocolS3 {
+		if b.region == "" {
+			return nil, fmt.Errorf("unable to determine region for S3 object")
+		}
+		return &S3Object{
+			region:   builder.region,
+			endpoint: builder.endpoint,
+			bucket:   builder.bucket,
+			key:      builder.key,
+			logger:   logger,
+		}, nil
+	}
+
+	swiftAPIUser := os.Getenv("SWIFT_API_USER")
+	if swiftAPIUser == "" {
+		return nil, fmt.Errorf("missing environment variable $SWIFT_API_USER")
+	}
+	swiftAPIKey := os.Getenv("SWIFT_API_KEY")
+	if swiftAPIKey == "" {
+		return nil, fmt.Errorf("missing environment variable $SWIFT_API_KEY")
+	}
+
+	return &SwiftObject{
+		container:  builder.bucket,
+		objectName: builder.key,
+		logger:     logger,
+		cnxParams: protocols.SwiftConnectionParams{
+			UserName: swiftAPIUser,
+			APIKey:   swiftAPIKey,
+			AuthURL:  b.endpoint,
+		},
 	}, nil
 }
 
-func (b ObjectBuilder) validate() error {
+func (b ObjectBuilder) checkRequiredFields() error {
 	var missing []string
-	if b.region == "" {
-		missing = append(missing, "region")
+	if b.protocol == "" {
+		missing = append(missing, "protocol")
 	}
 	if b.endpoint == nil {
 		missing = append(missing, "endpoint")
@@ -104,17 +135,15 @@ func (b ObjectBuilder) validate() error {
 	return fmt.Errorf("missing fields: %v", strings.Join(missing, ", "))
 }
 
-func (b ObjectBuilder) withS3Uri(s3Uri *url.URL, logger Logger) (ObjectBuilder, error) {
-	if s3Uri.Scheme != "s3" {
-		return b, fmt.Errorf("not an S3 URL: %v", s3Uri)
-	}
-	b.bucket = s3Uri.Host
-	b.key = s3Uri.Path
-	logger.Detailf("Parsed bucket '%v' and key '%v' from S3 URL '%v'\n", b.bucket, b.key, s3Uri)
-	return b, nil
+func (b ObjectBuilder) withProtocolURI(protocolURI *url.URL, logger logging.Logger) (ObjectBuilder) {
+	b.protocol = protocolURI.Scheme
+	b.bucket = protocolURI.Host
+	b.key = protocolURI.Path
+	logger.Detailf("Parsed protocol '%v', bucket '%v' and key '%v' from URL '%v'\n", b.protocol, b.bucket, b.key, protocolURI)
+	return b
 }
 
-func (b ObjectBuilder) parsingObjURLStr(logger Logger) (ObjectBuilder, error) {
+func (b ObjectBuilder) parsingObjURLStr(logger logging.Logger) (ObjectBuilder, error) {
 	if b.objURLStr == "" {
 		return b, nil
 	}
@@ -123,8 +152,12 @@ func (b ObjectBuilder) parsingObjURLStr(logger Logger) (ObjectBuilder, error) {
 		return b, err
 	}
 
-	var s3Uri *url.URL
 	scheme := objURL.Scheme
+	if scheme == protocolSwift || scheme == protocolS3 {
+		return b.withProtocolURI(objURL, logger), nil
+	}
+
+	var s3Uri *url.URL
 	if scheme == "http" || scheme == "https" {
 		endpointStr := fmt.Sprintf("%v://%v/", scheme, objURL.Host)
 		logger.Detailf("Extracted endpoint URL '%v' from object URL '%v'", endpointStr, objURL)
@@ -137,12 +170,9 @@ func (b ObjectBuilder) parsingObjURLStr(logger Logger) (ObjectBuilder, error) {
 		if err != nil {
 			return b, err
 		}
-	} else if scheme == "s3" {
-		s3Uri = objURL
-	} else {
-		return b, fmt.Errorf("object URL '%v' is not of form s3://<bucket>/<key> or http(s)://<endpoint>/<bucket>/<key>", objURL)
+		return b.withProtocolURI(s3Uri, logger), nil
 	}
-	return b.withS3Uri(s3Uri, logger)
+	return b, fmt.Errorf("object URL '%v' is not of form s3://<bucket>/<key>, swift://<container>//<name>, or http(s)://<S3 endpoint>/<bucket>/<key>", objURL)
 }
 
 func (b ObjectBuilder) parsingEndpointStr() (ObjectBuilder, error) {
@@ -154,15 +184,16 @@ func (b ObjectBuilder) parsingEndpointStr() (ObjectBuilder, error) {
 	return b, err
 }
 
-func (b ObjectBuilder) ensureRegion(logger Logger) ObjectBuilder {
+func (b ObjectBuilder) ensureRegion(logger logging.Logger) ObjectBuilder {
+	// TODO: can some of this move into s3_utils?
 	if b.region == "" {
-		region, err := RegionFromEndpoint(b.endpoint)
+		region, err := protocols.RegionFromEndpoint(b.endpoint)
 		if err == nil {
 			logger.Detailf("Found AWS region in endpoint URL %v: %v\n", b.endpoint, *region)
 			b.region = *region
 		} else {
-			logger.Detailf("No AWS region found in endpoint URL '%v' (%v); using default region %v\n", b.endpoint, err, DefaultAwsRegion)
-			regionStr := DefaultAwsRegion
+			logger.Detailf("No AWS region found in endpoint URL '%v' (%v); using default region %v\n", b.endpoint, err, protocols.DefaultAwsRegion)
+			regionStr := protocols.DefaultAwsRegion
 			b.region = regionStr
 		}
 	} else {
