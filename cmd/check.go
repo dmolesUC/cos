@@ -51,12 +51,11 @@ type checkFlags struct {
 	Region    string
 }
 
-func (f checkFlags) logTo(logger internal.Logger) {
-	logger.Detailf("verbose   : %v\n", f.Verbose)
-	logger.Detailf("algorithm : %v\n", f.Algorithm)
-	logger.Detailf("expected  : %x\n", f.Expected)
-	logger.Detailf("endpoint  : %v\n", f.Endpoint)
-	logger.Detailf("region    : %v\n", f.Region)
+func (f checkFlags) String() string {
+	return fmt.Sprintf(
+		"checkFlags{ verbose: %v, expected: %x, algorithm: '%v', endpoint: '%v', region: '%v'}",
+		f.Verbose, f.Expected, f.Algorithm, f.Endpoint, f.Region,
+	)
 }
 
 // ------------------------------------------------------------
@@ -66,29 +65,26 @@ func formatHelp(text string, indent string) string {
 	return regexp.MustCompile(`(?m)^[\t ]+`).ReplaceAllString(text, indent)
 }
 
-func runWith(objURLStr string, f checkFlags) error {
-	var logger = internal.NewLogger(f.Verbose)
-	f.logTo(logger)
+func runWith(objURLStr string, flags checkFlags) error {
+	var logger = internal.NewLogger(flags.Verbose)
+	logger.Detailf("flags: %v\n", flags)
 	logger.Detailf("object URL: %v\n", objURLStr)
 
-	// TODO: look up default endpoint in S3 config / environment variables?
 	obj, err := internal.NewObjectBuilder().
-		WithEndpointStr(f.Endpoint).
 		WithObjectURLStr(objURLStr).
+		WithEndpointStr(flags.Endpoint).
+		WithRegion(flags.Region).
 		Build(logger)
 	if err != nil {
 		return err
 	}
-	logger.Detailf("Object: %v\n", obj)
+	logger.Detailf("object: %v\n", obj)
 
 	var check = pkg.Check{
-		Logger:    logger,
 		Object:    obj,
-		Expected:  f.Expected,
-		Algorithm: f.Algorithm,
-		Region:    f.Region,
+		Expected:  flags.Expected,
+		Algorithm: flags.Algorithm,
 	}
-
 	digest, err := check.CalcDigest()
 	if err != nil {
 		return err
@@ -101,7 +97,7 @@ func runWith(objURLStr string, f checkFlags) error {
 // Command initialization
 
 func init() {
-	check := checkFlags{}
+	flags := checkFlags{}
 
 	cmd := &cobra.Command{
 		Use:           usage,
@@ -112,14 +108,14 @@ func init() {
 		SilenceErrors: true,
 		Example:       formatHelp(example, "  "),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runWith(args[0], check)
+			return runWith(args[0], flags)
 		},
 	}
-	cmd.Flags().BoolVarP(&check.Verbose, "verbose", "v", false, "Verbose output")
-	cmd.Flags().BytesHexVarP(&check.Expected, "expected", "x", nil, "Expected digest value (exit with error if not matched)")
-	cmd.Flags().StringVarP(&check.Algorithm, "algorithm", "a", "sha256", "Algorithm: md5 or sha256")
-	cmd.Flags().StringVarP(&check.Endpoint, "endpoint", "e", "", "S3 endpoint: HTTP(S) URL")
-	cmd.Flags().StringVarP(&check.Endpoint, "region", "r", "", "S3 region (if not in endpoint URL; default \""+internal.DefaultAwsRegion+"\")")
+	cmd.Flags().BoolVarP(&flags.Verbose, "verbose", "v", false, "Verbose output")
+	cmd.Flags().BytesHexVarP(&flags.Expected, "expected", "x", nil, "Expected digest value (exit with error if not matched)")
+	cmd.Flags().StringVarP(&flags.Algorithm, "algorithm", "a", "sha256", "Algorithm: md5 or sha256")
+	cmd.Flags().StringVarP(&flags.Endpoint, "endpoint", "e", "", "S3 endpoint: HTTP(S) URL")
+	cmd.Flags().StringVarP(&flags.Endpoint, "region", "r", "", "S3 region (if not in endpoint URL; default \""+internal.DefaultAwsRegion+"\")")
 
 	rootCmd.AddCommand(cmd)
 }

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+
+	"github.com/dmolesUC3/cos/pkg"
 )
 
 // An ObjectBuilder builds an Object
@@ -60,7 +62,7 @@ func (b ObjectBuilder) WithObjectURLStr(objURLStr string) ObjectBuilder {
 }
 
 // Build builds a new Object from the state of this ObjectBuilder
-func (b ObjectBuilder) Build(logger Logger) (Object, error) {
+func (b ObjectBuilder) Build(logger Logger) (pkg.Object, error) {
 	builder, err := b.parsingObjURLStr(logger)
 	if err != nil {
 		return nil, err
@@ -168,4 +170,3 @@ func (b ObjectBuilder) ensureRegion(logger Logger) ObjectBuilder {
 	}
 	return b
 }
-
