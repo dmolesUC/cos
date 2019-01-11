@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"time"
 
 	"github.com/ncw/swift"
 
@@ -56,6 +57,8 @@ func (obj *SwiftObject) Key() *string {
 // StreamDown streams the object down in ranged requests of the specified size, passing
 // each byte range retrieved to the specified handler function, in sequence.
 func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) error) (int64, error) {
+	nsStart := time.Now().UnixNano()
+
 	logger := obj.logger
 	totalBytes := int64(0)
 
@@ -63,7 +66,7 @@ func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) err
 	if err != nil {
 		return 0, err
 	}
-	// TODO: try setting range in headers?
+
 	file, _, err := cnx.ObjectOpen(obj.container, obj.objectName, false, nil)
 	if err != nil {
 		return 0, err
@@ -78,14 +81,24 @@ func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) err
 		return 0, err
 	}
 
+	nsLastUpdate := int64(0)
 	for totalBytes < contentLength {
 		byteRange := make([]byte, rangeSize)
 		actualBytes, err := file.Read(byteRange)
-		logger.Detailf("read %d bytes starting at %d\n", actualBytes, totalBytes)
-
 		eof := err == io.EOF
-		actualBytes64 := int64(actualBytes)
-		totalBytes = totalBytes + actualBytes64
+		totalBytes = totalBytes + int64(actualBytes)
+
+		nsNow := time.Now().UnixNano()
+		nsSinceLastUpdate := nsNow - nsLastUpdate
+		if nsSinceLastUpdate > int64(time.Second) || eof {
+			nsLastUpdate = nsNow
+			nsElapsed := nsNow - nsStart
+			sElapsed := nsElapsed / int64(time.Second)
+			bps := float64(totalBytes) / float64(sElapsed)
+			sRemaining := float64(contentLength - totalBytes) / bps
+			logger.Detailf("read %d of %d bytes (%ds elapsed, %.0fs remaining\n", totalBytes, actualBytes, nsElapsed, sRemaining)
+		}
+
 		err = handleBytes(byteRange)
 		if err != nil {
 			return totalBytes, err
