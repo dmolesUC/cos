@@ -81,7 +81,7 @@ func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) err
 		return 0, err
 	}
 
-	nsLastUpdate := int64(time.Second) // skip first update
+	nsLastUpdate := nsStart
 	for totalBytes < contentLength {
 		byteRange := make([]byte, rangeSize)
 		actualBytes, err := file.Read(byteRange)
@@ -90,12 +90,13 @@ func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) err
 
 		nsNow := time.Now().UnixNano()
 		nsSinceLastUpdate := nsNow - nsLastUpdate
-		if nsSinceLastUpdate > int64(time.Second) || eof {
+		if (nsSinceLastUpdate > int64(time.Second)) || eof {
 			nsLastUpdate = nsNow
 			nsElapsed := nsNow - nsStart
 			nsPerByte := float64(nsElapsed) / float64(totalBytes)
+			estKps := float64(time.Second) / (float64(1024) * nsPerByte)
 			nsRemaining := int64(float64(contentLength - totalBytes) * nsPerByte)
-			logProgress(logger, totalBytes, actualBytes, nsElapsed, nsRemaining)
+			logProgress(logger, totalBytes, actualBytes, estKps, nsElapsed, nsRemaining)
 		}
 
 		err = handleBytes(byteRange)
@@ -109,10 +110,13 @@ func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) err
 	return totalBytes, nil
 }
 
-func logProgress(logger logging.Logger, totalBytes int64, actualBytes int, nsElapsed int64, nsRemaining int64) {
+func logProgress(logger logging.Logger, totalBytes int64, actualBytes int, estKps float64, nsElapsed int64, nsRemaining int64) {
 	elapsedStr := formatNanos(nsElapsed)
 	remainingStr := formatNanos(nsRemaining)
-	logger.Detailf("read %d of %d bytes (%v elapsed, %v remaining)\n", totalBytes, actualBytes, elapsedStr, remainingStr)
+	logger.Detailf(
+		"read %d of %d bytes (%0.f KiB/s; %v elapsed, %v remaining)\n",
+		totalBytes, actualBytes, estKps, elapsedStr, remainingStr,
+	)
 }
 
 func formatNanos(ns int64) string {
