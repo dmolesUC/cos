@@ -112,22 +112,25 @@ func (obj *S3Object) SupportsRanges() bool {
 // each byte range retrieved to the specified handler function, in sequence.
 func (obj *S3Object) StreamDown(rangeSize int64, handleBytes func([]byte) error) (int64, error) {
 	// TODO: parallel downloads, serial handling? cf. https://coderwall.com/p/uz2noa/fast-parallel-downloads-in-golang-with-accept-ranges-and-goroutines
-	if !obj.SupportsRanges() {
-		return 0, fmt.Errorf("object %v does not support ranged downloads", obj)
-	}
+
 	logger := obj.logger
 
 	awsSession, err := obj.session()
 	if err != nil {
 		return 0, err
 	}
-	downloader := s3manager.NewDownloader(awsSession)
 
+	// this will 404 if the object doesn't exist
 	contentLength, err := obj.ContentLength()
 	if err != nil {
 		return 0, err
 	}
 
+	if !obj.SupportsRanges() {
+		obj.logger.Detailf("object %v may not support ranged downloads; trying anyway\n", obj)
+	}
+
+	downloader := s3manager.NewDownloader(awsSession)
 	nsStart := time.Now().UnixNano()
 	nsLastUpdate := nsStart
 	totalBytes := int64(0)
