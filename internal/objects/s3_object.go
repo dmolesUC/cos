@@ -161,7 +161,7 @@ func (obj *S3Object) StreamDown(rangeSize int64, handleBytes func([]byte) error)
 		nsNow := time.Now().UnixNano()
 		nsSinceLastUpdate := nsNow - nsLastUpdate
 		verbose := logger.Verbose()
-		if verbose && (nsSinceLastUpdate > int64(time.Second)) || eof {
+		if verbose && (nsSinceLastUpdate > int64(time.Second)) || (rangeIndex + 1 >= rangeCount) || eof {
 			nsLastUpdate = nsNow
 			nsElapsed := nsNow - nsStart
 			nsPerByte := float64(nsElapsed) / float64(totalBytes)
