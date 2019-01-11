@@ -100,7 +100,7 @@ func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) err
 			logging.DetailProgress(logger, totalBytes, contentLength, estKps, nsElapsed, nsRemaining)
 		}
 
-		err = handleBytes(byteRange)
+		err = handleBytes(byteRange[0:actualBytes])
 		if err != nil {
 			return totalBytes, err
 		}

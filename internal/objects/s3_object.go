@@ -170,7 +170,7 @@ func (obj *S3Object) StreamDown(rangeSize int64, handleBytes func([]byte) error)
 			return totalBytes, fmt.Errorf("range %d of %d: expected %d bytes (%d - %d), got %d\n", rangeIndex, rangeCount, expectedBytes, startInclusive, endInclusive, actualBytes)
 		}
 		byteRange := target.Bytes()
-		err = handleBytes(byteRange)
+		err = handleBytes(byteRange[0:actualBytes])
 		if err != nil {
 			return totalBytes, err
 		}
