@@ -110,12 +110,12 @@ func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) err
 	return totalBytes, nil
 }
 
-func logProgress(logger logging.Logger, totalBytes int64, actualBytes int, estKps float64, nsElapsed int64, nsRemaining int64) {
+func logProgress(logger logging.Logger, totalBytes int64, contentLength int, estKps float64, nsElapsed int64, nsRemaining int64) {
 	elapsedStr := formatNanos(nsElapsed)
 	remainingStr := formatNanos(nsRemaining)
 	logger.Detailf(
 		"read %d of %d bytes (%0.f KiB/s; %v elapsed, %v remaining)\n",
-		totalBytes, actualBytes, estKps, elapsedStr, remainingStr,
+		totalBytes, contentLength, estKps, elapsedStr, remainingStr,
 	)
 }
 
