@@ -2,19 +2,6 @@
 
 A tool for checking cloud object storage.
 
-## Roadmap
-
-- ✅ fixity checking: expected vs. actual
-- 🔲 streaming download performance
-  - throughput
-  - time download to nowhere 
-  - time download to file
-  - include fixity check
-- 🔲 reliability
-  - same file
-  - different files
-  - retries
-
 ## Running
 
 ### Fixity checking with `cos check`
@@ -28,6 +15,13 @@ cos check -v \
   's3://uc3-s3mrt5001-stg/ark:/99999/fk46w9nc06|1|producer/1500MBTestObject.blob' \
   -e 'https://s3-us-west-2.amazonaws.com/' \
   -x d0487cf92819b6f70a4769419348ab51ed77c519664a6262283e0016b9a6235c
+```
+
+```
+cos check -v \
+  's3://uc3-s3mrt5001-prd/ark:/13030/qt30c9r5qj|1|producer/content/supp/FreeSolv_paper.tar.gz' \
+  -e 'https://s3-us-west-2.amazonaws.com/' \
+  -x c0916ef45d917578e4dcdc3045d9340738d0e750c0ab9f6a8e866aa28da677df
 ```
 
 #### Minio example with explicit credentials:
@@ -78,9 +72,23 @@ To cross-compile for Linux (Intel, 64-bit):
 GOOS=linux GOARCH=amd64 go build -o <output file>
 ```
 
-### Configuring JetBrains GoLand IDE
+### Configuring JetBrains IDEs (GoLand or IDEA)
 
-In **Preferences > Go > Go Modules (vgo)**, check “Enable Go Modules (vgo)
-integration“. The “Vgo Executable” field should default to “Project SDK”
-(1.11.x).
+In **Preferences > Go > Go Modules (vgo)** (GoLand) or **Preferences >
+Languages & Frameworks Go > Go Modules (vgo)** (IDEA + Go plugin) , check
+“Enable Go Modules (vgo) integration“. The “Vgo Executable” field should
+default to “Project SDK” (1.11.x).
 
+## Roadmap
+
+- ✅ fixity checking: expected vs. actual
+- 🔲 streaming download performance
+  - throughput
+  - time download to nowhere 
+  - time download to file
+  - include fixity check
+- 🔲 reliability
+  - same file
+  - different files
+  - retries
+>
