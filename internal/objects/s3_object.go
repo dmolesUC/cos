@@ -2,7 +2,9 @@ package objects
 
 import (
 	"fmt"
+	"io"
 	"net/url"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -122,6 +124,8 @@ func (obj *S3Object) StreamDown(rangeSize int64, handleBytes func([]byte) error)
 		return 0, err
 	}
 
+	nsStart := time.Now().UnixNano()
+	nsLastUpdate := nsStart
 	totalBytes := int64(0)
 	rangeCount := (contentLength + rangeSize - 1) / rangeSize
 	for rangeIndex := int64(0); rangeIndex < rangeCount; rangeIndex++ {
@@ -136,7 +140,6 @@ func (obj *S3Object) StreamDown(rangeSize int64, handleBytes func([]byte) error)
 		rangeStr := fmt.Sprintf("bytes=%d-%d", startInclusive, endInclusive)
 
 		expectedBytes := (endInclusive + 1) - startInclusive
-		logger.Detailf("range %d of %d: retrieving %d bytes (%d - %d)\n", rangeIndex, rangeCount, expectedBytes, startInclusive, endInclusive)
 		goInput := s3.GetObjectInput{
 			Bucket: obj.Bucket(),
 			Key: obj.Key(),
@@ -145,7 +148,21 @@ func (obj *S3Object) StreamDown(rangeSize int64, handleBytes func([]byte) error)
 
 		target := aws.NewWriteAtBuffer(make([]byte, expectedBytes))
 		actualBytes, err := downloader.Download(target, &goInput)
+		eof := err == io.EOF
 		totalBytes = totalBytes + actualBytes
+
+		nsNow := time.Now().UnixNano()
+		nsSinceLastUpdate := nsNow - nsLastUpdate
+		verbose := logger.Verbose()
+		if verbose && (nsSinceLastUpdate > int64(time.Second)) || eof {
+			nsLastUpdate = nsNow
+			nsElapsed := nsNow - nsStart
+			nsPerByte := float64(nsElapsed) / float64(totalBytes)
+			estKps := float64(time.Second) / (float64(1024) * nsPerByte)
+			nsRemaining := int64(float64(contentLength-totalBytes) * nsPerByte)
+			logging.DetailProgress(logger, totalBytes, contentLength, estKps, nsElapsed, nsRemaining)
+		}
+
 		if err != nil {
 			return totalBytes, err
 		}
@@ -156,6 +173,9 @@ func (obj *S3Object) StreamDown(rangeSize int64, handleBytes func([]byte) error)
 		err = handleBytes(byteRange)
 		if err != nil {
 			return totalBytes, err
+		}
+		if eof {
+			break
 		}
 	}
 	return totalBytes, nil

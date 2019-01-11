@@ -57,7 +57,6 @@ func (obj *SwiftObject) Key() *string {
 // StreamDown streams the object down in ranged requests of the specified size, passing
 // each byte range retrieved to the specified handler function, in sequence.
 func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) error) (int64, error) {
-	nsStart := time.Now().UnixNano()
 
 	logger := obj.logger
 	totalBytes := int64(0)
@@ -81,6 +80,7 @@ func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) err
 		return 0, err
 	}
 
+	nsStart := time.Now().UnixNano()
 	nsLastUpdate := nsStart
 	for totalBytes < contentLength {
 		byteRange := make([]byte, rangeSize)
@@ -90,13 +90,14 @@ func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) err
 
 		nsNow := time.Now().UnixNano()
 		nsSinceLastUpdate := nsNow - nsLastUpdate
-		if (nsSinceLastUpdate > int64(time.Second)) || eof {
+		verbose := logger.Verbose()
+		if verbose && (nsSinceLastUpdate > int64(time.Second)) || eof {
 			nsLastUpdate = nsNow
 			nsElapsed := nsNow - nsStart
 			nsPerByte := float64(nsElapsed) / float64(totalBytes)
 			estKps := float64(time.Second) / (float64(1024) * nsPerByte)
-			nsRemaining := int64(float64(contentLength - totalBytes) * nsPerByte)
-			logProgress(logger, totalBytes, actualBytes, estKps, nsElapsed, nsRemaining)
+			nsRemaining := int64(float64(contentLength-totalBytes) * nsPerByte)
+			logging.DetailProgress(logger, totalBytes, contentLength, estKps, nsElapsed, nsRemaining)
 		}
 
 		err = handleBytes(byteRange)
@@ -108,30 +109,6 @@ func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) err
 		}
 	}
 	return totalBytes, nil
-}
-
-func logProgress(logger logging.Logger, totalBytes int64, contentLength int, estKps float64, nsElapsed int64, nsRemaining int64) {
-	elapsedStr := formatNanos(nsElapsed)
-	remainingStr := formatNanos(nsRemaining)
-	logger.Detailf(
-		"read %d of %d bytes (%0.f KiB/s; %v elapsed, %v remaining)\n",
-		totalBytes, contentLength, estKps, elapsedStr, remainingStr,
-	)
-}
-
-func formatNanos(ns int64) string {
-	hours := ns / int64(time.Hour)
-	remainder := ns % int64(time.Hour)
-	minutes := remainder / int64(time.Minute)
-	remainder = ns % int64(time.Minute)
-	seconds := remainder / int64(time.Second)
-	if hours > 0 {
-		return fmt.Sprintf("%dh %dm %ds", hours, minutes, seconds)
-	}
-	if minutes > 0 {
-		return fmt.Sprintf("%dm %ds", minutes, seconds)
-	}
-	return fmt.Sprintf("%ds", seconds)
 }
 
 // ------------------------------------------------------------
