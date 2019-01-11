@@ -81,7 +81,7 @@ func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) err
 		return 0, err
 	}
 
-	nsLastUpdate := int64(0)
+	nsLastUpdate := int64(time.Second) // skip first update
 	for totalBytes < contentLength {
 		byteRange := make([]byte, rangeSize)
 		actualBytes, err := file.Read(byteRange)
@@ -93,10 +93,9 @@ func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) err
 		if nsSinceLastUpdate > int64(time.Second) || eof {
 			nsLastUpdate = nsNow
 			nsElapsed := nsNow - nsStart
-			sElapsed := nsElapsed / int64(time.Second)
-			bps := float64(totalBytes) / float64(sElapsed)
-			sRemaining := float64(contentLength - totalBytes) / bps
-			logger.Detailf("read %d of %d bytes (%ds elapsed, %.0fs remaining\n", totalBytes, actualBytes, nsElapsed, sRemaining)
+			nsPerByte := float64(nsElapsed) / float64(totalBytes)
+			nsRemaining := int64(float64(contentLength - totalBytes) * nsPerByte)
+			logProgress(logger, totalBytes, actualBytes, nsElapsed, nsRemaining)
 		}
 
 		err = handleBytes(byteRange)
@@ -107,36 +106,28 @@ func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) err
 			break
 		}
 	}
-
-	//rangeCount := (contentLength + rangeSize - 1) / rangeSize
-	//for rangeIndex := int64(0); rangeIndex < rangeCount; rangeIndex++ {
-	//	// byte ranges are 0-indexed and inclusive
-	//	startInclusive := rangeIndex * rangeSize
-	//	var endInclusive int64
-	//	if (rangeIndex + 1) < rangeCount {
-	//		endInclusive = startInclusive + rangeSize - 1
-	//	} else {
-	//		endInclusive = contentLength - 1
-	//	}
-	//	expectedBytes := (endInclusive + 1) - startInclusive
-	//	logger.Detailf("range %d of %d: retrieving %d bytes (%d - %d)\n", rangeIndex, rangeCount, expectedBytes, startInclusive, endInclusive)
-	//
-	//	byteRange := make([]byte, expectedBytes)
-	//	actualBytes, err := file.Read(byteRange)
-	//	actualBytes64 := int64(actualBytes)
-	//	totalBytes = totalBytes + actualBytes64
-	//	if err != nil {
-	//		return totalBytes, err
-	//	}
-	//	if actualBytes64 != expectedBytes {
-	//		return totalBytes, fmt.Errorf("range %d of %d: expected %d bytes (%d - %d), got %d\n", rangeIndex, rangeCount, expectedBytes, startInclusive, endInclusive, actualBytes)
-	//	}
-	//	err = handleBytes(byteRange)
-	//	if err != nil {
-	//		return totalBytes, err
-	//	}
-	//}
 	return totalBytes, nil
+}
+
+func logProgress(logger logging.Logger, totalBytes int64, actualBytes int, nsElapsed int64, nsRemaining int64) {
+	elapsedStr := formatNanos(nsElapsed)
+	remainingStr := formatNanos(nsRemaining)
+	logger.Detailf("read %d of %d bytes (%v elapsed, %v remaining)\n", totalBytes, actualBytes, elapsedStr, remainingStr)
+}
+
+func formatNanos(ns int64) string {
+	hours := ns / int64(time.Hour)
+	remainder := ns % int64(time.Hour)
+	minutes := remainder / int64(time.Minute)
+	remainder = ns % int64(time.Minute)
+	seconds := remainder / int64(time.Second)
+	if hours > 0 {
+		return fmt.Sprintf("%dh %dm %ds", hours, minutes, seconds)
+	}
+	if minutes > 0 {
+		return fmt.Sprintf("%dm %ds", minutes, seconds)
+	}
+	return fmt.Sprintf("%ds", seconds)
 }
 
 // ------------------------------------------------------------
