@@ -79,10 +79,14 @@ func (obj *S3Object) Key() *string {
 func (obj *S3Object) ContentLength() (int64, error) {
 	goOutput, err := obj.getObject()
 	if err != nil {
-		obj.logger.Detailf("error determining content-length: %v", err)
+		obj.logger.Detailf("error determining content-length: %v\n", err)
 		return 0, err
 	}
-	return *goOutput.ContentLength, nil
+	contentLength := goOutput.ContentLength
+	if contentLength == nil {
+		return 0, fmt.Errorf("no content-length returned by GetObject")
+	}
+	return *contentLength, nil
 }
 
 // SupportsRanges returns true if the object supports ranged downloads,
@@ -221,7 +225,14 @@ func (obj *S3Object) getObject() (*s3.GetObjectOutput, error) {
 		awsSession, err := obj.session()
 		if err == nil {
 			s3Svc := s3.New(awsSession)
-			obj.goOutput, err = s3Svc.GetObject(obj.toGetObjectInput())
+			goOutput, err := s3Svc.GetObject(obj.toGetObjectInput())
+			if err != nil {
+				return nil, err
+			}
+			if goOutput == nil {
+				return nil, fmt.Errorf("nil *GetObjectOutput returned by S3.GetObject")
+			}
+			obj.goOutput = goOutput
 		}
 	}
 	return obj.goOutput, err
