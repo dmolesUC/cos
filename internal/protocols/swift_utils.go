@@ -21,8 +21,15 @@ func (p SwiftConnectionParams) String() string {
 		authURLStr = p.AuthURL.String()
 	}
 
+	var apiKeyStr string
+	if p.APIKey == "" {
+		apiKeyStr = "<not set>"
+	} else {
+		apiKeyStr = "<hidden>"
+	}
+
 	return fmt.Sprintf(
 		"SwiftConnectionParams { Username: %v, APIKey: %v, AuthURL: %v }",
-		p.UserName, p.APIKey, authURLStr,
+		p.UserName, apiKeyStr, authURLStr,
 	)
 }
