@@ -71,7 +71,7 @@ func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) err
 		return 0, err
 	}
 	defer func() {
-		logger.Detailf("read %d total bytes", totalBytes)
+		logger.Detailf("read %d total bytes\n", totalBytes)
 		err = file.Close()
 	}()
 
