@@ -17,6 +17,7 @@ type Progress struct {
 	TotalBytes    int64
 	ContentLength int64
 	estimatedBytesPerSecond *float64
+	estNsRemaining *int64
 }
 
 func (p *Progress) DetailTo(logger logging.Logger) {
@@ -41,9 +42,15 @@ func (p *Progress) NsRemainingStr() string {
 }
 
 func (p *Progress) EstimatedNsRemaining() int64 {
-	estBytesPerSecond := p.EstimatedBytesPerSecond()
-	bytesRemaining := p.ContentLength - p.TotalBytes
-	nsRemaining := int64(float64(bytesRemaining) / estBytesPerSecond)
+	var nsRemaining int64
+	if p.estNsRemaining == nil {
+		estBytesPerSecond := p.EstimatedBytesPerSecond()
+		bytesRemaining := p.ContentLength - p.TotalBytes
+		nsRemaining = int64(nsPerSecondFloat64 * float64(bytesRemaining) / estBytesPerSecond)
+		p.estNsRemaining = &nsRemaining
+	} else {
+		nsRemaining = *p.estNsRemaining
+	}
 	return nsRemaining
 }
 
