@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// Deprecated: Use streaming.Progress instead
 func DetailProgress(logger Logger, totalBytes int64, contentLength int64, estKps float64, nsElapsed int64, nsRemaining int64) {
 	elapsedStr := formatNanos(nsElapsed)
 	remainingStr := formatNanos(nsRemaining)

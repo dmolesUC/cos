@@ -2,9 +2,7 @@ package objects
 
 import (
 	"fmt"
-	"io"
 	"net/url"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -13,6 +11,7 @@ import (
 
 	"github.com/dmolesUC3/cos/internal/logging"
 	"github.com/dmolesUC3/cos/internal/protocols"
+	"github.com/dmolesUC3/cos/internal/streaming"
 )
 
 // S3Object is an S3 implementation of Object
@@ -108,13 +107,7 @@ func (obj *S3Object) SupportsRanges() bool {
 	return false
 }
 
-// StreamDown streams the object down in ranged requests of the specified size, passing
-// each byte range retrieved to the specified handler function, in sequence.
 func (obj *S3Object) StreamDown(rangeSize int64, handleBytes func([]byte) error) (int64, error) {
-	// TODO: parallel downloads, serial handling? cf. https://coderwall.com/p/uz2noa/fast-parallel-downloads-in-golang-with-accept-ranges-and-goroutines
-
-	logger := obj.logger
-
 	awsSession, err := obj.session()
 	if err != nil {
 		return 0, err
@@ -131,61 +124,28 @@ func (obj *S3Object) StreamDown(rangeSize int64, handleBytes func([]byte) error)
 	}
 
 	downloader := s3manager.NewDownloader(awsSession)
-	nsStart := time.Now().UnixNano()
-	nsLastUpdate := nsStart
-	totalBytes := int64(0)
-	rangeCount := (contentLength + rangeSize - 1) / rangeSize
-	for rangeIndex := int64(0); rangeIndex < rangeCount; rangeIndex++ {
-		// byte ranges are 0-indexed and inclusive
-		startInclusive := rangeIndex * rangeSize
-		var endInclusive int64
-		if (rangeIndex + 1) < rangeCount {
-			endInclusive = startInclusive + rangeSize - 1
-		} else {
-			endInclusive = contentLength - 1
-		}
-		rangeStr := fmt.Sprintf("bytes=%d-%d", startInclusive, endInclusive)
 
-		expectedBytes := (endInclusive + 1) - startInclusive
+	fillRange := func(byteRange *streaming.ByteRange) (int64, error) {
+		startInclusive := byteRange.StartInclusive
+		endInclusive := byteRange.EndInclusive
+		rangeStr := fmt.Sprintf("bytes=%d-%d", startInclusive, endInclusive)
 		goInput := s3.GetObjectInput{
 			Bucket: obj.Bucket(),
 			Key: obj.Key(),
 			Range: &rangeStr,
 		}
-
-		target := aws.NewWriteAtBuffer(make([]byte, expectedBytes))
-		actualBytes, err := downloader.Download(target, &goInput)
-		eof := err == io.EOF
-		totalBytes = totalBytes + actualBytes
-
-		nsNow := time.Now().UnixNano()
-		nsSinceLastUpdate := nsNow - nsLastUpdate
-		verbose := logger.Verbose()
-		if verbose && (nsSinceLastUpdate > int64(time.Second)) || (rangeIndex + 1 >= rangeCount) || eof {
-			nsLastUpdate = nsNow
-			nsElapsed := nsNow - nsStart
-			nsPerByte := float64(nsElapsed) / float64(totalBytes)
-			estKps := float64(time.Second) / (float64(1024) * nsPerByte)
-			nsRemaining := int64(float64(contentLength-totalBytes) * nsPerByte)
-			logging.DetailProgress(logger, totalBytes, contentLength, estKps, nsElapsed, nsRemaining)
-		}
-
-		if err != nil {
-			return totalBytes, err
-		}
-		if actualBytes != expectedBytes {
-			return totalBytes, fmt.Errorf("range %d of %d: expected %d bytes (%d - %d), got %d\n", rangeIndex, rangeCount, expectedBytes, startInclusive, endInclusive, actualBytes)
-		}
-		byteRange := target.Bytes()
-		err = handleBytes(byteRange[0:actualBytes])
-		if err != nil {
-			return totalBytes, err
-		}
-		if eof {
-			break
-		}
+		target := aws.NewWriteAtBuffer(byteRange.Buffer)
+		bytesRead, err := downloader.Download(target, &goInput)
+		byteRange.Buffer = target.Bytes()
+		return bytesRead, err
 	}
-	return totalBytes, nil
+
+	streamer, err := streaming.NewStreamer(rangeSize, contentLength, &fillRange)
+	if err != nil {
+		return 0, err
+	}
+
+	return streamer.StreamDown(obj.logger, handleBytes)
 }
 
 // ------------------------------------------------------------
