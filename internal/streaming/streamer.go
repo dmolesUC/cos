@@ -60,7 +60,18 @@ func (s *Streamer) StreamDown(logger logging.Logger, handleBytes func([]byte) er
 		eof := err == io.EOF
 
 		totalBytes = totalBytes + bytesRead
-		s.maybeLog(logger, nsStart, nsLastUpdate, rangeIndex, eof, totalBytes)
+		if logger.Verbose() {
+			nsNow := time.Now().UnixNano()
+			if nsNow-nsLastUpdate > nsPerSecond || rangeIndex+1 >= s.RangeCount() || eof {
+				nsLastUpdate = nsNow
+				progress := Progress{
+					NsElapsed:     nsNow - nsStart,
+					TotalBytes:    totalBytes,
+					ContentLength: s.ContentLength,
+				}
+				progress.DetailTo(logger)
+			}
+		}
 
 		if err != nil {
 			return totalBytes, err
@@ -78,19 +89,4 @@ func (s *Streamer) StreamDown(logger logging.Logger, handleBytes func([]byte) er
 		}
 	}
 	return totalBytes, nil
-}
-
-func (s *Streamer) maybeLog(logger logging.Logger, nsStart int64, nsLastUpdate int64, rangeIndex int64, eof bool, totalBytes int64) {
-	if logger.Verbose() {
-		nsNow := time.Now().UnixNano()
-		if nsNow-nsLastUpdate > nsPerSecond || rangeIndex+1 >= s.RangeCount() || eof {
-			nsLastUpdate = nsNow
-			progress := Progress{
-				NsElapsed:     nsNow - nsStart,
-				TotalBytes:    totalBytes,
-				ContentLength: s.ContentLength,
-			}
-			progress.DetailTo(logger)
-		}
-	}
 }
