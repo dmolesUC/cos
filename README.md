@@ -64,6 +64,10 @@ From the project root:
 - to build `cos`, writing the executable to the source directory, use `go build`.
 - to build `cos` and install it in `$GOPATH/bin`, use `go install`.
 
+### Running tests
+
+From the project root: `go test ./...`
+
 #### Cross-compiling
 
 To cross-compile for Linux (Intel, 64-bit):

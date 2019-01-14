@@ -1,6 +1,7 @@
 package streaming
 
 import (
+	"fmt"
 	"time"
 
 	. "gopkg.in/check.v1"
@@ -48,5 +49,13 @@ func (s *ProgressSuite) TestInfoTo(c *C) {
 	progress := Progress { NsElapsed: nsElapsed, TotalBytes: totalBytes, ContentLength: contentLength }
 	progress.InfoTo(s.logger)
 	c.Assert(len(s.logger.Infos), Equals, 1)
-	c.Assert(s.logger.Infos[0], Equals, "")
+
+	expectedKiBps := float64(2048)
+	expectedNsRemaining := int64(31) * nsElapsed
+
+	expected := fmt.Sprintf(
+		"read %d of %d bytes (%0.f KiB/s; %v elapsed, %v remaining)\n",
+		totalBytes, contentLength, expectedKiBps, formatNanos(nsElapsed), formatNanos(expectedNsRemaining),
+	)
+	c.Assert(s.logger.Infos[0], Equals, expected)
 }
