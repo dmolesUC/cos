@@ -10,6 +10,7 @@ import (
 
 	"github.com/dmolesUC3/cos/internal/logging"
 	"github.com/dmolesUC3/cos/internal/protocols"
+	"github.com/dmolesUC3/cos/internal/streaming"
 )
 
 const defaultRetries = 3
@@ -54,61 +55,51 @@ func (obj *SwiftObject) Key() *string {
 	return &obj.objectName
 }
 
-// StreamDown streams the object down in ranged requests of the specified size, passing
-// each byte range retrieved to the specified handler function, in sequence.
+func (obj *SwiftObject) ContentLength() (int64, error) {
+	cnx, err := obj.connection()
+	if err != nil {
+		return 0, err
+	}
+	info, _, err := cnx.Object(obj.container, obj.objectName)
+	if err != nil {
+		return 0, err
+	}
+	return info.Bytes, nil
+}
+
 func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) error) (int64, error) {
-
-	logger := obj.logger
-	totalBytes := int64(0)
-
 	cnx, err := obj.connection()
 	if err != nil {
 		return 0, err
 	}
 
-	file, _, err := cnx.ObjectOpen(obj.container, obj.objectName, false, nil)
-	if err != nil {
-		return 0, err
-	}
-	defer func() {
-		logger.Detailf("read %d total bytes\n", totalBytes)
-		err = file.Close()
-	}()
-
-	contentLength, err := file.Length()
+	// this will 404 if the object doesn't exist
+	contentLength, err := obj.ContentLength()
 	if err != nil {
 		return 0, err
 	}
 
-	nsStart := time.Now().UnixNano()
-	nsLastUpdate := nsStart
-	for totalBytes < contentLength {
-		byteRange := make([]byte, rangeSize)
-		actualBytes, err := file.Read(byteRange)
-		eof := err == io.EOF
-		totalBytes = totalBytes + int64(actualBytes)
+	fillRange := func(byteRange *streaming.ByteRange) (int64, error) {
+		startInclusive := byteRange.StartInclusive
+		endInclusive := byteRange.EndInclusive
+		rangeStr := fmt.Sprintf("bytes=%d-%d", startInclusive, endInclusive)
 
-		nsNow := time.Now().UnixNano()
-		nsSinceLastUpdate := nsNow - nsLastUpdate
-		verbose := logger.Verbose()
-		if verbose && (nsSinceLastUpdate > int64(time.Second)) || eof {
-			nsLastUpdate = nsNow
-			nsElapsed := nsNow - nsStart
-			nsPerByte := float64(nsElapsed) / float64(totalBytes)
-			estKps := float64(time.Second) / (float64(1024) * nsPerByte)
-			nsRemaining := int64(float64(contentLength-totalBytes) * nsPerByte)
-			logging.DetailProgress(logger, totalBytes, contentLength, estKps, nsElapsed, nsRemaining)
-		}
+		headers := map[string]string { "Range" : rangeStr }
 
-		err = handleBytes(byteRange[0:actualBytes])
+		file, _, err := cnx.ObjectOpen(obj.container, obj.objectName, false, headers)
 		if err != nil {
-			return totalBytes, err
+			return 0, err
 		}
-		if eof {
-			break
-		}
+		bytesRead, err := io.ReadFull(file, byteRange.Buffer)
+		return int64(bytesRead), err
 	}
-	return totalBytes, nil
+
+	streamer, err := streaming.NewStreamer(rangeSize, contentLength, &fillRange)
+	if err != nil {
+		return 0, err
+	}
+
+	return streamer.StreamDown(obj.logger, handleBytes)
 }
 
 // ------------------------------------------------------------

@@ -14,6 +14,7 @@ type Object interface {
 	Endpoint() *url.URL
 	Bucket() *string
 	Key() *string
+	ContentLength() (int64, error)
 	StreamDown(rangeSize int64, handleBytes func([]byte) error) (int64, error)
 }
 
