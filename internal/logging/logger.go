@@ -29,30 +29,6 @@ func NewLogger(verbose bool) Logger {
 	return terseLogger{ infoLogger {out: os.Stderr} }
 }
 
-type CapturingLogger struct {
-	Infos   []string
-	Details []string
-}
-
-func (logger *CapturingLogger) Info(a ...interface{}) {
-	logger.Infos = append(logger.Infos, fmt.Sprintln(a...))
-}
-
-func (logger *CapturingLogger) Infof(format string, a ...interface{}) {
-	logger.Infos = append(logger.Infos, fmt.Sprintf(format, a...))
-}
-
-func (logger *CapturingLogger) Detail(a ...interface{}) {
-	logger.Details = append(logger.Details, fmt.Sprintln(a...))
-}
-
-func (logger *CapturingLogger) Detailf(format string, a ...interface{}) {
-	logger.Details = append(logger.Details, fmt.Sprintf(format, a...))
-}
-
-func (logger *CapturingLogger) Verbose() bool {
-	return true
-}
 
 // ------------------------------------------------------------
 // Unexported symbols

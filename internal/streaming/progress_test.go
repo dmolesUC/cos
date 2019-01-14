@@ -5,18 +5,16 @@ import (
 	"time"
 
 	. "gopkg.in/check.v1"
-
-	"github.com/dmolesUC3/cos/internal/logging"
 )
 
 type ProgressSuite struct {
-	logger *logging.CapturingLogger
+	logger *CapturingLogger
 }
 
 var _ = Suite(&ProgressSuite{})
 
 func (s *ProgressSuite) SetUpTest(c *C) {
-	s.logger = &logging.CapturingLogger{}
+	s.logger = &CapturingLogger{}
 }
 
 func (s *ProgressSuite) TearDownTest(c *C) {
@@ -59,3 +57,29 @@ func (s *ProgressSuite) TestInfoTo(c *C) {
 	)
 	c.Assert(s.logger.Infos[0], Equals, expected)
 }
+
+type CapturingLogger struct {
+	Infos   []string
+	Details []string
+}
+
+func (logger *CapturingLogger) Info(a ...interface{}) {
+	logger.Infos = append(logger.Infos, fmt.Sprintln(a...))
+}
+
+func (logger *CapturingLogger) Infof(format string, a ...interface{}) {
+	logger.Infos = append(logger.Infos, fmt.Sprintf(format, a...))
+}
+
+func (logger *CapturingLogger) Detail(a ...interface{}) {
+	logger.Details = append(logger.Details, fmt.Sprintln(a...))
+}
+
+func (logger *CapturingLogger) Detailf(format string, a ...interface{}) {
+	logger.Details = append(logger.Details, fmt.Sprintf(format, a...))
+}
+
+func (logger *CapturingLogger) Verbose() bool {
+	return true
+}
+
