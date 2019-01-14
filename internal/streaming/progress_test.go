@@ -58,6 +58,9 @@ func (s *ProgressSuite) TestInfoTo(c *C) {
 	c.Assert(s.logger.Infos[0], Equals, expected)
 }
 
+// ------------------------------------------------------------
+// Helper types
+
 type CapturingLogger struct {
 	Infos   []string
 	Details []string

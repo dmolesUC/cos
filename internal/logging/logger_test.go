@@ -1,8 +1,8 @@
 package logging
 
 import (
-	"strings"
 	"fmt"
+	"strings"
 
 	. "gopkg.in/check.v1"
 )
@@ -43,22 +43,6 @@ func (s *LoggerSuite) logFatal(v ...interface{}) {
 	s.fatals = append(s.fatals, fmt.Sprint(v...))
 }
 
-type StringableWriter interface {
-	Write(p []byte) (n int, err error)
-	String() string
-}
-
-type FailWriter struct {
-
-}
-
-func (f FailWriter) Write(p []byte) (n int, err error) {
-	return 0, fmt.Errorf("failed to write %v", p)
-}
-
-func (f FailWriter) String() string {
-	return "FailWriter{}"
-}
 
 // ------------------------------------------------------------
 // Tests
@@ -154,3 +138,5 @@ func (s *LoggerSuite) TestVerboseFlag(c *C) {
 		c.Assert(logger.String(), Equals, strExpected)
 	}
 }
+
+
