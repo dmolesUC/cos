@@ -19,6 +19,7 @@ type Logger interface {
 	Infof(format string, a ...interface{})
 	Detailf(format string, a ...interface{})
 	Verbose() bool
+	String() string
 }
 
 // NewLogger returns a new logger, either verbose or not, as specified
@@ -29,9 +30,10 @@ func NewLogger(verbose bool) Logger {
 	return terseLogger{ infoLogger {out: os.Stderr} }
 }
 
-
 // ------------------------------------------------------------
 // Unexported symbols
+
+var logFatal = log.Fatal
 
 // ------------------------------
 // infoLogger
@@ -45,7 +47,7 @@ type infoLogger struct {
 func (l infoLogger) Info(a ...interface{}) {
 	_, err := fmt.Fprintln(l.out, a...)
 	if err != nil {
-		log.Fatal(err)
+		logFatal(err)
 	}
 }
 
@@ -53,7 +55,7 @@ func (l infoLogger) Info(a ...interface{}) {
 func (l infoLogger) Infof(format string, a ...interface{}) {
 	_, err := fmt.Fprintf(l.out, format, a...)
 	if err != nil {
-		log.Fatal(err)
+		logFatal(err)
 	}
 }
 

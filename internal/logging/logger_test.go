@@ -11,7 +11,8 @@ import (
 // Fixture
 
 type LoggerSuite struct {
-	out *strings.Builder
+	out StringableWriter
+	fatals []string
 }
 
 func (s *LoggerSuite) newTerseLogger() terseLogger {
@@ -30,10 +31,33 @@ var _ = Suite(&LoggerSuite{})
 
 func (s *LoggerSuite) SetUpTest(c *C) {
 	s.out = &strings.Builder{}
+	s.fatals = nil
 }
 
 func (s *LoggerSuite) TearDownTest(c *C) {
 	s.out = nil
+	s.fatals = nil
+}
+
+func (s *LoggerSuite) logFatal(v ...interface{}) {
+	s.fatals = append(s.fatals, fmt.Sprint(v...))
+}
+
+type StringableWriter interface {
+	Write(p []byte) (n int, err error)
+	String() string
+}
+
+type FailWriter struct {
+
+}
+
+func (f FailWriter) Write(p []byte) (n int, err error) {
+	return 0, fmt.Errorf("failed to write %v", p)
+}
+
+func (f FailWriter) String() string {
+	return "FailWriter{}"
 }
 
 // ------------------------------------------------------------
@@ -59,6 +83,23 @@ func (s *LoggerSuite) TestTerseInfof(c *C) {
 	var logger = s.newTerseLogger()
 	logger.Infof(format, "text", 123)
 	c.Assert(s.out.String(), Equals, expected)
+}
+
+func (s *LoggerSuite) TestTerseInfoFail(c *C) {
+	s.out = FailWriter{}
+	logFatal = s.logFatal
+	var logger = s.newTerseLogger()
+	logger.Info("I am a log message")
+	c.Assert(len(s.fatals), Equals, 1)
+}
+
+func (s *LoggerSuite) TestTerseInfofFail(c *C) {
+	s.out = FailWriter{}
+	logFatal = s.logFatal
+	var logger = s.newTerseLogger()
+	var format = "I am a log message: %v %d"
+	logger.Infof(format, "text", 123)
+	c.Assert(len(s.fatals), Equals, 1)
 }
 
 func (s *LoggerSuite) TestTerseDetailf(c *C) {
@@ -96,4 +137,20 @@ func (s *LoggerSuite) TestVerboseDetailf(c *C) {
 	var logger = s.newVerboseLogger()
 	logger.Detailf(format, "text", 123)
 	c.Assert(s.out.String(), Equals, expected)
+}
+
+func (s *LoggerSuite) TestVerboseFlag(c *C) {
+	flags := []bool { true, false }
+	for _, verbose := range flags {
+		logger := NewLogger(verbose)
+		c.Assert(logger.Verbose(), Equals, verbose)
+
+		var strExpected string
+		if verbose {
+			strExpected = "verbose"
+		} else {
+			strExpected = "terse"
+		}
+		c.Assert(logger.String(), Equals, strExpected)
+	}
 }

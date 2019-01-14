@@ -63,6 +63,10 @@ type CapturingLogger struct {
 	Details []string
 }
 
+func (logger *CapturingLogger) String() string {
+	return "capturing"
+}
+
 func (logger *CapturingLogger) Info(a ...interface{}) {
 	logger.Infos = append(logger.Infos, fmt.Sprintln(a...))
 }
@@ -82,4 +86,6 @@ func (logger *CapturingLogger) Detailf(format string, a ...interface{}) {
 func (logger *CapturingLogger) Verbose() bool {
 	return true
 }
+
+
 
