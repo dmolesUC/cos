@@ -136,7 +136,7 @@ func (obj *S3Object) StreamDown(rangeSize int64, handleBytes func([]byte) error)
 		}
 		target := aws.NewWriteAtBuffer(byteRange.Buffer)
 		bytesRead, err := downloader.Download(target, &goInput)
-		byteRange.Buffer = target.Bytes()
+		byteRange.Buffer = target.Bytes() // TODO: is this necessary?
 		return bytesRead, err
 	}
 
