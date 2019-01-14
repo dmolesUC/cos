@@ -66,7 +66,14 @@ From the project root:
 
 ### Running tests
 
-From the project root: `go test ./...`
+To run all tests in all subpackages, from the project root, use `go test ./...`.
+
+To run all tests in all subpackages with coverage and view a coverage report, use
+
+```
+go test -coverprofile=coverage.out ./... \
+&& go tool cover -html=coverage.out
+```
 
 #### Cross-compiling
 
