@@ -4,40 +4,23 @@ import (
 	"net/url"
 
 	. "gopkg.in/check.v1"
+
+	"github.com/dmolesUC3/cos/internal/logging"
 )
 
 type ObjectSuite struct {
-	logger Logger
+	logger logging.Logger
 }
 
 var _ = Suite(&ObjectSuite{})
 
 func (s *ObjectSuite) SetUpSuite(c *C) {
-	s.logger = NewLogger(false)
-}
-
-func (s *ObjectSuite) TestBuild(c *C) {
-	expectedRegion := "cn-north-1"
-	expectedKey := "/foo/bar/baz.qux"
-	expectedBucket := "example.org"
-	expectedEndpoint, _ := url.Parse("https://s3-cn-north-1.amazonaws.com/")
-
-	b := NewObjectBuilder().
-		WithRegion(expectedRegion).
-		WithEndpoint(expectedEndpoint).
-		WithKey(expectedKey).
-		WithBucket(expectedBucket)
-
-	o, err := b.Build(s.logger)
-	c.Assert(err, IsNil)
-	c.Assert(*o.Key(), Equals, expectedKey)
-	c.Assert(*o.Bucket(), Equals, expectedBucket)
-	c.Assert(*o.Endpoint(), Equals, *expectedEndpoint)
+	s.logger = logging.NewLogger(false)
 }
 
 func (s *ObjectSuite) TestParsingHttpObjectURL(c *C) {
 	inputURLStr := "https://s3-cn-north-1.amazonaws.com/example.org/foo/bar/baz.qux"
-	expectedRegion := "cn-north-1"
+	// expectedRegion := "cn-north-1"
 	expectedKey := "/foo/bar/baz.qux"
 	expectedBucket := "example.org"
 	expectedEndpoint, _ := url.Parse("https://s3-cn-north-1.amazonaws.com/")
@@ -52,7 +35,7 @@ func (s *ObjectSuite) TestParsingHttpObjectURL(c *C) {
 
 func (s *ObjectSuite) TestParsingHttpObjectURLEmptyEndpoint(c *C) {
 	inputURLStr := "https://s3-cn-north-1.amazonaws.com/example.org/foo/bar/baz.qux"
-	expectedRegion := "cn-north-1"
+	// expectedRegion := "cn-north-1"
 	expectedKey := "/foo/bar/baz.qux"
 	expectedBucket := "example.org"
 	expectedEndpoint, _ := url.Parse("https://s3-cn-north-1.amazonaws.com/")
@@ -62,7 +45,7 @@ func (s *ObjectSuite) TestParsingHttpObjectURLEmptyEndpoint(c *C) {
 		WithEndpointStr("")
 	o, err := b.Build(s.logger)
 	c.Assert(err, IsNil)
-	c.Assert(*o.Region(), Equals, expectedRegion)
+	//c.Assert(*o.Region(), Equals, expectedRegion)
 	c.Assert(*o.Key(), Equals, expectedKey)
 	c.Assert(*o.Bucket(), Equals, expectedBucket)
 	c.Assert(*o.Endpoint(), Equals, *expectedEndpoint)
@@ -70,7 +53,7 @@ func (s *ObjectSuite) TestParsingHttpObjectURLEmptyEndpoint(c *C) {
 
 func (s *ObjectSuite) TestParsingS3ObjectURL(c *C) {
 	inputURLStr := "s3://example.org/foo/bar/baz.qux"
-	expectedRegion := "cn-north-1"
+	// expectedRegion := "cn-north-1"
 	expectedKey := "/foo/bar/baz.qux"
 	expectedBucket := "example.org"
 	expectedEndpoint, _ := url.Parse("https://s3-cn-north-1.amazonaws.com/")
@@ -81,7 +64,7 @@ func (s *ObjectSuite) TestParsingS3ObjectURL(c *C) {
 
 	o, err := b.Build(s.logger)
 	c.Assert(err, IsNil)
-	c.Assert(*o.Region(), Equals, expectedRegion)
+	//c.Assert(*o.Region(), Equals, expectedRegion)
 	c.Assert(*o.Key(), Equals, expectedKey)
 	c.Assert(*o.Bucket(), Equals, expectedBucket)
 	c.Assert(*o.Endpoint(), Equals, *expectedEndpoint)

@@ -60,17 +60,15 @@ func (s *Streamer) StreamDown(logger logging.Logger, handleBytes func([]byte) er
 		eof := err == io.EOF
 
 		totalBytes = totalBytes + bytesRead
-		if logger.Verbose() {
-			nsNow := time.Now().UnixNano()
-			if nsNow-nsLastUpdate > nsPerSecond || rangeIndex+1 >= s.RangeCount() || eof {
-				nsLastUpdate = nsNow
-				progress := Progress{
-					NsElapsed:     nsNow - nsStart,
-					TotalBytes:    totalBytes,
-					ContentLength: s.ContentLength,
-				}
-				progress.DetailTo(logger)
+		nsNow := time.Now().UnixNano()
+		if nsNow-nsLastUpdate > nsPerSecond || rangeIndex+1 >= s.RangeCount() || eof {
+			nsLastUpdate = nsNow
+			progress := Progress{
+				NsElapsed:     nsNow - nsStart,
+				TotalBytes:    totalBytes,
+				ContentLength: s.ContentLength,
 			}
+			progress.InfoTo(logger)
 		}
 
 		if err != nil {

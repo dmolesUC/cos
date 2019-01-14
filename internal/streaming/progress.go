@@ -27,6 +27,13 @@ func (p *Progress) DetailTo(logger logging.Logger) {
 	)
 }
 
+func (p *Progress) InfoTo(logger logging.Logger) {
+	logger.Infof(
+		"read %d of %d bytes (%0.f KiB/s; %v elapsed, %v remaining)\n",
+		p.TotalBytes, p.ContentLength, p.EstimatedKibPerSecond(), p.NsElapsedStr(), p.NsRemainingStr(),
+	)
+}
+
 func (p *Progress) EstimatedKibPerSecond() float64 {
 	estBytesPerSecond := p.EstimatedBytesPerSecond()
 	estKibPerSecond := estBytesPerSecond / float64(1024)
