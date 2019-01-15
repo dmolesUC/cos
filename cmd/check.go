@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"regexp"
 
 	"github.com/dmolesUC3/cos/internal/logging"
 	"github.com/dmolesUC3/cos/internal/objects"
@@ -57,6 +56,17 @@ type checkFlags struct {
 	Region    string
 }
 
+func (f checkFlags) Pretty() string {
+	format := `
+		verbose: %v
+		expected: %x
+		algorithm: '%v'
+		endpoint: '%v'
+		region: '%v'`
+	format = logging.Untabify(format, "  ")
+	return fmt.Sprintf(format, f.Verbose, f.Expected, f.Algorithm, f.Endpoint, f.Region)
+}
+
 func (f checkFlags) String() string {
 	return fmt.Sprintf(
 		"checkFlags{ verbose: %v, expected: %x, algorithm: '%v', endpoint: '%v', region: '%v'}",
@@ -64,12 +74,10 @@ func (f checkFlags) String() string {
 	)
 }
 
+
+
 // ------------------------------------------------------------
 // Functions
-
-func formatHelp(text string, indent string) string {
-	return regexp.MustCompile(`(?m)^[\t ]+`).ReplaceAllString(text, indent)
-}
 
 func runWith(objURLStr string, flags checkFlags) error {
 	var logger = logging.NewLogger(flags.Verbose)
@@ -108,11 +116,11 @@ func init() {
 	cmd := &cobra.Command{
 		Use:           usage,
 		Short:         shortDescription,
-		Long:          formatHelp(longDescription, ""),
+		Long:          logging.Untabify(longDescription, ""),
 		Args:          cobra.ExactArgs(1),
 		SilenceUsage:  true,
 		SilenceErrors: true,
-		Example:       formatHelp(example, "  "),
+		Example:       logging.Untabify(example, "  "),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runWith(args[0], flags)
 		},

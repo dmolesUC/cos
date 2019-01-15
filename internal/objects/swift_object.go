@@ -23,8 +23,21 @@ type SwiftObject struct {
 	swiftConnection *swift.Connection
 }
 
+func (obj *SwiftObject) Pretty() string {
+	format := `SwiftObject { 
+		container: '%v' 
+		objectName: '%v' 
+		cnxParams: %v 
+		logger: %v 
+		swiftConnection: %v
+	}`
+	format = logging.Untabify(format, " ")
+	args := logging.Prettify(obj.container, obj.objectName, obj.cnxParams, obj.logger, obj.swiftConnection)
+	return fmt.Sprintf(format, args...)
+}
+
 func (obj *SwiftObject) String() string {
-	return fmt.Sprintf("SwiftObject { container: '%v', objectName: '%v', cnxParams: %v, logger: %v, swiftConnection: %v",
+	return fmt.Sprintf("SwiftObject { container: '%v', objectName: '%v', cnxParams: %v, logger: %v, swiftConnection: %v }",
 		obj.container,
 		obj.objectName,
 		obj.cnxParams,
@@ -32,6 +45,8 @@ func (obj *SwiftObject) String() string {
 		obj.swiftConnection,
 	)
 }
+
+
 
 // Endpoint returns the Swift authentication URL
 func (obj *SwiftObject) Endpoint() *url.URL {

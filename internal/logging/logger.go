@@ -45,7 +45,7 @@ type infoLogger struct {
 
 // Logger.Info() implementation: log to stderr
 func (l infoLogger) Info(a ...interface{}) {
-	pretty := prettify(a...)
+	pretty := Prettify(a...)
 	_, err := fmt.Fprintln(l.out, pretty...)
 	if err != nil {
 		logFatal(err)
@@ -54,23 +54,11 @@ func (l infoLogger) Info(a ...interface{}) {
 
 // Logger.Infof() implementation: log to stderr
 func (l infoLogger) Infof(format string, a ...interface{}) {
-	pretty := prettify(a...)
+	pretty := Prettify(a...)
 	_, err := fmt.Fprintf(l.out, format, pretty...)
 	if err != nil {
 		logFatal(err)
 	}
-}
-
-func prettify(a ...interface{}) []interface{} {
-	var pretty []interface{}
-	for _, v := range a {
-		if p, ok := v.(Pretty); ok {
-			pretty = append(pretty, p.Pretty())
-		} else {
-			pretty = append(pretty, v)
-		}
-	}
-	return pretty
 }
 
 // ------------------------------
@@ -126,3 +114,4 @@ func (l verboseLogger) Verbose() bool {
 func (l verboseLogger) String() string {
 	return "verbose"
 }
+
