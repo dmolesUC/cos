@@ -6,7 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"hash"
+	"io"
 	"net/url"
+
+	"github.com/dmolesUC3/cos/internal/logging"
 )
 
 // The Object type represents the location of an object in cloud storage.
@@ -16,6 +19,8 @@ type Object interface {
 	Key() *string
 	ContentLength() (int64, error)
 	StreamDown(rangeSize int64, handleBytes func([]byte) error) (int64, error)
+	StreamUp(body io.Reader) (err error)
+	Logger() logging.Logger
 }
 
 // CalcDigest calculates the digest of the object using the specified algorithm

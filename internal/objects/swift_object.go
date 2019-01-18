@@ -1,6 +1,7 @@
 package objects
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -46,7 +47,9 @@ func (obj *SwiftObject) String() string {
 	)
 }
 
-
+func (obj *SwiftObject) Logger() logging.Logger {
+	return obj.logger
+}
 
 // Endpoint returns the Swift authentication URL
 func (obj *SwiftObject) Endpoint() *url.URL {
@@ -98,7 +101,7 @@ func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) err
 		endInclusive := byteRange.EndInclusive
 		rangeStr := fmt.Sprintf("bytes=%d-%d", startInclusive, endInclusive)
 
-		headers := map[string]string { "Range" : rangeStr }
+		headers := map[string]string{"Range": rangeStr}
 
 		file, _, err := cnx.ObjectOpen(obj.container, obj.objectName, false, headers)
 		if err != nil {
@@ -114,6 +117,10 @@ func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) err
 	}
 
 	return streamer.StreamDown(obj.logger, handleBytes)
+}
+
+func (obj *SwiftObject) StreamUp(body io.Reader) (err error) {
+	return errors.New("not implemented")
 }
 
 // ------------------------------------------------------------

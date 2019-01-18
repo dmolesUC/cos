@@ -8,6 +8,9 @@ import (
 	"github.com/dmolesUC3/cos/internal/logging"
 )
 
+// DefaultRangeSize is the default range size for ranged downloads
+const DefaultRangeSize = int64(1024 * 1024 * 5)
+
 type Streamer struct {
 	RangeSize     int64
 	ContentLength int64
@@ -88,3 +91,4 @@ func (s *Streamer) StreamDown(logger logging.Logger, handleBytes func([]byte) er
 	}
 	return totalBytes, nil
 }
+

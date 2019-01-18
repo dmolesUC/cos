@@ -2,6 +2,7 @@ package objects
 
 import (
 	"fmt"
+	"io"
 	"net/url"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -44,12 +45,8 @@ func (obj *S3Object) String() string {
 	)
 }
 
-// Region returns the AWS region of the object
-func (obj *S3Object) Region() *string {
-	if obj.region == "" {
-		return nil
-	}
-	return &obj.region
+func (obj *S3Object) Logger() logging.Logger {
+	return obj.logger
 }
 
 // Endpoint returns the endpoint URL used to access the object
@@ -108,7 +105,7 @@ func (obj *S3Object) SupportsRanges() bool {
 }
 
 func (obj *S3Object) StreamDown(rangeSize int64, handleBytes func([]byte) error) (int64, error) {
-	awsSession, err := obj.session()
+	awsSession, err := obj.sessionP()
 	if err != nil {
 		return 0, err
 	}
@@ -131,8 +128,8 @@ func (obj *S3Object) StreamDown(rangeSize int64, handleBytes func([]byte) error)
 		rangeStr := fmt.Sprintf("bytes=%d-%d", startInclusive, endInclusive)
 		goInput := s3.GetObjectInput{
 			Bucket: obj.Bucket(),
-			Key: obj.Key(),
-			Range: &rangeStr,
+			Key:    obj.Key(),
+			Range:  &rangeStr,
 		}
 		target := aws.NewWriteAtBuffer(byteRange.Buffer)
 		bytesRead, err := downloader.Download(target, &goInput)
@@ -148,16 +145,41 @@ func (obj *S3Object) StreamDown(rangeSize int64, handleBytes func([]byte) error)
 	return streamer.StreamDown(obj.logger, handleBytes)
 }
 
+func (obj *S3Object) StreamUp(body io.Reader) (err error) {
+	awsSession, err := obj.sessionP()
+	if err != nil {
+		return err
+	}
+	uploader := s3manager.NewUploader(awsSession)
+	result, err := uploader.Upload(&s3manager.UploadInput{
+		Bucket: obj.Bucket(),
+		Key:    obj.Key(),
+		Body:   body,
+	})
+	if err == nil {
+		obj.logger.Detailf("upload successful to %v", result.Location)
+	}
+	return err
+}
+
 // ------------------------------------------------------------
 // Unexported functions
 
-func (obj *S3Object) session() (*session.Session, error) {
+// Region returns the AWS region of the object
+func (obj *S3Object) regionP() *string {
+	if obj.region == "" {
+		return nil
+	}
+	return &obj.region
+}
+
+func (obj *S3Object) sessionP() (*session.Session, error) {
 	var err error
 	if obj.awsSession == nil {
 		endpointStr := obj.endpoint.String()
 		verboseLogging := obj.logger.Verbose()
 		// TODO: move this all back to s3_utils
-		obj.awsSession, err = protocols.InitS3Session(&endpointStr, obj.Region(), verboseLogging)
+		obj.awsSession, err = protocols.InitS3Session(&endpointStr, obj.regionP(), verboseLogging)
 		isEC2, err := protocols.IsEC2()
 		if err != nil {
 			obj.logger.Detailf("Rrror trying to determine whether we're running in EC2 (assume we're not): %v", err)
@@ -185,7 +207,7 @@ func (obj *S3Object) toGetObjectInput() *s3.GetObjectInput {
 func (obj *S3Object) getObject() (*s3.GetObjectOutput, error) {
 	var err error
 	if obj.goOutput == nil {
-		awsSession, err := obj.session()
+		awsSession, err := obj.sessionP()
 		if err == nil {
 			s3Svc := s3.New(awsSession)
 			goOutput, err := s3Svc.GetObject(obj.toGetObjectInput())
@@ -200,4 +222,3 @@ func (obj *S3Object) getObject() (*s3.GetObjectOutput, error) {
 	}
 	return obj.goOutput, err
 }
-
