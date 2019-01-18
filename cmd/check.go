@@ -15,34 +15,28 @@ import (
 // Constants: Help Text
 
 const (
-	usage = "check <OBJECT-URL>"
+	usageCheck = "check <OBJECT-URL>"
 
-	shortDescription = "check: verify the digest of an object"
+	shortDescCheck = "check: verify the digest of an object"
 
-	longDescription = shortDescription + `
+	longDescCheck = shortDescCheck + `
 
 		Verifies the digest of an object in cloud object storage, using SHA-256 (by
 		default) or MD5 (optionally). The object location can be specified either
 		as a complete HTTP(S) URL, https://<endpoint>/<bucket>/<key>, or using
-		separate URLs for the endpoint (HTTP(S)) and bucket/key (s3://).
+		separate URLs for the endpoint (HTTP(S)) and bucket/key (s3:// or swift://).
 
-		Uses AWS credentials from ~/.aws/config, or other config file specified
-		with the AWS_CONFIG_FILE environment variable. Credentials can also be
-		specified with the AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment
-		variables.
-
-        Note that for OpenStack Swift, the API username and key must be specified
-        with the SWIFT_API_USER and SWIFT_API_KEY environment variables, and the
-        endpoint URL is mandatory.
+        Note that for OpenStack Swift, the endpoint URL must always be set explicitly
+        with the --endpoint flag.
 	`
 
-	// TODO: add Minio example(s)
-	example = ` 
+	exampleCheck = ` 
 		cos check https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg
 		cos check https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg -x c99ad299fa53d5d9688909164cf25b386b33bea8d4247310d80f615be29978f5
 		cos check s3://www.dmoles.net/images/fa/archive.svg -e https://s3.us-west-2.amazonaws.com/ -a md5 -x eac8a75e3b3023e98003f1c24137ebbd
 		cos check s3://mrt-test/inusitatum.png --endpoint http://127.0.0.1:9000/ --algorithm md5 --expected cadf871cd4135212419f488f42c62482
-	    SWIFT_API_USER=<user> SWIFT_API_KEY=<key> cos check 'swift://distrib.stage.9001.__c5e/ark:/99999/fk4kw5kc1z|1|producer/6GBZeroFile.txt' -e http://cloud.sdsc.edu/auth/v1.0`
+	    cos check 'swift://distrib.stage.9001.__c5e/ark:/99999/fk4kw5kc1z|1|producer/6GBZeroFile.txt' -e http://cloud.sdsc.edu/auth/v1.0
+    `
 )
 
 // ------------------------------------------------------------
@@ -79,7 +73,7 @@ func (f checkFlags) String() string {
 // ------------------------------------------------------------
 // Functions
 
-func runWith(objURLStr string, flags checkFlags) error {
+func check(objURLStr string, flags checkFlags) error {
 	var logger = logging.NewLogger(flags.Verbose)
 	logger.Detailf("flags: %v\n", flags)
 	logger.Detailf("object URL: %v\n", objURLStr)
@@ -114,22 +108,22 @@ func init() {
 	flags := checkFlags{}
 
 	cmd := &cobra.Command{
-		Use:           usage,
-		Short:         shortDescription,
-		Long:          logging.Untabify(longDescription, ""),
+		Use:           usageCheck,
+		Short:         shortDescCheck,
+		Long:          logging.Untabify(longDescCheck, ""),
 		Args:          cobra.ExactArgs(1),
 		SilenceUsage:  true,
 		SilenceErrors: true,
-		Example:       logging.Untabify(example, "  "),
+		Example:       logging.Untabify(exampleCheck, "  "),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runWith(args[0], flags)
+			return check(args[0], flags)
 		},
 	}
-	cmd.Flags().BoolVarP(&flags.Verbose, "verbose", "v", false, "Verbose output")
-	cmd.Flags().BytesHexVarP(&flags.Expected, "expected", "x", nil, "Expected digest value (exit with error if not matched)")
+	cmd.Flags().BoolVarP(&flags.Verbose, "verbose", "v", false, "verbose output")
+	cmd.Flags().BytesHexVarP(&flags.Expected, "expected", "x", nil, "expected digest value (exit with error if not matched)")
 	cmd.Flags().StringVarP(&flags.Algorithm, "algorithm", "a", "sha256", "Algorithm: md5 or sha256")
-	cmd.Flags().StringVarP(&flags.Endpoint, "endpoint", "e", "", "S3 endpoint: HTTP(S) URL")
-	cmd.Flags().StringVarP(&flags.Endpoint, "region", "r", "", "S3 region (if not in endpoint URL; default \""+protocols.DefaultAwsRegion+"\")")
+	cmd.Flags().StringVarP(&flags.Endpoint, "endpoint", "e", "", "endpoint: HTTP(S) URL")
+	cmd.Flags().StringVarP(&flags.Region, "region", "r", "", "S3 region (if not in endpoint URL; default \""+protocols.DefaultAwsRegion+"\")")
 
 	rootCmd.AddCommand(cmd)
 }

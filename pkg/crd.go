@@ -11,11 +11,11 @@ import (
 	"github.com/dmolesUC3/cos/internal/streaming"
 )
 
-type Crd struct {
+type Crvd struct {
 	Object objects.Object
 }
 
-func (c *Crd) CreateRetrieve(body io.Reader, contentLength int64) (digest []byte, err error) {
+func (c *Crvd) CreateRetrieveValidate(body io.Reader, contentLength int64) (digest []byte, err error) {
 	digest, err = c.create(body, contentLength)
 	if err == nil {
 		check := Check{Object: c.Object, Expected: digest, Algorithm: "sha-256"}
@@ -24,7 +24,7 @@ func (c *Crd) CreateRetrieve(body io.Reader, contentLength int64) (digest []byte
 	return digest, err
 }
 
-func (c *Crd) create(body io.Reader, contentLength int64) ([] byte, error) {
+func (c *Crvd) create(body io.Reader, contentLength int64) ([] byte, error) {
 	// TODO: extract most of this to a struct & clean up
 	obj := c.Object
 

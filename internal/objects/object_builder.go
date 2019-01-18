@@ -139,7 +139,7 @@ func (b ObjectBuilder) checkRequiredFields() error {
 	return fmt.Errorf("missing fields: %v", strings.Join(missing, ", "))
 }
 
-func (b ObjectBuilder) withProtocolURI(protocolURI *url.URL, logger logging.Logger) (ObjectBuilder) {
+func (b ObjectBuilder) WithProtocolUri(protocolURI *url.URL, logger logging.Logger) (ObjectBuilder) {
 	b.protocol = protocolURI.Scheme
 	b.bucket = protocolURI.Host
 	b.key = protocolURI.Path
@@ -158,7 +158,7 @@ func (b ObjectBuilder) parsingObjURLStr(logger logging.Logger) (ObjectBuilder, e
 
 	scheme := objURL.Scheme
 	if scheme == protocolSwift || scheme == protocolS3 {
-		return b.withProtocolURI(objURL, logger), nil
+		return b.WithProtocolUri(objURL, logger), nil
 	}
 
 	var s3Uri *url.URL
@@ -174,7 +174,7 @@ func (b ObjectBuilder) parsingObjURLStr(logger logging.Logger) (ObjectBuilder, e
 		if err != nil {
 			return b, err
 		}
-		return b.withProtocolURI(s3Uri, logger), nil
+		return b.WithProtocolUri(s3Uri, logger), nil
 	}
 	return b, fmt.Errorf("object URL '%v' is not of form s3://<bucket>/<key>, swift://<container>//<name>, or http(s)://<S3 endpoint>/<bucket>/<key>", objURL)
 }

@@ -26,10 +26,10 @@ type SwiftObject struct {
 
 func (obj *SwiftObject) Pretty() string {
 	format := `SwiftObject { 
-		container: '%v' 
-		objectName: '%v' 
-		cnxParams: %v 
-		logger: %v 
+		container:      '%v' 
+		objectName:     '%v' 
+		cnxParams:       %v 
+		logger:          %v 
 		swiftConnection: %v
 	}`
 	format = logging.Untabify(format, " ")

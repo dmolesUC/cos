@@ -26,22 +26,24 @@ type S3Object struct {
 	goOutput   *s3.GetObjectOutput
 }
 
+func (obj *S3Object) Pretty() string {
+	format := `S3Object { 
+				region:  '%v' 
+				endpoint: %v 
+				bucket:  '%v' 
+		        key :    '%v'
+				logger:   %v 
+				session: '%v'
+			}`
+	format = logging.Untabify(format, " ")
+	args := logging.Prettify(obj.region, obj.formatEndpoint(), obj.bucket, obj.key, obj.logger, obj.formatSession())
+	return fmt.Sprintf(format, args...)
+}
+
 func (obj *S3Object) String() string {
-	var endpointStr string
-	if obj.endpoint == nil {
-		endpointStr = "<nil>"
-	} else {
-		endpointStr = obj.Endpoint().String()
-	}
-	var sessionStr string
-	if obj.awsSession == nil {
-		sessionStr = "<nil>"
-	} else {
-		sessionStr = "(initialized)"
-	}
 	return fmt.Sprintf(
 		"{region: %v, endpoint: %v, bucket: %v, key: %v, logger: %v, awsSession: %v}",
-		obj.region, endpointStr, obj.bucket, obj.key, obj.logger, sessionStr,
+		obj.region, obj.formatEndpoint(), obj.bucket, obj.key, obj.logger, obj.formatSession(),
 	)
 }
 
@@ -222,3 +224,24 @@ func (obj *S3Object) getObject() (*s3.GetObjectOutput, error) {
 	}
 	return obj.goOutput, err
 }
+
+func (obj *S3Object) formatSession() string {
+	var sessionStr string
+	if obj.awsSession == nil {
+		sessionStr = "<nil>"
+	} else {
+		sessionStr = "(initialized)"
+	}
+	return sessionStr
+}
+
+func (obj *S3Object) formatEndpoint() string {
+	var endpointStr string
+	if obj.endpoint == nil {
+		endpointStr = "<nil>"
+	} else {
+		endpointStr = obj.Endpoint().String()
+	}
+	return endpointStr
+}
+
