@@ -132,6 +132,11 @@ func (obj *SwiftObject) StreamUp(body io.Reader) (err error) {
 	return errors.New("not implemented")
 }
 
+func (obj *SwiftObject) Delete() (err error) {
+	// TODO: implement this
+	return errors.New("not implemented")
+}
+
 // ------------------------------------------------------------
 // Unexported functions
 

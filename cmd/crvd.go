@@ -43,6 +43,7 @@ type crvdFlags struct {
 	Size     int64
 	Seed     int64
 	Zero     bool
+	Keep     bool
 }
 
 func (f crvdFlags) Pretty() string {
@@ -91,9 +92,18 @@ func crvd(bucketStr string, flags crvdFlags) (err error) {
 
 	var crvd = pkg.Crvd{Object: obj}
 	random := rand.New(rand.NewSource(flags.Seed))
-	digest, err := crvd.CreateRetrieveValidate(random, flags.Size)
-	if err == nil {
-		logger.Detailf("created %v://%v/%v (%d bytes, SHA-256 digest %x)", obj.Protocol(), *obj.Bucket(), *obj.Key(), flags.Size, digest)
+
+	var digest []byte
+	if flags.Keep {
+		digest, err = crvd.CreateRetrieveValidate(random, flags.Size)
+		if err == nil {
+			logger.Infof("created %v (%d bytes, SHA-256 digest %x)\n", objects.ProtocolUriStr(obj), flags.Size, digest)
+		}
+	} else {
+		digest, err = crvd.CreateRetrieveValidateDelete(random, flags.Size)
+		if err == nil {
+			logger.Infof("verified and deleted %v (%d bytes, SHA-256 digest %x)\n", objects.ProtocolUriStr(obj), flags.Size, digest)
+		}
 	}
 	return err
 }
@@ -112,11 +122,12 @@ func init() {
 			return crvd(args[0], flags)
 		},
 	}
+	cmd.Flags().BoolVarP(&flags.Keep, "keep", "", false, "keep object after verification (defaults to false)")
 	cmd.Flags().StringVarP(&flags.Endpoint, "endpoint", "e", "", "endpoint: HTTP(S) URL (required)")
 	cmd.Flags().StringVarP(&flags.Key, "key", "k", "", "key to create (defaults to cos-crvd-TIMESTAMP.bin)")
 	cmd.Flags().Int64VarP(&flags.Size, "random-seed", "", 0, "seed for random-number generator")
 	cmd.Flags().StringVarP(&flags.Region, "region", "r", "", "S3 region (if not in endpoint URL; default \""+protocols.DefaultAwsRegion+"\")")
-	cmd.Flags().Int64VarP(&flags.Size, "size", "s", 1024, "size in bytes of object to create (if --zero not set)")
+	cmd.Flags().Int64VarP(&flags.Size, "size", "s", 1024, "size in bytes of object to create, if --zero not set")
 	cmd.Flags().BoolVarP(&flags.Verbose, "verbose", "v", false, "verbose output")
 	cmd.Flags().BoolVarP(&flags.Zero, "zero", "z", false, "whether to generate a zero-byte file")
 

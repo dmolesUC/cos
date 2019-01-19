@@ -23,3 +23,9 @@ func Untabify(text string, indent string) string {
 	return regexp.MustCompile(`(?m)^[\t ]+`).ReplaceAllString(text, indent)
 }
 
+func PrettyStrP(s *string) string {
+	if s == nil {
+		return "<nil>"
+	}
+	return *s
+}

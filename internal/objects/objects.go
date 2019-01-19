@@ -22,8 +22,13 @@ type Object interface {
 	ContentLength() (int64, error)
 	StreamDown(rangeSize int64, handleBytes func([]byte) error) (int64, error)
 	StreamUp(body io.Reader) (err error)
+	Delete() (err error)
 	Logger() logging.Logger
 	Reset()
+}
+
+func ProtocolUriStr(obj Object) string {
+	return fmt.Sprintf("%v://%v/%v", obj.Protocol(), logging.PrettyStrP(obj.Bucket()), logging.PrettyStrP(obj.Key()))
 }
 
 // CalcDigest calculates the digest of the object using the specified algorithm

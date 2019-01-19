@@ -173,6 +173,20 @@ func (obj *S3Object) StreamUp(body io.Reader) (err error) {
 	return err
 }
 
+func (obj *S3Object) Delete() (err error) {
+	awsSession, err := obj.sessionP()
+	if err != nil {
+		return err
+	}
+	doInput := s3.DeleteObjectInput{
+		Bucket: obj.Bucket(),
+		Key: obj.Key(),
+	}
+	obj.Logger().Detailf("deleting %v\n", ProtocolUriStr(obj))
+	_, err = s3.New(awsSession).DeleteObject(&doInput)
+	return err
+}
+
 // ------------------------------------------------------------
 // Unexported functions
 
