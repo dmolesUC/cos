@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"sync"
 )
 
 // ------------------------------------------------------------
@@ -41,10 +42,14 @@ var logFatal = log.Fatal
 // Partial base Logger implementation
 type infoLogger struct {
 	out io.Writer
+	mux sync.Mutex
 }
 
 // Logger.Info() implementation: log to stderr
 func (l infoLogger) Info(a ...interface{}) {
+	l.mux.Lock()
+	defer l.mux.Unlock()
+
 	pretty := Prettify(a...)
 	_, err := fmt.Fprintln(l.out, pretty...)
 	if err != nil {
@@ -54,6 +59,9 @@ func (l infoLogger) Info(a ...interface{}) {
 
 // Logger.Infof() implementation: log to stderr
 func (l infoLogger) Infof(format string, a ...interface{}) {
+	l.mux.Lock()
+	defer l.mux.Unlock()
+
 	pretty := Prettify(a...)
 	_, err := fmt.Fprintf(l.out, format, pretty...)
 	if err != nil {

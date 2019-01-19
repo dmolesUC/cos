@@ -37,6 +37,10 @@ func (obj *SwiftObject) Pretty() string {
 	return fmt.Sprintf(format, args...)
 }
 
+func (obj *SwiftObject) Reset() {
+	obj.swiftConnection = nil
+}
+
 func (obj *SwiftObject) String() string {
 	return fmt.Sprintf("SwiftObject { container: '%v', objectName: '%v', cnxParams: %v, logger: %v, swiftConnection: %v }",
 		obj.container,

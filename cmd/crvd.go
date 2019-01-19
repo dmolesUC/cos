@@ -89,16 +89,11 @@ func crvd(bucketStr string, flags crvdFlags) (err error) {
 		return err
 	}
 
-	//if true {
-	//	return nil
-	//}
-
-	random := rand.New(rand.NewSource(flags.Seed))
-
 	var crvd = pkg.Crvd{Object: obj}
+	random := rand.New(rand.NewSource(flags.Seed))
 	digest, err := crvd.CreateRetrieveValidate(random, flags.Size)
 	if err == nil {
-		logger.Detailf("%d bytes created, retrieved, and validated; digest: %v", flags.Size, digest)
+		logger.Detailf("created %v (%d bytes, SHA-256 digest %x)", obj.Key(), flags.Size, digest)
 	}
 	return err
 }

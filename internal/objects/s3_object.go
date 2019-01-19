@@ -47,6 +47,11 @@ func (obj *S3Object) String() string {
 	)
 }
 
+func (obj *S3Object) Reset() {
+	obj.awsSession = nil
+	obj.goOutput = nil
+}
+
 func (obj *S3Object) Logger() logging.Logger {
 	return obj.logger
 }
@@ -159,7 +164,7 @@ func (obj *S3Object) StreamUp(body io.Reader) (err error) {
 		Body:   body,
 	})
 	if err == nil {
-		obj.logger.Detailf("upload successful to %v", result.Location)
+		obj.logger.Detailf("upload successful to %v\n", result.Location)
 	}
 	return err
 }

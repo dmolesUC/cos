@@ -18,8 +18,20 @@ type Crvd struct {
 func (c *Crvd) CreateRetrieveValidate(body io.Reader, contentLength int64) (digest []byte, err error) {
 	digest, err = c.create(body, contentLength)
 	if err == nil {
-		check := Check{Object: c.Object, Expected: digest, Algorithm: "sha-256"}
-		return check.CalcDigest()
+		obj := c.Object
+		obj.Logger().Detailf("calculated digest on upload: %x\n", digest)
+
+		obj.Reset()
+		var actualLength int64
+		actualLength, err = obj.ContentLength()
+		if err == nil {
+			if actualLength != contentLength {
+				return digest, fmt.Errorf("content-length mismatch: expected: %d, actual: %d", contentLength, actualLength)
+			}
+			obj.Logger().Detailf("uploaded %d bytes\n", contentLength)
+			check := Check{Object: obj, Expected: digest, Algorithm: "sha256"}
+			return check.CalcDigest()
+		}
 	}
 	return digest, err
 }
@@ -27,6 +39,7 @@ func (c *Crvd) CreateRetrieveValidate(body io.Reader, contentLength int64) (dige
 func (c *Crvd) create(body io.Reader, contentLength int64) ([] byte, error) {
 	// TODO: extract most of this to a struct & clean up
 	obj := c.Object
+	logger := obj.Logger()
 
 	errs := make(chan error, 3)
 
@@ -41,7 +54,8 @@ func (c *Crvd) create(body io.Reader, contentLength int64) ([] byte, error) {
 		defer func() {
 			errs <- pw.Close()
 		}()
-		errs <- obj.StreamUp(tr)
+		errs <- obj.StreamUp(io.LimitReader(tr, contentLength))
+		logger.Detail("upload goroutine complete")
 	}()
 
 	hash := sha256.New()
@@ -53,26 +67,28 @@ func (c *Crvd) create(body io.Reader, contentLength int64) ([] byte, error) {
 		}
 		streamer, err := streaming.NewStreamer(streaming.DefaultRangeSize, contentLength, &fillRange)
 		if err == nil {
-			logger := obj.Logger()
 			bytesRead, err2 := streamer.StreamDown(logger, func(bytes []byte) error {
 				_, err := hash.Write(bytes)
 				return err
 			})
 			if bytesRead != contentLength {
-				logger.Detailf("expected %d bytes, got %d", contentLength, bytesRead)
+				logger.Detailf("expected %d bytes, got %d\n", contentLength, bytesRead)
 			}
 			err = err2
 		}
-		if err != nil {
-			errs <- err
-		}
+		errs <- err
+		logger.Detail("hashing goroutine complete")
 	}()
+
+	logger.Detail("waiting for goroutines to complete")
 	streamWg.Wait()
 	close(errs)
 
 	var allErrs []string
 	for err := range errs {
-		allErrs = append(allErrs, err.Error())
+		if err != nil {
+			allErrs = append(allErrs, err.Error())
+		}
 	}
 	if len(allErrs) > 0 {
 		return nil, fmt.Errorf("error(s) creating object: %v", strings.Join(allErrs, ", "))

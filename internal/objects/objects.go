@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash"
 	"io"
+	"log"
 	"net/url"
 
 	"github.com/dmolesUC3/cos/internal/logging"
@@ -21,6 +22,7 @@ type Object interface {
 	StreamDown(rangeSize int64, handleBytes func([]byte) error) (int64, error)
 	StreamUp(body io.Reader) (err error)
 	Logger() logging.Logger
+	Reset()
 }
 
 // CalcDigest calculates the digest of the object using the specified algorithm
@@ -56,6 +58,9 @@ func ValidAbsURL(urlStr string) (*url.URL, error) {
 func newHash(algorithm string) hash.Hash {
 	if algorithm == "sha256" {
 		return sha256.New()
+	} else if algorithm == "md5" {
+		return md5.New()
 	}
-	return md5.New()
+	log.Fatalf("unsupported digest algorithm: '%v'\n", algorithm)
+	return nil
 }
