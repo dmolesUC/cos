@@ -128,6 +128,7 @@ func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) err
 }
 
 func (obj *SwiftObject) StreamUp(body io.Reader) (err error) {
+	// TODO: implement this
 	return errors.New("not implemented")
 }
 
