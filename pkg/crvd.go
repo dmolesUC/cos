@@ -29,7 +29,7 @@ func (c *Crvd) CreateRetrieveValidate(body io.Reader, contentLength int64) (dige
 				return digest, fmt.Errorf("content-length mismatch: expected: %d, actual: %d", contentLength, actualLength)
 			}
 			obj.Logger().Detailf("uploaded %d bytes\n", contentLength)
-			obj.Logger().Detailf("validating %v (expected digest: %x)\n", objects.ProtocolUriStr(obj), digest)
+			obj.Logger().Infof("validating %v (expected digest: %x)\n", objects.ProtocolUriStr(obj), digest)
 			check := Check{Object: obj, Expected: digest, Algorithm: "sha256"}
 			return check.CalcDigest()
 		}
@@ -63,7 +63,7 @@ func (c *Crvd) create(body io.Reader, contentLength int64) ([] byte, error) {
 		defer func() {
 			errs <- pw.Close()
 		}()
-		logger.Detailf("uploading %d bytes to %v\n", contentLength, objects.ProtocolUriStr(obj))
+		logger.Infof("uploading %d bytes to %v\n", contentLength, objects.ProtocolUriStr(obj))
 		lr := io.LimitReader(tr, contentLength)
 		errs <- obj.StreamUp(lr)
 		logger.Detail("upload goroutine complete")
