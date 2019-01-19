@@ -24,6 +24,10 @@ type SwiftObject struct {
 	swiftConnection *swift.Connection
 }
 
+func (obj *SwiftObject) Protocol() string {
+	return protocolSwift
+}
+
 func (obj *SwiftObject) Pretty() string {
 	format := `SwiftObject { 
 		container:      '%v' 

@@ -93,7 +93,7 @@ func crvd(bucketStr string, flags crvdFlags) (err error) {
 	random := rand.New(rand.NewSource(flags.Seed))
 	digest, err := crvd.CreateRetrieveValidate(random, flags.Size)
 	if err == nil {
-		logger.Detailf("created %v (%d bytes, SHA-256 digest %x)", obj.Key(), flags.Size, digest)
+		logger.Detailf("created %v://%v/%v (%d bytes, SHA-256 digest %x)", obj.Protocol(), *obj.Bucket(), *obj.Key(), flags.Size, digest)
 	}
 	return err
 }

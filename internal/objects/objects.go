@@ -15,6 +15,7 @@ import (
 
 // The Object type represents the location of an object in cloud storage.
 type Object interface {
+	Protocol() string
 	Endpoint() *url.URL
 	Bucket() *string
 	Key() *string

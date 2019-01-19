@@ -26,6 +26,10 @@ type S3Object struct {
 	goOutput   *s3.GetObjectOutput
 }
 
+func (obj *S3Object) Protocol() string {
+	return protocolS3
+}
+
 func (obj *S3Object) Pretty() string {
 	format := `S3Object { 
 				region:  '%v' 
