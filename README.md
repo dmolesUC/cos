@@ -50,6 +50,8 @@ cos check -v \
   'swift://distrib.stage.9001.__c5e/ark:/99999/fk4kw5kc1z|1|producer/6GBZeroFile.txt'
 ```
 
+<!-- TODO: document crvd -->
+
 ## For developers
 
 `cos` is a [Go 1.11 module](https://github.com/golang/go/wiki/Modules). 
