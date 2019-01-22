@@ -24,7 +24,7 @@ type Progress struct {
 
 func (p *Progress) InfoTo(logger logging.Logger) {
 	logger.Infof(
-		"read %v of %v (%v/s; %v elapsed, %v remaining)\n",
+		"%v of %v (%v/s; %v elapsed, %v remaining)\n",
 		p.TotalBytesStr(), p.ContentLengthStr(), p.EstimatedBytesPerSecondStr(), p.NsElapsedStr(), p.NsRemainingStr(),
 	)
 }
