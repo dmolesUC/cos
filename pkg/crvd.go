@@ -67,7 +67,7 @@ func (c *Crvd) create(body io.Reader, contentLength int64) ([] byte, error) {
 		}()
 		logger.Infof("uploading %d bytes to %v\n", contentLength, objects.ProtocolUriStr(obj))
 		lr := io.LimitReader(tr, contentLength)
-		errs <- obj.StreamUp(lr)
+		errs <- obj.StreamUp(lr, contentLength)
 		logger.Detail("upload goroutine complete")
 	}()
 

@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/url"
 
+	"code.cloudfoundry.org/bytefmt"
 	"github.com/ncw/swift"
 
 	"github.com/dmolesUC3/cos/internal/logging"
@@ -12,7 +13,11 @@ import (
 	"github.com/dmolesUC3/cos/internal/streaming"
 )
 
-const defaultRetries = 3
+const (
+	defaultRetries   = 3
+	dloSizeThreshold = int64(2 * bytefmt.GIGABYTE)
+	//dloSegmentSize   = int64(bytefmt.GIGABYTE) // TODO: any way to set this?
+)
 
 // SwiftObject is an OpenStack Swift implementation of Object
 type SwiftObject struct {
@@ -126,20 +131,44 @@ func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) err
 	return streamer.StreamDown(obj.logger, handleBytes)
 }
 
-func (obj *SwiftObject) StreamUp(body io.Reader) error {
+func (obj *SwiftObject) StreamUp(body io.Reader, length int64) error {
 	cnx, err := obj.connection()
 	if err != nil {
 		return err
 	}
+	logger := obj.logger
+
 	// TODO: allow object to include an expected MD5
-	out, err := cnx.ObjectCreate(obj.container, obj.objectName, false, "", "", nil)
-	//noinspection GoUnhandledErrorResult
-	defer out.Close()
+	var out io.WriteCloser
+	if length <= dloSizeThreshold {
+		out, err = cnx.ObjectCreate(obj.container, obj.objectName, false, "", "", nil)
+	} else {
+		logger.Detailf(
+			"object size %d is greater than single-object maximum %d; creating dynamic large object\n",
+			length, dloSizeThreshold,
+		)
+		dloOpts := swift.LargeObjectOpts{
+			Container:  obj.container,
+			ObjectName: obj.objectName,
+			ChunkSize: streaming.DefaultRangeSize,
+		}
+		out, err = cnx.DynamicLargeObjectCreate(&dloOpts)
+	}
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		err := out.Close()
+		if err != nil {
+			logger.Detailf("error closing upload stream: %v\n", err)
+		}
+	}()
 
 	buffer := make([]byte, streaming.DefaultRangeSize)
 	written, err := io.CopyBuffer(out, body, buffer)
 	if err == nil {
-		obj.logger.Detailf("wrote %d bytes to %v/%v\n", written, obj.container, obj.objectName)
+		logger.Detailf("wrote %d bytes to %v/%v\n", written, obj.container, obj.objectName)
 	}
 	return err
 }

@@ -21,7 +21,7 @@ type Object interface {
 	Key() *string
 	ContentLength() (int64, error)
 	StreamDown(rangeSize int64, handleBytes func([]byte) error) (int64, error)
-	StreamUp(body io.Reader) (err error)
+	StreamUp(body io.Reader, length int64) (err error)
 	Delete() (err error)
 	Logger() logging.Logger
 	Reset()

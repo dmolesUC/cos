@@ -156,7 +156,7 @@ func (obj *S3Object) StreamDown(rangeSize int64, handleBytes func([]byte) error)
 	return streamer.StreamDown(obj.logger, handleBytes)
 }
 
-func (obj *S3Object) StreamUp(body io.Reader) (err error) {
+func (obj *S3Object) StreamUp(body io.Reader, length int64) (err error) {
 	awsSession, err := obj.sessionP()
 	if err != nil {
 		return err
