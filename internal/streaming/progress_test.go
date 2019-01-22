@@ -46,13 +46,7 @@ func (s *ProgressSuite) TestInfoTo(c *C) {
 	progress.InfoTo(s.logger)
 	c.Assert(len(s.logger.Infos), Equals, 1)
 
-	expectedKiBps := float64(2048)
-	expectedNsRemaining := int64(31) * nsElapsed
-
-	expected := fmt.Sprintf(
-		"read %d of %d bytes (%0.f KiB/s; %v elapsed, %v remaining)\n",
-		totalBytes, contentLength, expectedKiBps, formatNanos(nsElapsed), formatNanos(expectedNsRemaining),
-	)
+	expected :=  "read 32M of 1G (2M/s; 16s elapsed, 8m 16s remaining)\n"
 	c.Assert(s.logger.Infos[0], Equals, expected)
 }
 

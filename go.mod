@@ -1,13 +1,19 @@
 module github.com/dmolesUC3/cos
 
 require (
-	github.com/BurntSushi/toml v0.3.1 // indirect
+	code.cloudfoundry.org/bytefmt v0.0.0-20180906201452-2aa6f33b730c
 	github.com/aws/aws-sdk-go v1.16.13
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
-	github.com/mitchellh/go-homedir v1.0.0
 	github.com/ncw/swift v1.0.43
+	github.com/onsi/ginkgo v1.7.0 // indirect
+	github.com/onsi/gomega v1.4.3 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/cobra v0.0.3
-	github.com/spf13/viper v1.3.1
+	github.com/spf13/pflag v1.0.3 // indirect
+	github.com/stretchr/testify v1.2.2 // indirect
 	golang.org/x/net v0.0.0-20181220203305-927f97764cc3 // indirect
+	golang.org/x/sys v0.0.0-20181205085412-a5c9d58dba9a // indirect
 	gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405
+	gopkg.in/yaml.v2 v2.2.2 // indirect
 )

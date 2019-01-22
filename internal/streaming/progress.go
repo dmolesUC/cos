@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"code.cloudfoundry.org/bytefmt"
+
 	"github.com/dmolesUC3/cos/internal/logging"
 )
 
@@ -13,25 +15,33 @@ const nsPerHour = int64(time.Hour)
 const nsPerSecondFloat64 = float64(time.Second)
 
 type Progress struct {
-	NsElapsed     int64
-	TotalBytes    int64
-	ContentLength int64
+	NsElapsed               int64
+	TotalBytes              int64
+	ContentLength           int64
 	estimatedBytesPerSecond *float64
-	estNsRemaining *int64
-}
-
-func (p *Progress) DetailTo(logger logging.Logger) {
-	logger.Detailf(
-		"read %d of %d bytes (%0.f KiB/s; %v elapsed, %v remaining)\n",
-		p.TotalBytes, p.ContentLength, p.EstimatedKibPerSecond(), p.NsElapsedStr(), p.NsRemainingStr(),
-	)
+	estNsRemaining          *int64
 }
 
 func (p *Progress) InfoTo(logger logging.Logger) {
 	logger.Infof(
-		"read %d of %d bytes (%0.f KiB/s; %v elapsed, %v remaining)\n",
-		p.TotalBytes, p.ContentLength, p.EstimatedKibPerSecond(), p.NsElapsedStr(), p.NsRemainingStr(),
+		"read %v of %v (%v/s; %v elapsed, %v remaining)\n",
+		p.TotalBytesStr(), p.ContentLengthStr(), p.EstimatedBytesPerSecondStr(), p.NsElapsedStr(), p.NsRemainingStr(),
 	)
+}
+
+func (p *Progress) TotalBytesStr() string {
+	totalBytes := uint64(p.TotalBytes)
+	return bytefmt.ByteSize(totalBytes)
+}
+
+func (p *Progress) ContentLengthStr() string {
+	contentLength := uint64(p.ContentLength)
+	return bytefmt.ByteSize(contentLength)
+}
+
+func (p *Progress) EstimatedBytesPerSecondStr() string {
+	estBps := uint64(p.EstimatedBytesPerSecond())
+	return bytefmt.ByteSize(estBps)
 }
 
 func (p *Progress) EstimatedKibPerSecond() float64 {
