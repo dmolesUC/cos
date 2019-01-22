@@ -6,11 +6,40 @@ A tool for checking cloud object storage.
 
 ### Create/retrieve/verify/delete with `cos crvd`
 
+#### S3 (including Minio)
+
+Amazon (Merritt Stage) example with implicit credentials:
+
+```
+cos crvd s3://uc3-s3mrt5001-stg/ -e https://s3-s3-us-west-2.amazonaws.com/
+```
+
+Minio example with explicit credentials:
+
+```
+AWS_ACCESS_KEY_ID=<access key> \
+AWS_SECRET_ACCESS_KEY=<secret access key> \
+cos crvd s3://mrt-test/ -e http://localhost:9000/
+```
+
+#### OpenStack/Swift
+
+Note that for OpenStack Swift, the credentials must always be specified
+explicitly with the SWIFT_API_USER and SWIFT_API_KEY environment variables, and
+the bucket URL must be in `swift://<container>/` form, with an explicit
+`--endpoint` parameter.
+
+```
+SWIFT_API_USER=<user> \
+SWIFT_API_KEY=<key> \
+cos crvd -v swift://distrib.stage.9001.__c5e/ -e http://cloud.sdsc.edu/auth/v1.0 
+```
+
 ### Fixity checking with `cos check`
 
-#### Amazon (Merrit Stage) example with implicit credentials:
+#### S3 (including Minio)
 
-S3 keys for Merritt objects are of the form `<ark>|<version>|<pathname>`. 
+Amazon (Merritt Stage) example with implicit credentials:
 
 ```
 cos check -v \
@@ -26,7 +55,9 @@ cos check -v \
   -x c0916ef45d917578e4dcdc3045d9340738d0e750c0ab9f6a8e866aa28da677df
 ```
 
-#### Minio example with explicit credentials:
+(S3 keys for Merritt objects are of the form `<ark>|<version>|<pathname>`.) 
+
+Minio example with explicit credentials:
 
 ```
 AWS_ACCESS_KEY_ID=<access key> \
@@ -34,7 +65,7 @@ AWS_SECRET_ACCESS_KEY=<secret access key> \
 cos check http://127.0.0.1:9000/mrt-test/inusitatum.png -a md5 -x cadf871cd4135212419f488f42c62482`
 ```
 
-#### Amazon example with explicit credentials:
+Amazon example with explicit credentials:
 
 ```
 AWS_ACCESS_KEY_ID=<access key> \
@@ -42,7 +73,12 @@ AWS_SECRET_ACCESS_KEY=<secret access key> \
 cos check https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg
 ```
 
-#### OpenStack/Swift example with explicit credentials
+#### OpenStack/Swift
+
+Note that for OpenStack Swift, the credentials must always be specified
+explicitly with the SWIFT_API_USER and SWIFT_API_KEY environment variables, and
+the object URL must be in `swift://<container>/<name>` form, with an explicit
+`--endpoint` parameter.
 
 ```
 SWIFT_API_USER=<user> \
