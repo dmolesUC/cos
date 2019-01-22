@@ -10,14 +10,16 @@ import (
 )
 
 const (
-	shortDescRoot = "cos: cloud object storage checker"
+	shortDescRoot = "cos: a cloud object storage tool"
 	longDescRoot  = shortDescRoot + `
-        cos is a tool for checking cloud object storage
 
-		Uses AWS credentials from ~/.aws/config, or other config file specified
-		with the AWS_CONFIG_FILE environment variable. Credentials can also be
-		specified with the AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment
-		variables.
+        cos is a tool for testing and validating cloud object storage.
+
+		For S3, cos uses AWS credentials from ~/.aws/config, or any alternate config
+        file specified with the AWS_CONFIG_FILE environment variable. Credentials can
+        also be specified with the AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment
+		variables. When running in an EC2 environment, cos can also access IAM role
+        credentials.
 
         Note that for OpenStack Swift, the API username and key must be specified
         with the SWIFT_API_USER and SWIFT_API_KEY environment variables.

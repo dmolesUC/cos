@@ -159,7 +159,7 @@ func init() {
 	cmd.Flags().BoolVarP(&flags.Keep, "keep", "", false, "keep object after verification (defaults to false)")
 	cmd.Flags().StringVarP(&flags.Endpoint, "endpoint", "e", "", "endpoint: HTTP(S) URL (required)")
 	cmd.Flags().StringVarP(&flags.Key, "key", "k", "", "key to create (defaults to cos-crvd-TIMESTAMP.bin)")
-	cmd.Flags().Int64VarP(&flags.Seed, "random-seed", "", 0, "seed for random-number generator")
+	cmd.Flags().Int64VarP(&flags.Seed, "random-seed", "", 0, "seed for random-number generator (default 0)")
 	cmd.Flags().StringVarP(&flags.Region, "region", "r", "", "S3 region (if not in endpoint URL; default \""+protocols.DefaultAwsRegion+"\")")
 	cmd.Flags().StringVarP(&flags.Size, "size", "s", "1K", "size in bytes of object to create, if --zero not set")
 	cmd.Flags().BoolVarP(&flags.Verbose, "verbose", "v", false, "verbose output")
