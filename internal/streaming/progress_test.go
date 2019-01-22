@@ -22,8 +22,6 @@ func (s *ProgressSuite) TearDownTest(c *C) {
 }
 
 func (s *ProgressSuite) TestProgress(c *C) {
-	// TODO: move this into fixture, & split assertions
-
 	totalBytes := int64(2048 * 1024 * 16)
 	nsElapsed := int64(16) * int64(time.Second)
 	contentLength := totalBytes * 32

@@ -105,37 +105,3 @@ func (s *ObjectSuite) TestValidationFailureNoKey(c *C) {
 	_, err := b.Build(s.logger)
 	c.Assert(err, ErrorMatches, ".*key.*")
 }
-
-// TODO: uncommment these; add explicit region; test for region w/swift
-
-//func (s *ObjectSuite) TestRegionFromEndpoint(c *C) {
-//	expectedRegion := "cn-north-1"
-//	expectedKey := "/foo/bar/baz.qux"
-//	expectedBucket := "example.org"
-//	expectedEndpoint, _ := url.Parse("https://s3-cn-north-1.amazonaws.com/")
-//
-//	b := NewObjectBuilder().
-//		WithEndpoint(expectedEndpoint).
-//		WithKey(expectedKey).
-//		WithBucket(expectedBucket)
-//
-//	o, err := b.Build(s.logger)
-//	c.Assert(err, IsNil)
-//	c.Assert(*o.Region(), Equals, expectedRegion)
-//}
-//
-//func (s *ObjectSuite) TestRegionDefault(c *C) {
-//	expectedKey := "/foo/bar/baz.qux"
-//	expectedBucket := "example.org"
-//	expectedEndpoint, _ := url.Parse("https://endpoint.example.org/")
-//
-//	b := NewObjectBuilder().
-//		WithEndpoint(expectedEndpoint).
-//		WithKey(expectedKey).
-//		WithBucket(expectedBucket)
-//
-//	o, err := b.Build(s.logger)
-//	c.Assert(err, IsNil)
-//	c.Assert(*o.Region(), Equals, DefaultAwsRegion)
-//}
-

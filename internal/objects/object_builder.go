@@ -81,7 +81,7 @@ func (b ObjectBuilder) Build(logger logging.Logger) (Object, error) {
 		return nil, err
 	}
 	if builder.protocol == protocolS3 {
-		builder = builder.ensureRegion(logger)
+		builder.region = protocols.EnsureS3Region(builder.region, builder.endpoint, logger)
 		if builder.region == "" {
 			return nil, fmt.Errorf("unable to determine region for S3 object")
 		}
@@ -186,22 +186,4 @@ func (b ObjectBuilder) parsingEndpointStr() (ObjectBuilder, error) {
 	endpoint, err := ValidAbsURL(b.endpointStr)
 	b.endpoint = endpoint
 	return b, err
-}
-
-func (b ObjectBuilder) ensureRegion(logger logging.Logger) ObjectBuilder {
-	// TODO: can some of this move into s3_utils?
-	if b.region == "" {
-		region, err := protocols.RegionFromEndpoint(b.endpoint)
-		if err == nil {
-			logger.Detailf("Found AWS region in endpoint URL %v: %v\n", b.endpoint, *region)
-			b.region = *region
-		} else {
-			logger.Detailf("No AWS region found in endpoint URL '%v' (%v); using default region %v\n", b.endpoint, err, protocols.DefaultAwsRegion)
-			regionStr := protocols.DefaultAwsRegion
-			b.region = regionStr
-		}
-	} else {
-		logger.Detailf("Using specified AWS region: %v\n", b.region)
-	}
-	return b
 }

@@ -202,21 +202,7 @@ func (obj *S3Object) sessionP() (*session.Session, error) {
 	var err error
 	if obj.awsSession == nil {
 		endpointStr := obj.endpoint.String()
-		verboseLogging := obj.logger.Verbose()
-		// TODO: move this all back to s3_utils
-		obj.awsSession, err = protocols.InitS3Session(&endpointStr, obj.regionP(), verboseLogging)
-		isEC2, err := protocols.IsEC2()
-		if err != nil {
-			obj.logger.Detailf("Rrror trying to determine whether we're running in EC2 (assume we're not): %v", err)
-			isEC2 = false
-		}
-		if isEC2 {
-			obj.logger.Detailf("Running in EC2; allowing IAM role credentials\n")
-		} else {
-			// TODO: https://github.com/aws/aws-sdk-go/issues/2392
-			obj.logger.Detailf("Not running in EC2; disallowing IAM role credentials\n")
-			return protocols.ValidateCredentials(obj.awsSession)
-		}
+		obj.awsSession, err = protocols.ValidS3Session(&endpointStr, obj.regionP(), obj.logger)
 	}
 	return obj.awsSession, err
 }
