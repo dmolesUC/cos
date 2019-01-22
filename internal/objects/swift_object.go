@@ -140,7 +140,7 @@ func (obj *SwiftObject) StreamUp(body io.Reader, length int64) error {
 
 	// TODO: allow object to include an expected MD5
 	var out io.WriteCloser
-	if length <= dloSizeThreshold {
+	if length <= dloSizeThreshold { // 5 GiB
 		out, err = cnx.ObjectCreate(obj.container, obj.objectName, false, "", "", nil)
 	} else {
 		logger.Detailf(
@@ -150,11 +150,12 @@ func (obj *SwiftObject) StreamUp(body io.Reader, length int64) error {
 		dloOpts := swift.LargeObjectOpts{
 			Container:  obj.container,
 			ObjectName: obj.objectName,
-			ChunkSize: streaming.DefaultRangeSize,
+			ChunkSize: streaming.DefaultRangeSize, // 5 MiB
 		}
-		out, err = cnx.DynamicLargeObjectCreate(&dloOpts)
+		out, err = cnx.DynamicLargeObjectCreateFile(&dloOpts)
 	}
 	if err != nil {
+		logger.Detailf("error opening upload stream: %v\n", err)
 		return err
 	}
 
@@ -167,9 +168,10 @@ func (obj *SwiftObject) StreamUp(body io.Reader, length int64) error {
 
 	buffer := make([]byte, streaming.DefaultRangeSize)
 	written, err := io.CopyBuffer(out, body, buffer)
-	if err == nil {
-		logger.Detailf("wrote %d bytes to %v/%v\n", written, obj.container, obj.objectName)
+	if err != nil {
+		logger.Detailf("error writing to upload stream: %v\n", err)
 	}
+	logger.Detailf("wrote %d bytes to %v/%v\n", written, obj.container, obj.objectName)
 	return err
 }
 
