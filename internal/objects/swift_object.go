@@ -1,7 +1,6 @@
 package objects
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -127,14 +126,28 @@ func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) err
 	return streamer.StreamDown(obj.logger, handleBytes)
 }
 
-func (obj *SwiftObject) StreamUp(body io.Reader) (err error) {
-	// TODO: implement this
-	return errors.New("not implemented")
+func (obj *SwiftObject) StreamUp(body io.Reader) error {
+	cnx, err := obj.connection()
+	if err != nil {
+		return err
+	}
+	// TODO: allow object to include an expected MD5
+	ocf, err := cnx.ObjectCreate(obj.container, obj.objectName, false, "", "", nil)
+	buffer := make([]byte, streaming.DefaultRangeSize)
+	written, err := io.CopyBuffer(ocf, body, buffer)
+	if err == nil {
+		obj.logger.Detailf("wrote %d bytes to %v/%v", written, obj.container, obj.objectName)
+	}
+	return err
 }
 
 func (obj *SwiftObject) Delete() (err error) {
-	// TODO: implement this
-	return errors.New("not implemented")
+	cnx, err := obj.connection()
+	if err != nil {
+		return err
+	}
+	// TODO: detect DynamicLargeObjects
+	return cnx.ObjectDelete(obj.container, obj.objectName)
 }
 
 // ------------------------------------------------------------

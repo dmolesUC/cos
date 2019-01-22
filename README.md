@@ -4,6 +4,8 @@ A tool for checking cloud object storage.
 
 ## Running
 
+### Create/retrieve/verify/delete with `cos crvd`
+
 ### Fixity checking with `cos check`
 
 #### Amazon (Merrit Stage) example with implicit credentials:
@@ -49,8 +51,6 @@ cos check -v \
   -e 'http://cloud.sdsc.edu/auth/v1.0' \
   'swift://distrib.stage.9001.__c5e/ark:/99999/fk4kw5kc1z|1|producer/6GBZeroFile.txt'
 ```
-
-<!-- TODO: document crvd -->
 
 ## For developers
 

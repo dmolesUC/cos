@@ -161,6 +161,7 @@ func (obj *S3Object) StreamUp(body io.Reader) (err error) {
 	if err != nil {
 		return err
 	}
+	// TODO: allow object to include an expected MD5
 	uploader := s3manager.NewUploader(awsSession)
 	result, err := uploader.Upload(&s3manager.UploadInput{
 		Bucket: obj.Bucket(),
