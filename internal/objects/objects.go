@@ -34,15 +34,16 @@ func ProtocolUriStr(obj Object) string {
 // CalcDigest calculates the digest of the object using the specified algorithm
 // (md5 or sha256), using ranged downloads of the specified size.
 func CalcDigest(obj Object, downloadRangeSize int64, algorithm string) ([] byte, error) {
-	hash := newHash(algorithm)
+	h := newHash(algorithm)
 	_, err := obj.StreamDown(downloadRangeSize, func(bytes []byte) error {
-		_, err := hash.Write(bytes)
+		//obj.Logger().Detailf("writing %d bytes to hash\n", len(bytes))
+		_, err := h.Write(bytes)
 		return err
 	})
 	if err != nil {
 		return nil, err
 	}
-	digest := hash.Sum(nil)
+	digest := h.Sum(nil)
 	return digest, nil
 }
 

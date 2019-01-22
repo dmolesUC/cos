@@ -175,6 +175,7 @@ func (obj *S3Object) StreamUp(body io.Reader, length int64) (err error) {
 }
 
 func (obj *S3Object) Delete() (err error) {
+	obj.Logger().Detailf("Delete: getting session for %v\n", ProtocolUriStr(obj))
 	awsSession, err := obj.sessionP()
 	if err != nil {
 		return err

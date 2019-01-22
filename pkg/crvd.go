@@ -42,7 +42,9 @@ func (c *Crvd) CreateRetrieveValidate(body io.Reader, contentLength int64) (dige
 func (c *Crvd) CreateRetrieveValidateDelete(body io.Reader, contentLength int64) (digest []byte, err error) {
 	digest, err = c.CreateRetrieveValidate(body, contentLength)
 	if err == nil {
-		err = c.Object.Delete()
+		obj := c.Object
+		obj.Logger().Detailf("validated %v\n", objects.ProtocolUriStr(obj))
+		err = obj.Delete()
 	}
 	return digest, err
 }
@@ -52,7 +54,7 @@ func (c *Crvd) create(body io.Reader, contentLength int64) ([] byte, error) {
 	obj := c.Object
 	logger := obj.Logger()
 
-	errs := make(chan error, 3)
+	errs := make(chan error, 4)
 
 	pr, pw := io.Pipe()
 	tr := io.TeeReader(body, pw)
@@ -61,10 +63,12 @@ func (c *Crvd) create(body io.Reader, contentLength int64) ([] byte, error) {
 	streamWg.Add(2)
 
 	go func() {
-		defer streamWg.Done()
 		defer func() {
 			errs <- pw.Close()
+			errs <- pr.Close()
 		}()
+
+		defer streamWg.Done()
 		logger.Infof("uploading %d bytes to %v\n", contentLength, objects.ProtocolUriStr(obj))
 		lr := io.LimitReader(tr, contentLength)
 		errs <- obj.StreamUp(lr, contentLength)
