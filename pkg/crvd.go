@@ -32,6 +32,8 @@ func (c *Crvd) CreateRetrieveValidate(body io.Reader, contentLength int64) (dige
 			obj.Logger().Infof("validating %v (expected digest: %x)\n", objects.ProtocolUriStr(obj), digest)
 			check := Check{Object: obj, Expected: digest, Algorithm: "sha256"}
 			return check.CalcDigest()
+		} else {
+			err = fmt.Errorf("unable to determine content-length after upload: %v", err)
 		}
 	}
 	return digest, err

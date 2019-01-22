@@ -127,6 +127,7 @@ func init() {
 	cmd.Flags().StringVarP(&flags.Key, "key", "k", "", "key to create (defaults to cos-crvd-TIMESTAMP.bin)")
 	cmd.Flags().Int64VarP(&flags.Size, "random-seed", "", 0, "seed for random-number generator")
 	cmd.Flags().StringVarP(&flags.Region, "region", "r", "", "S3 region (if not in endpoint URL; default \""+protocols.DefaultAwsRegion+"\")")
+	// TODO: support human-readable sizes (5K, 6MB, 3.2GB, 1TiB, etc.)
 	cmd.Flags().Int64VarP(&flags.Size, "size", "s", 1024, "size in bytes of object to create, if --zero not set")
 	cmd.Flags().BoolVarP(&flags.Verbose, "verbose", "v", false, "verbose output")
 	cmd.Flags().BoolVarP(&flags.Zero, "zero", "z", false, "whether to generate a zero-byte file")

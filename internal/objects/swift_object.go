@@ -132,11 +132,14 @@ func (obj *SwiftObject) StreamUp(body io.Reader) error {
 		return err
 	}
 	// TODO: allow object to include an expected MD5
-	ocf, err := cnx.ObjectCreate(obj.container, obj.objectName, false, "", "", nil)
+	out, err := cnx.ObjectCreate(obj.container, obj.objectName, false, "", "", nil)
+	//noinspection GoUnhandledErrorResult
+	defer out.Close()
+
 	buffer := make([]byte, streaming.DefaultRangeSize)
-	written, err := io.CopyBuffer(ocf, body, buffer)
+	written, err := io.CopyBuffer(out, body, buffer)
 	if err == nil {
-		obj.logger.Detailf("wrote %d bytes to %v/%v", written, obj.container, obj.objectName)
+		obj.logger.Detailf("wrote %d bytes to %v/%v\n", written, obj.container, obj.objectName)
 	}
 	return err
 }
