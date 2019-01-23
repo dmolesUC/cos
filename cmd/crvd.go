@@ -72,9 +72,10 @@ func (f crvdFlags) Pretty() string {
         key:      '%v'
 		size:      %v (%d bytes)
         seed:      %d
-        zero:      %v`
+        zero:      %v
+        keep:      %v`
 	format = logging.Untabify(format, "  ")
-	return fmt.Sprintf(format, f.Verbose, f.Region, f.Endpoint, f.Key, f.Size, f.SizeBytes, f.Seed, f.Zero)
+	return fmt.Sprintf(format, f.Verbose, f.Region, f.Endpoint, f.Key, f.Size, f.SizeBytes, f.Seed, f.Zero, f.Keep)
 }
 
 func crvd(bucketStr string, flags crvdFlags) (err error) {
