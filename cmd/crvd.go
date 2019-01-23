@@ -130,12 +130,12 @@ func crvd(bucketStr string, flags crvdFlags) (err error) {
 
 	var digest []byte
 	if flags.Keep {
-		digest, err = crvd.CreateRetrieveValidate(random, flags.SizeBytes)
+		digest, err = crvd.CreateRetrieveVerify(random, flags.SizeBytes)
 		if err == nil {
 			logger.Infof("created %v (%d bytes, SHA-256 digest %x)\n", objects.ProtocolUriStr(obj), flags.Size, digest)
 		}
 	} else {
-		digest, err = crvd.CreateRetrieveValidateDelete(random, flags.SizeBytes)
+		digest, err = crvd.CreateRetrieveVerifyDelete(random, flags.SizeBytes)
 		if err == nil {
 			logger.Infof("verified and deleted %v (%d bytes, SHA-256 digest %x)\n", objects.ProtocolUriStr(obj), flags.SizeBytes, digest)
 		}

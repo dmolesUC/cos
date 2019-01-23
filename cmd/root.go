@@ -23,7 +23,7 @@ const (
 
         Note that for OpenStack Swift, the API username and key must be specified
         with the SWIFT_API_USER and SWIFT_API_KEY environment variables.
-    `
+    ` // TODO: use ST_USER, ST_KEY, whatever the endpoint variable was
 )
 
 // rootCmd represents the base command when called without any subcommands
