@@ -1,7 +1,6 @@
 package objects
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"net/url"

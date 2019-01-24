@@ -1,7 +1,7 @@
 package streaming
 
 import (
-	"fmt"
+	"math"
 	"time"
 
 	"code.cloudfoundry.org/bytefmt"
@@ -10,89 +10,58 @@ import (
 )
 
 const nsPerSecond = int64(time.Second)
-const nsPerMinute = int64(time.Minute)
-const nsPerHour = int64(time.Hour)
 const nsPerSecondFloat64 = float64(time.Second)
 
 type Progress struct {
-	NsElapsed               int64
-	TotalBytes              int64
-	ContentLength           int64
-	estimatedBytesPerSecond *float64
-	estNsRemaining          *int64
+	NsElapsed     int64
+	TotalBytes    int64
+	ContentLength int64
+	estimatedBps  *int64
 }
 
 func (p *Progress) InfoTo(logger logging.Logger) {
 	logger.Infof(
 		"%v of %v (%v/s; %v elapsed, %v remaining)\n",
-		p.TotalBytesStr(), p.ContentLengthStr(), p.EstimatedBytesPerSecondStr(), p.NsElapsedStr(), p.NsRemainingStr(),
+		logging.FormatBytes(p.TotalBytes),
+		logging.FormatBytes(p.ContentLength),
+		logging.FormatBytes(p.EstimatedBps()),
+		logging.FormatNanos(p.NsElapsed),
+		logging.FormatNanos(p.estNsRemaining()),
 	)
 }
 
-func (p *Progress) TotalBytesStr() string {
-	totalBytes := uint64(p.TotalBytes)
-	return bytefmt.ByteSize(totalBytes)
-}
-
-func (p *Progress) ContentLengthStr() string {
-	contentLength := uint64(p.ContentLength)
-	return bytefmt.ByteSize(contentLength)
-}
-
-func (p *Progress) EstimatedBytesPerSecondStr() string {
-	estBps := uint64(p.EstimatedBytesPerSecond())
-	return bytefmt.ByteSize(estBps)
-}
-
-func (p *Progress) EstimatedKibPerSecond() float64 {
-	estBytesPerSecond := p.EstimatedBytesPerSecond()
-	estKibPerSecond := estBytesPerSecond / float64(1024)
-	return estKibPerSecond
-}
-
-func (p *Progress) NsElapsedStr() string {
-	return formatNanos(p.NsElapsed)
-}
-
-func (p *Progress) NsRemainingStr() string {
-	return formatNanos(p.EstimatedNsRemaining())
-}
-
-func (p *Progress) EstimatedNsRemaining() int64 {
-	var nsRemaining int64
-	if p.estNsRemaining == nil {
-		estBytesPerSecond := p.EstimatedBytesPerSecond()
-		bytesRemaining := p.ContentLength - p.TotalBytes
-		nsRemaining = int64(nsPerSecondFloat64 * float64(bytesRemaining) / estBytesPerSecond)
-		p.estNsRemaining = &nsRemaining
+func (p *Progress) EstimatedBps() int64 {
+	var estBytesPerSecond int64
+	if p.estimatedBps == nil {
+		estBps := (nsPerSecondFloat64 * float64(p.TotalBytes)) / (float64(p.NsElapsed))
+		estBytesPerSecond = int64(math.Round(estBps))
+		p.estimatedBps = &estBytesPerSecond
 	} else {
-		nsRemaining = *p.estNsRemaining
-	}
-	return nsRemaining
-}
-
-func (p *Progress) EstimatedBytesPerSecond() float64 {
-	var estBytesPerSecond float64
-	if p.estimatedBytesPerSecond == nil {
-		estBytesPerSecond = (nsPerSecondFloat64 * float64(p.TotalBytes)) / (float64(p.NsElapsed))
-		p.estimatedBytesPerSecond = &estBytesPerSecond
-	} else {
-		estBytesPerSecond = *p.estimatedBytesPerSecond
+		estBytesPerSecond = *p.estimatedBps
 	}
 	return estBytesPerSecond
 }
 
-func formatNanos(ns int64) string {
-	hours := ns / nsPerHour
-	remainder := ns % nsPerHour
-	minutes := remainder / nsPerMinute
-	remainder = ns % nsPerMinute
-	seconds := remainder / nsPerSecond
-	if hours > 0 {
-		return fmt.Sprintf("%dh %dm %ds", hours, minutes, seconds)
-	}
-	if minutes > 0 {
-		return fmt.Sprintf("%dm %ds", minutes, seconds)
-	}
-	return fmt.Sprintf("%ds", seconds)
+func (p *Progress) fmtTotalBytes() string {
+	totalBytes := uint64(p.TotalBytes)
+	return bytefmt.ByteSize(totalBytes)
 }
+
+func (p *Progress) fmtContentLength() string {
+	contentLength := uint64(p.ContentLength)
+	return bytefmt.ByteSize(contentLength)
+}
+
+func (p *Progress) fmtEstBps() string {
+	estBps := uint64(p.EstimatedBps())
+	return bytefmt.ByteSize(estBps)
+}
+
+func (p *Progress) estNsRemaining() int64 {
+	var nsRemaining float64
+	estBytesPerSecond := p.EstimatedBps()
+	bytesRemaining := p.ContentLength - p.TotalBytes
+	nsRemaining = nsPerSecondFloat64 * float64(bytesRemaining) / float64(estBytesPerSecond)
+	return int64(math.Round(nsRemaining))
+}
+
