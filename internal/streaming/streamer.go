@@ -65,9 +65,9 @@ func (s *Streamer) StreamDown(logger logging.Logger, handleBytes func([]byte) er
 		// TODO: put progress in a goroutine?
 		totalBytes = totalBytes + bytesRead
 		nsNow := time.Now().UnixNano()
-		if nsNow-nsLastUpdate > nsPerSecond || rangeIndex+1 >= s.RangeCount() || eof {
+		if nsNow-nsLastUpdate > int64(time.Second) || rangeIndex+1 >= s.RangeCount() || eof {
 			nsLastUpdate = nsNow
-			progress := Progress{
+			progress := logging.Progress{
 				NsElapsed:     nsNow - nsStart,
 				TotalBytes:    totalBytes,
 				ContentLength: s.ContentLength,

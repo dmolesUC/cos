@@ -105,30 +105,7 @@ func (obj *SwiftObject) Download(rangeSize int64, out io.Writer) (totalRead int6
 		return 0, err
 	}
 	logger := obj.logger
-	rangeCount := contentLength / rangeSize
-
-	// TODO: move this to a func() (sync.WaitGroup, chan int64) or similar in progress package
-	progress := make(chan int64, rangeCount)
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		nsStart := time.Now().UnixNano()
-		nsLastUpdate := nsStart
-		for total := range progress {
-			nsNow := time.Now().UnixNano()
-			if nsNow-nsLastUpdate > int64(time.Second) || (total + rangeSize >= contentLength) {
-				nsLastUpdate = nsNow
-				progress := streaming.Progress{
-					NsElapsed:     nsNow - nsStart,
-					TotalBytes:    total,
-					ContentLength: contentLength,
-				}
-				progress.InfoTo(logger)
-			}
-		}
-	}()
-
+	progress := logging.ReportProgress(contentLength, logger, time.Second)
 	for ; totalRead < contentLength; {
 		start, end, size := streaming.NextRange(totalRead, rangeSize, contentLength)
 		file, err := obj.ReadRange(start, end)
@@ -147,6 +124,7 @@ func (obj *SwiftObject) Download(rangeSize int64, out io.Writer) (totalRead int6
 			break
 		}
 	}
+	close(progress)
 	return
 }
 
