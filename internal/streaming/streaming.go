@@ -15,6 +15,8 @@ func NextRange(currentTotal int64, maxRangeSize int64, contentLength int64) (sta
 	return start, end, size
 }
 
+// ReadExactly reads exactly the number of bytes to fill the specified buffer,
+// otherwise returning an error.
 func ReadExactly(in io.Reader, buffer []byte) (err error) {
 	bytesRead, err := io.ReadFull(in, buffer)
 	if err == nil {
@@ -26,6 +28,8 @@ func ReadExactly(in io.Reader, buffer []byte) (err error) {
 	return
 }
 
+// WriteExactly writes exactly the number of bytes found in the specified buffer,
+// otherwise returning an error.
 func WriteExactly(out io.Writer, data []byte) (err error) {
 	bytesWritten, err := out.Write(data)
 	if err == nil {

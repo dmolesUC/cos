@@ -2,7 +2,6 @@ package logging
 
 import (
 	"math"
-	"sync"
 	"time"
 
 	"code.cloudfoundry.org/bytefmt"

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"io"
 	"net/url"
-	"sync"
-	"time"
 
 	"code.cloudfoundry.org/bytefmt"
 	"github.com/ncw/swift"
@@ -98,81 +96,22 @@ func (obj *SwiftObject) ContentLength() (int64, error) {
 	return info.Bytes, nil
 }
 
-func (obj *SwiftObject) Download(rangeSize int64, out io.Writer) (totalRead int64, err error) {
-	// this will 404 if the object doesn't exist
-	contentLength, err := obj.ContentLength()
-	if err != nil {
-		return 0, err
-	}
-	logger := obj.logger
-	progress := logging.ReportProgress(contentLength, logger, time.Second)
-	for ; totalRead < contentLength; {
-		start, end, size := streaming.NextRange(totalRead, rangeSize, contentLength)
-		file, err := obj.ReadRange(start, end)
-		if err == nil {
-			buffer := make([]byte, size)
-			err = streaming.ReadExactly(file, buffer)
-			if err == nil {
-				err = streaming.WriteExactly(out, buffer)
-				if err == nil {
-					totalRead += int64(size)
-					progress <- totalRead
-				}
-			}
-		}
-		if err != nil {
-			break
-		}
-	}
-	close(progress)
-	return
-}
-
-func (obj *SwiftObject) ReadRange(startInclusive int64, endInclusive int64) (*swift.ObjectOpenFile, error) {
+func (obj *SwiftObject) ReadRange(startInclusive, endInclusive int64, buffer []byte) (int64, error) {
 	cnx, err := obj.connection()
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 	rangeStr := fmt.Sprintf("bytes=%d-%d", startInclusive, endInclusive)
 	headers := map[string]string{"Range": rangeStr}
 	file, _, err := cnx.ObjectOpen(obj.container, obj.objectName, false, headers)
-	return file, err
-}
-
-// Deprecated: use Download() instead
-func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) error) (int64, error) {
-	cnx, err := obj.connection()
 	if err != nil {
 		return 0, err
 	}
-
-	// this will 404 if the object doesn't exist
-	contentLength, err := obj.ContentLength()
+	err = streaming.ReadExactly(file, buffer)
 	if err != nil {
 		return 0, err
 	}
-
-	fillRange := func(byteRange *streaming.ByteRange) (int64, error) {
-		startInclusive := byteRange.StartInclusive
-		endInclusive := byteRange.EndInclusive
-		rangeStr := fmt.Sprintf("bytes=%d-%d", startInclusive, endInclusive)
-
-		headers := map[string]string{"Range": rangeStr}
-
-		file, _, err := cnx.ObjectOpen(obj.container, obj.objectName, false, headers)
-		if err != nil {
-			return 0, err
-		}
-		bytesRead, err := io.ReadFull(file, byteRange.Buffer)
-		return int64(bytesRead), err
-	}
-
-	streamer, err := streaming.NewStreamer(rangeSize, contentLength, &fillRange)
-	if err != nil {
-		return 0, err
-	}
-
-	return streamer.StreamDown(obj.logger, handleBytes)
+	return int64(len(buffer)), nil
 }
 
 func (obj *SwiftObject) StreamUp(body io.Reader, length int64) error {
