@@ -1,9 +1,12 @@
 package objects
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"net/url"
+	"sync"
+	"time"
 
 	"code.cloudfoundry.org/bytefmt"
 	"github.com/ncw/swift"
@@ -96,6 +99,70 @@ func (obj *SwiftObject) ContentLength() (int64, error) {
 	return info.Bytes, nil
 }
 
+func (obj *SwiftObject) Download(rangeSize int64, out io.Writer) (totalRead int64, err error) {
+	// this will 404 if the object doesn't exist
+	contentLength, err := obj.ContentLength()
+	if err != nil {
+		return 0, err
+	}
+	logger := obj.logger
+	rangeCount := contentLength / rangeSize
+
+	// TODO: move this to a func() (sync.WaitGroup, chan int64) or similar in progress package
+	progress := make(chan int64, rangeCount)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		nsStart := time.Now().UnixNano()
+		nsLastUpdate := nsStart
+		for total := range progress {
+			nsNow := time.Now().UnixNano()
+			if nsNow-nsLastUpdate > int64(time.Second) || (total + rangeSize >= contentLength) {
+				nsLastUpdate = nsNow
+				progress := streaming.Progress{
+					NsElapsed:     nsNow - nsStart,
+					TotalBytes:    total,
+					ContentLength: contentLength,
+				}
+				progress.InfoTo(logger)
+			}
+		}
+	}()
+
+	for ; totalRead < contentLength; {
+		start, end, size := streaming.NextRange(totalRead, rangeSize, contentLength)
+		file, err := obj.ReadRange(start, end)
+		if err == nil {
+			buffer := make([]byte, size)
+			err = streaming.ReadExactly(file, buffer)
+			if err == nil {
+				err = streaming.WriteExactly(out, buffer)
+				if err == nil {
+					totalRead += int64(size)
+					progress <- totalRead
+				}
+			}
+		}
+		if err != nil {
+			break
+		}
+	}
+	return
+}
+
+func (obj *SwiftObject) ReadRange(startInclusive int64, endInclusive int64) (*swift.ObjectOpenFile, error) {
+	cnx, err := obj.connection()
+	if err != nil {
+		return nil, err
+	}
+	rangeStr := fmt.Sprintf("bytes=%d-%d", startInclusive, endInclusive)
+	headers := map[string]string{"Range": rangeStr}
+	file, _, err := cnx.ObjectOpen(obj.container, obj.objectName, false, headers)
+	return file, err
+}
+
+// Deprecated: use Download() instead
 func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) error) (int64, error) {
 	cnx, err := obj.connection()
 	if err != nil {
@@ -150,7 +217,7 @@ func (obj *SwiftObject) StreamUp(body io.Reader, length int64) error {
 		dloOpts := swift.LargeObjectOpts{
 			Container:  obj.container,
 			ObjectName: obj.objectName,
-			ChunkSize: streaming.DefaultRangeSize, // 5 MiB
+			ChunkSize:  streaming.DefaultRangeSize, // 5 MiB
 		}
 		out, err = cnx.DynamicLargeObjectCreateFile(&dloOpts)
 	}
