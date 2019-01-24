@@ -33,32 +33,32 @@ func ProtocolUriStr(obj Object) string {
 	return fmt.Sprintf("%v://%v/%v", obj.Protocol(), logging.PrettyStrP(obj.Bucket()), logging.PrettyStrP(obj.Key()))
 }
 
-func Download(obj Object, rangeSize int64, out io.Writer) (int64, error) {
+func Download(obj Object, rangeSize int64, out io.Writer) (totalRead int64, err error) {
 	// this will 404 if the object doesn't exist
 	contentLength, err := obj.ContentLength()
 	if err != nil {
 		return 0, err
 	}
 	logger := obj.Logger()
-	progress := logging.ReportProgress(contentLength, logger, time.Second)
-	defer close(progress)
-
-	var totalRead int64
+	progress := make(chan int64, (contentLength+rangeSize-1)/rangeSize)
+	go logging.ReportProgress(progress, contentLength, logger, time.Second)
 	for ; totalRead < contentLength; {
 		start, end, size := streaming.NextRange(totalRead, rangeSize, contentLength)
 		buffer := make([]byte, size)
 		bytesRead, err := obj.ReadRange(start, end, buffer)
 		if err != nil {
-			return totalRead, err
+			break
 		}
 		err = streaming.WriteExactly(out, buffer)
 		if err != nil {
-			return totalRead, err
+			break
 		}
 		totalRead += bytesRead
 		progress <- totalRead
 	}
-	return totalRead, nil
+	close(progress)
+	logger.Infof("%v from %v\n", logging.FormatBytes(totalRead), ProtocolUriStr(obj))
+	return totalRead, err
 }
 
 // CalcDigest calculates the digest of the object using the specified algorithm

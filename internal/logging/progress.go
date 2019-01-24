@@ -12,25 +12,25 @@ const nsPerSecondFloat64 = float64(time.Second)
 // ------------------------------------------------------------
 // Exported functions
 
-func ReportProgress(expectedBytes int64, logger Logger, interval time.Duration) (progress chan int64) {
+func ReportProgress(progress chan int64, expectedBytes int64, logger Logger, interval time.Duration) {
+	var currentBytes int64
 	nsStart := time.Now().UnixNano()
 	ticker := time.NewTicker(interval)
-	go func() {
-		var currentBytes int64
-		for {
-			select {
-			case latestBytes, ok := <-progress:
-				if ok {
-					currentBytes = latestBytes
-				} else {
-					return
-				}
-			case _ = <-ticker.C:
-				ProgressInfoTo(logger, nsStart, currentBytes, expectedBytes)
+
+	defer ticker.Stop()
+
+	for {
+		select {
+		case latestBytes, ok := <-progress:
+			if ok {
+				currentBytes = latestBytes
+			} else {
+				return
 			}
+		case _ = <-ticker.C:
+			ProgressInfoTo(logger, nsStart, currentBytes, expectedBytes)
 		}
-	}()
-	return
+	}
 }
 
 func ProgressInfoTo(logger Logger, nsStart, currentBytes, expectedBytes int64) {

@@ -43,6 +43,9 @@ func PrettyStrP(s *string) string {
 }
 
 func FormatBytes(bytes int64) string {
+	if bytes == 0 {
+		return "0B"
+	}
 	return bytefmt.ByteSize(uint64(bytes))
 }
 
