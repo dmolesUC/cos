@@ -45,7 +45,7 @@ func (obj *SwiftObject) Pretty() string {
 	return fmt.Sprintf(format, args...)
 }
 
-func (obj *SwiftObject) Reset() {
+func (obj *SwiftObject) Refresh() {
 	obj.swiftConnection = nil
 }
 

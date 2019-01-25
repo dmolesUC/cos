@@ -50,7 +50,7 @@ func (obj *S3Object) String() string {
 	)
 }
 
-func (obj *S3Object) Reset() {
+func (obj *S3Object) Refresh() {
 	obj.awsSession = nil
 	obj.goOutput = nil
 }
@@ -139,6 +139,8 @@ func (obj *S3Object) Create(body io.Reader, length int64) (err error) {
 	if err != nil {
 		return err
 	}
+	obj.Logger().Detailf("Uploading %d bytes to %v\n", length, ProtocolUriStr(obj))
+
 	// TODO: allow object to include an expected MD5
 	uploader := s3manager.NewUploader(awsSession)
 	result, err := uploader.Upload(&s3manager.UploadInput{

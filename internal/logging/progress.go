@@ -12,7 +12,7 @@ const nsPerSecondFloat64 = float64(time.Second)
 // ------------------------------------------------------------
 // Exported functions
 
-func ReportProgress(progress chan int64, expectedBytes int64, logger Logger, interval time.Duration) {
+func LogProgress(progress chan int64, expectedBytes int64, logger Logger, interval time.Duration) {
 	var currentBytes int64
 	nsStart := time.Now().UnixNano()
 	ticker := time.NewTicker(interval)

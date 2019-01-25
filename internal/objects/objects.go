@@ -21,12 +21,16 @@ type Object interface {
 	Endpoint() *url.URL
 	Bucket() *string
 	Key() *string
+
+	Refresh()
+
+	Logger() logging.Logger
+
 	ContentLength() (int64, error)
+
 	Create(body io.Reader, length int64) (err error)
 	DownloadRange(startInclusive, endInclusive int64, buffer []byte) (int64, error)
 	Delete() (err error)
-	Logger() logging.Logger
-	Reset()
 }
 
 func ProtocolUriStr(obj Object) string {
@@ -40,8 +44,10 @@ func Download(obj Object, rangeSize int64, out io.Writer) (totalRead int64, err 
 		return 0, err
 	}
 	logger := obj.Logger()
-	progress := make(chan int64, (contentLength+rangeSize-1)/rangeSize)
-	go logging.ReportProgress(progress, contentLength, logger, time.Second)
+
+	target := logging.NewProgressWriter(out, contentLength)
+	target.LogTo(logger, time.Second)
+
 	for ; totalRead < contentLength; {
 		start, end, size := streaming.NextRange(totalRead, rangeSize, contentLength)
 		buffer := make([]byte, size)
@@ -54,9 +60,7 @@ func Download(obj Object, rangeSize int64, out io.Writer) (totalRead int64, err 
 			break
 		}
 		totalRead += bytesRead
-		progress <- totalRead
 	}
-	close(progress)
 	logger.Infof("%v from %v\n", logging.FormatBytes(totalRead), ProtocolUriStr(obj))
 	return totalRead, err
 }
