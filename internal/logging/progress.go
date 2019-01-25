@@ -2,24 +2,25 @@ package logging
 
 import (
 	"math"
+	"sync/atomic"
 	"time"
 )
 
 const nsPerSecondFloat64 = float64(time.Second)
 
 type ProgressReporter struct {
-	totalBytes int64
+	totalBytes    *int64
 	expectedBytes int64
-	progress chan int64
 }
 
 // ------------------------------
 // Factory method
 
 func NewProgressReporter(expectedBytes int64) *ProgressReporter {
+	zero := int64(0)
 	return &ProgressReporter{
+		totalBytes: &zero,
 		expectedBytes: expectedBytes,
-		progress: make(chan int64),
 	}
 }
 
@@ -27,30 +28,37 @@ func NewProgressReporter(expectedBytes int64) *ProgressReporter {
 // Exported methods
 
 func (r *ProgressReporter) LogTo(logger Logger, interval time.Duration) {
-	go monitorProgress(r.progress, r.expectedBytes, logger, interval)
+	go r.monitorProgress(logger, interval)
+	// go monitorProgress(r.progress, r.expectedBytes, logger, interval)
 }
 
 func (r *ProgressReporter) TotalBytes() int64 {
-	return r.totalBytes
+	return atomic.LoadInt64(r.totalBytes)
 }
 
 // ------------------------------
 // Unexported methods
 
 func (r *ProgressReporter) updateTotal(additionalBytes int) {
-	r.totalBytes += int64(additionalBytes)
+	atomic.AddInt64(r.totalBytes, int64(additionalBytes))
+}
 
-	progress := r.progress
-	if progress != nil {
+func (r *ProgressReporter) monitorProgress(logger Logger, interval time.Duration) {
+	expectedBytes := r.expectedBytes
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	nsStart := time.Now().UnixNano()
+	for {
 		select {
-		case progress <- r.totalBytes:
-			// progress reported
+		case _ = <-ticker.C:
+			currentBytes := r.TotalBytes()
+			logProgress(logger, nsStart, currentBytes, expectedBytes)
+			if currentBytes >= expectedBytes {
+				return
+			}
 		default:
-			// wait for channel
-		}
-		if r.totalBytes >= r.expectedBytes {
-			close(progress)
-			r.progress = nil
+			// wait for next tick
 		}
 	}
 }
