@@ -67,6 +67,6 @@ func (c *Crvd) create(body io.Reader, contentLength int64) ([] byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	logger.Infof("%v to %v\n", logging.FormatBytes(in.TotalBytesRead()), objects.ProtocolUriStr(obj))
+	logger.Infof("%v to %v\n", logging.FormatBytes(in.TotalBytes()), objects.ProtocolUriStr(obj))
 	return digest.Sum(nil), err
 }
