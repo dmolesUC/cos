@@ -49,7 +49,7 @@ func (c *Crvd) CreateRetrieveVerifyDelete(body io.Reader, contentLength int64) (
 
 func (c *Crvd) create(body io.Reader, contentLength int64) ([] byte, error) {
 	hash := sha256.New()
-	err := c.Object.StreamUp(io.TeeReader(body, hash), contentLength)
+	err := c.Object.Create(io.TeeReader(body, hash), contentLength)
 	if err != nil {
 		return nil, err
 	}

@@ -96,7 +96,7 @@ func (obj *SwiftObject) ContentLength() (int64, error) {
 	return info.Bytes, nil
 }
 
-func (obj *SwiftObject) ReadRange(startInclusive, endInclusive int64, buffer []byte) (int64, error) {
+func (obj *SwiftObject) DownloadRange(startInclusive, endInclusive int64, buffer []byte) (int64, error) {
 	cnx, err := obj.connection()
 	if err != nil {
 		return 0, err
@@ -114,7 +114,7 @@ func (obj *SwiftObject) ReadRange(startInclusive, endInclusive int64, buffer []b
 	return int64(len(buffer)), nil
 }
 
-func (obj *SwiftObject) StreamUp(body io.Reader, length int64) error {
+func (obj *SwiftObject) Create(body io.Reader, length int64) error {
 	cnx, err := obj.connection()
 	if err != nil {
 		return err

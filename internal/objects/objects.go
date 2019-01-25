@@ -22,8 +22,8 @@ type Object interface {
 	Bucket() *string
 	Key() *string
 	ContentLength() (int64, error)
-	ReadRange(startInclusive, endInclusive int64, buffer []byte) (int64, error)
-	StreamUp(body io.Reader, length int64) (err error)
+	Create(body io.Reader, length int64) (err error)
+	DownloadRange(startInclusive, endInclusive int64, buffer []byte) (int64, error)
 	Delete() (err error)
 	Logger() logging.Logger
 	Reset()
@@ -45,7 +45,7 @@ func Download(obj Object, rangeSize int64, out io.Writer) (totalRead int64, err 
 	for ; totalRead < contentLength; {
 		start, end, size := streaming.NextRange(totalRead, rangeSize, contentLength)
 		buffer := make([]byte, size)
-		bytesRead, err := obj.ReadRange(start, end, buffer)
+		bytesRead, err := obj.DownloadRange(start, end, buffer)
 		if err != nil {
 			break
 		}

@@ -3,7 +3,11 @@ package streaming
 import (
 	"fmt"
 	"io"
+
+	"code.cloudfoundry.org/bytefmt"
 )
+
+const DefaultRangeSize = int64(5 * bytefmt.MEGABYTE)
 
 func NextRange(currentTotal int64, maxRangeSize int64, contentLength int64) (start, end int64, size int) {
 	start = currentTotal

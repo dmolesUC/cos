@@ -114,7 +114,7 @@ func (obj *S3Object) SupportsRanges() bool {
 	return false
 }
 
-func (obj *S3Object) ReadRange(startInclusive, endInclusive int64, buffer []byte) (int64, error) {
+func (obj *S3Object) DownloadRange(startInclusive, endInclusive int64, buffer []byte) (int64, error) {
 	if !obj.SupportsRanges() {
 		obj.logger.Detailf("object %v may not support ranged downloads; trying anyway\n", obj)
 	}
@@ -134,7 +134,7 @@ func (obj *S3Object) ReadRange(startInclusive, endInclusive int64, buffer []byte
 	return downloader.Download(target, &goInput)
 }
 
-func (obj *S3Object) StreamUp(body io.Reader, length int64) (err error) {
+func (obj *S3Object) Create(body io.Reader, length int64) (err error) {
 	awsSession, err := obj.sessionP()
 	if err != nil {
 		return err
