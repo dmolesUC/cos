@@ -17,7 +17,7 @@ type Crvd struct {
 func (c *Crvd) CreateRetrieveVerify(body io.Reader, contentLength int64) (digest []byte, err error) {
 	obj := c.Object
 	logger := obj.Logger()
-	logger.Detailf("creating object at %v\n", objects.ProtocolUriStr(obj))
+	logger.Infof("creating object at %v\n", objects.ProtocolUriStr(obj))
 	digest, err = c.create(body, contentLength)
 	if err == nil {
 		logger.Detailf("calculated digest on upload: %x\n", digest)
