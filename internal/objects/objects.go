@@ -48,14 +48,16 @@ func Download(obj Object, rangeSize int64, out io.Writer) (totalRead int64, err 
 	target := logging.NewProgressWriter(out, contentLength)
 	target.LogTo(logger, time.Second)
 
-	for ; totalRead < contentLength; {
-		start, end, size := streaming.NextRange(totalRead, rangeSize, contentLength)
+	expectedBytes := target.ExpectedBytes()
+
+	for ; totalRead < expectedBytes; {
+		start, end, size := streaming.NextRange(totalRead, rangeSize, expectedBytes)
 		buffer := make([]byte, size)
 		bytesRead, err := obj.DownloadRange(start, end, buffer)
 		if err != nil {
 			break
 		}
-		err = streaming.WriteExactly(out, buffer)
+		err = streaming.WriteExactly(target, buffer)
 		if err != nil {
 			break
 		}

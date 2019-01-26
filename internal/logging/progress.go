@@ -36,6 +36,10 @@ func (r *ProgressReporter) TotalBytes() int64 {
 	return atomic.LoadInt64(r.totalBytes)
 }
 
+func (r *ProgressReporter) ExpectedBytes() int64 {
+	return r.expectedBytes
+}
+
 // ------------------------------
 // Unexported methods
 
