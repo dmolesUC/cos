@@ -67,27 +67,6 @@ func (r *ProgressReporter) monitorProgress(logger Logger, interval time.Duration
 	}
 }
 
-func monitorProgress(progress chan int64, expectedBytes int64, logger Logger, interval time.Duration) {
-	var currentBytes int64
-	nsStart := time.Now().UnixNano()
-	ticker := time.NewTicker(interval)
-
-	defer ticker.Stop()
-
-	for {
-		select {
-		case latestBytes, ok := <-progress:
-			if ok {
-				currentBytes = latestBytes
-			} else {
-				return
-			}
-		case _ = <-ticker.C:
-			logProgress(logger, nsStart, currentBytes, expectedBytes)
-		}
-	}
-}
-
 func logProgress(logger Logger, nsStart, currentBytes, expectedBytes int64) {
 	nsElapsed := time.Now().UnixNano() - nsStart
 	estBytesPerSecond := int64(math.Round((nsPerSecondFloat64 * float64(currentBytes)) / (float64(nsElapsed))))
