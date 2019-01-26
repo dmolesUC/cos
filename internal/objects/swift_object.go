@@ -123,7 +123,7 @@ func (obj *SwiftObject) Create(body io.Reader, length int64) error {
 
 	// TODO: allow object to include an expected MD5
 	var out io.WriteCloser
-	if length <= dloSizeThreshold { // 5 GiB
+	if length <= dloSizeThreshold { // 2 GiB
 		out, err = cnx.ObjectCreate(obj.container, obj.objectName, false, "", "", nil)
 	} else {
 		logger.Detailf(
