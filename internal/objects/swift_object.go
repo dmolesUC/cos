@@ -16,7 +16,7 @@ import (
 const (
 	defaultRetries   = 3
 	dloSizeThreshold = int64(2 * bytefmt.GIGABYTE)
-	//dloSegmentSize   = int64(bytefmt.GIGABYTE) // TODO: any way to set this?
+	dloSegmentSize   = int64(bytefmt.GIGABYTE)
 )
 
 // SwiftObject is an OpenStack Swift implementation of Object
@@ -133,7 +133,8 @@ func (obj *SwiftObject) Create(body io.Reader, length int64) error {
 		dloOpts := swift.LargeObjectOpts{
 			Container:  obj.container,
 			ObjectName: obj.objectName,
-			ChunkSize:  streaming.DefaultRangeSize, // 5 MiB
+			ChunkSize:  dloSegmentSize,
+			NoBuffer: true,
 		}
 		out, err = cnx.DynamicLargeObjectCreateFile(&dloOpts)
 	}
