@@ -1,9 +1,11 @@
 package objects
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"net/url"
+	"time"
 
 	"code.cloudfoundry.org/bytefmt"
 	"github.com/ncw/swift"
@@ -130,10 +132,14 @@ func (obj *SwiftObject) Create(body io.Reader, length int64) error {
 			"object size %d is greater than single-object maximum %d; creating dynamic large object\n",
 			length, dloSizeThreshold,
 		)
+
+		// something vaguely like the python-swiftclient default: https://docs.openstack.org/swift/latest/overview_large_objects.html
+		segmentPrefix := fmt.Sprintf("%v/%d/%d", obj.objectName, time.Now().UnixNano(), length)
 		dloOpts := swift.LargeObjectOpts{
 			Container:  obj.container,
 			ObjectName: obj.objectName,
 			ChunkSize:  dloSegmentSize,
+			SegmentPrefix: segmentPrefix,
 			NoBuffer: true,
 		}
 		out, err = cnx.DynamicLargeObjectCreateFile(&dloOpts)
@@ -150,8 +156,10 @@ func (obj *SwiftObject) Create(body io.Reader, length int64) error {
 		}
 	}()
 
-	buffer := make([]byte, streaming.DefaultRangeSize)
-	written, err := io.CopyBuffer(out, body, buffer)
+	target := bufio.NewWriterSize(out, int(streaming.DefaultRangeSize))
+	written, err := io.Copy(target, body)
+	//buffer := make([]byte, streaming.DefaultRangeSize)
+	//written, err := io.CopyBuffer(out, body, buffer)
 	if err != nil {
 		logger.Detailf("error writing to upload stream: %v\n", err)
 	}
