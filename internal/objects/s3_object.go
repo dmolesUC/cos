@@ -12,7 +12,6 @@ import (
 
 	"github.com/dmolesUC3/cos/internal/logging"
 	"github.com/dmolesUC3/cos/internal/protocols"
-	"github.com/dmolesUC3/cos/internal/streaming"
 )
 
 // S3Object is an S3 implementation of Object
@@ -51,7 +50,7 @@ func (obj *S3Object) String() string {
 	)
 }
 
-func (obj *S3Object) Reset() {
+func (obj *S3Object) Refresh() {
 	obj.awsSession = nil
 	obj.goOutput = nil
 }
@@ -115,52 +114,33 @@ func (obj *S3Object) SupportsRanges() bool {
 	return false
 }
 
-func (obj *S3Object) StreamDown(rangeSize int64, handleBytes func([]byte) error) (int64, error) {
+func (obj *S3Object) DownloadRange(startInclusive, endInclusive int64, buffer []byte) (int64, error) {
+	if !obj.SupportsRanges() {
+		obj.logger.Detailf("object %v may not support ranged downloads; trying anyway\n", obj)
+	}
+	rangeStr := fmt.Sprintf("bytes=%d-%d", startInclusive, endInclusive)
+	goInput := s3.GetObjectInput{
+		Bucket: obj.Bucket(),
+		Key:    obj.Key(),
+		Range:  &rangeStr,
+	}
+
 	awsSession, err := obj.sessionP()
 	if err != nil {
 		return 0, err
 	}
-
-	// this will 404 if the object doesn't exist
-	contentLength, err := obj.ContentLength()
-	if err != nil {
-		return 0, err
-	}
-
-	if !obj.SupportsRanges() {
-		obj.logger.Detailf("object %v may not support ranged downloads; trying anyway\n", obj)
-	}
-
 	downloader := s3manager.NewDownloader(awsSession)
-
-	fillRange := func(byteRange *streaming.ByteRange) (int64, error) {
-		startInclusive := byteRange.StartInclusive
-		endInclusive := byteRange.EndInclusive
-		rangeStr := fmt.Sprintf("bytes=%d-%d", startInclusive, endInclusive)
-		goInput := s3.GetObjectInput{
-			Bucket: obj.Bucket(),
-			Key:    obj.Key(),
-			Range:  &rangeStr,
-		}
-		target := aws.NewWriteAtBuffer(byteRange.Buffer)
-		bytesRead, err := downloader.Download(target, &goInput)
-		byteRange.Buffer = target.Bytes() // TODO: is this necessary?
-		return bytesRead, err
-	}
-
-	streamer, err := streaming.NewStreamer(rangeSize, contentLength, &fillRange)
-	if err != nil {
-		return 0, err
-	}
-
-	return streamer.StreamDown(obj.logger, handleBytes)
+	target := aws.NewWriteAtBuffer(buffer)
+	return downloader.Download(target, &goInput)
 }
 
-func (obj *S3Object) StreamUp(body io.Reader, length int64) (err error) {
+func (obj *S3Object) Create(body io.Reader, length int64) (err error) {
 	awsSession, err := obj.sessionP()
 	if err != nil {
 		return err
 	}
+	obj.Logger().Detailf("Uploading %d bytes to %v\n", length, ProtocolUriStr(obj))
+
 	// TODO: allow object to include an expected MD5
 	uploader := s3manager.NewUploader(awsSession)
 	result, err := uploader.Upload(&s3manager.UploadInput{
@@ -182,7 +162,7 @@ func (obj *S3Object) Delete() (err error) {
 	}
 	doInput := s3.DeleteObjectInput{
 		Bucket: obj.Bucket(),
-		Key: obj.Key(),
+		Key:    obj.Key(),
 	}
 	obj.Logger().Detailf("deleting %v\n", ProtocolUriStr(obj))
 	_, err = s3.New(awsSession).DeleteObject(&doInput)
@@ -255,4 +235,3 @@ func (obj *S3Object) formatEndpoint() string {
 	}
 	return endpointStr
 }
-

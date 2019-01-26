@@ -45,7 +45,7 @@ func (obj *SwiftObject) Pretty() string {
 	return fmt.Sprintf(format, args...)
 }
 
-func (obj *SwiftObject) Reset() {
+func (obj *SwiftObject) Refresh() {
 	obj.swiftConnection = nil
 }
 
@@ -96,42 +96,25 @@ func (obj *SwiftObject) ContentLength() (int64, error) {
 	return info.Bytes, nil
 }
 
-func (obj *SwiftObject) StreamDown(rangeSize int64, handleBytes func([]byte) error) (int64, error) {
+func (obj *SwiftObject) DownloadRange(startInclusive, endInclusive int64, buffer []byte) (int64, error) {
 	cnx, err := obj.connection()
 	if err != nil {
 		return 0, err
 	}
-
-	// this will 404 if the object doesn't exist
-	contentLength, err := obj.ContentLength()
+	rangeStr := fmt.Sprintf("bytes=%d-%d", startInclusive, endInclusive)
+	headers := map[string]string{"Range": rangeStr}
+	file, _, err := cnx.ObjectOpen(obj.container, obj.objectName, false, headers)
 	if err != nil {
 		return 0, err
 	}
-
-	fillRange := func(byteRange *streaming.ByteRange) (int64, error) {
-		startInclusive := byteRange.StartInclusive
-		endInclusive := byteRange.EndInclusive
-		rangeStr := fmt.Sprintf("bytes=%d-%d", startInclusive, endInclusive)
-
-		headers := map[string]string{"Range": rangeStr}
-
-		file, _, err := cnx.ObjectOpen(obj.container, obj.objectName, false, headers)
-		if err != nil {
-			return 0, err
-		}
-		bytesRead, err := io.ReadFull(file, byteRange.Buffer)
-		return int64(bytesRead), err
-	}
-
-	streamer, err := streaming.NewStreamer(rangeSize, contentLength, &fillRange)
+	err = streaming.ReadExactly(file, buffer)
 	if err != nil {
 		return 0, err
 	}
-
-	return streamer.StreamDown(obj.logger, handleBytes)
+	return int64(len(buffer)), nil
 }
 
-func (obj *SwiftObject) StreamUp(body io.Reader, length int64) error {
+func (obj *SwiftObject) Create(body io.Reader, length int64) error {
 	cnx, err := obj.connection()
 	if err != nil {
 		return err
@@ -150,7 +133,7 @@ func (obj *SwiftObject) StreamUp(body io.Reader, length int64) error {
 		dloOpts := swift.LargeObjectOpts{
 			Container:  obj.container,
 			ObjectName: obj.objectName,
-			ChunkSize: streaming.DefaultRangeSize, // 5 MiB
+			ChunkSize:  streaming.DefaultRangeSize, // 5 MiB
 		}
 		out, err = cnx.DynamicLargeObjectCreateFile(&dloOpts)
 	}

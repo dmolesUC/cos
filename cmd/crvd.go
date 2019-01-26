@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"math"
 	"math/rand"
 	"strconv"
@@ -127,15 +128,16 @@ func crvd(bucketStr string, flags crvdFlags) (err error) {
 
 	var crvd = pkg.Crvd{Object: obj}
 	random := rand.New(rand.NewSource(flags.Seed))
+	body := io.LimitReader(random, flags.SizeBytes)
 
 	var digest []byte
 	if flags.Keep {
-		digest, err = crvd.CreateRetrieveVerify(random, flags.SizeBytes)
+		digest, err = crvd.CreateRetrieveVerify(body, flags.SizeBytes)
 		if err == nil {
 			logger.Infof("created %v (%d bytes, SHA-256 digest %x)\n", objects.ProtocolUriStr(obj), flags.Size, digest)
 		}
 	} else {
-		digest, err = crvd.CreateRetrieveVerifyDelete(random, flags.SizeBytes)
+		digest, err = crvd.CreateRetrieveVerifyDelete(body, flags.SizeBytes)
 		if err == nil {
 			logger.Infof("verified and deleted %v (%d bytes, SHA-256 digest %x)\n", objects.ProtocolUriStr(obj), flags.SizeBytes, digest)
 		}
