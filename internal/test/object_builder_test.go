@@ -1,4 +1,4 @@
-package objects
+package test
 
 import (
 	"net/url"
@@ -6,6 +6,7 @@ import (
 	. "gopkg.in/check.v1"
 
 	"github.com/dmolesUC3/cos/internal/logging"
+	. "github.com/dmolesUC3/cos/internal/objects"
 )
 
 type ObjectSuite struct {

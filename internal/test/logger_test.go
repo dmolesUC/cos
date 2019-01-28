@@ -1,10 +1,12 @@
-package logging
+package test
 
 import (
 	"fmt"
 	"strings"
 
 	. "gopkg.in/check.v1"
+
+	. "github.com/dmolesUC3/cos/internal/logging"
 )
 
 // ------------------------------------------------------------
@@ -15,16 +17,12 @@ type LoggerSuite struct {
 	fatals []string
 }
 
-func (s *LoggerSuite) newTerseLogger() terseLogger {
-	logger := NewLogger(false).(terseLogger)
-	logger.out = s.out
-	return logger
+func (s *LoggerSuite) newTerseLogger() Logger {
+	return NewLoggerTo(false, s.out)
 }
 
-func (s *LoggerSuite) newVerboseLogger() verboseLogger {
-	logger := NewLogger(true).(verboseLogger)
-	logger.out = s.out
-	return logger
+func (s *LoggerSuite) newVerboseLogger() Logger {
+	return NewLoggerTo(true, s.out)
 }
 
 var _ = Suite(&LoggerSuite{})
@@ -39,7 +37,7 @@ func (s *LoggerSuite) TearDownTest(c *C) {
 	s.fatals = nil
 }
 
-func (s *LoggerSuite) logFatal(v ...interface{}) {
+func (s *LoggerSuite) fatal(v ...interface{}) {
 	s.fatals = append(s.fatals, fmt.Sprint(v...))
 }
 
@@ -71,16 +69,16 @@ func (s *LoggerSuite) TestTerseInfof(c *C) {
 
 func (s *LoggerSuite) TestTerseInfoFail(c *C) {
 	s.out = FailWriter{}
-	logFatal = s.logFatal
 	var logger = s.newTerseLogger()
+	logger.TrapFatal(s.fatal)
 	logger.Info("I am a log message")
 	c.Assert(len(s.fatals), Equals, 1)
 }
 
 func (s *LoggerSuite) TestTerseInfofFail(c *C) {
 	s.out = FailWriter{}
-	logFatal = s.logFatal
 	var logger = s.newTerseLogger()
+	logger.TrapFatal(s.fatal)
 	var format = "I am a log message: %v %d"
 	logger.Infof(format, "text", 123)
 	c.Assert(len(s.fatals), Equals, 1)

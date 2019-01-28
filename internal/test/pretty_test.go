@@ -1,16 +1,18 @@
-package logging
+package test
 
 import (
 	"strings"
 
 	. "gopkg.in/check.v1"
+
+	. "github.com/dmolesUC3/cos/internal/logging"
 )
 
 // ------------------------------------------------------------
 // Fixture
 
 type PrettySuite struct {
-	out StringableWriter
+	out    StringableWriter
 	logger Logger
 }
 
@@ -18,8 +20,7 @@ var _ = Suite(&PrettySuite{})
 
 func (s *PrettySuite) SetUpTest(c *C) {
 	s.out = &strings.Builder{}
-	logger := NewLogger(true).(verboseLogger)
-	logger.out = s.out
+	logger := NewLoggerTo(true, s.out)
 	s.logger = logger
 }
 
