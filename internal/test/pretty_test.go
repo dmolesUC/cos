@@ -20,7 +20,7 @@ var _ = Suite(&PrettySuite{})
 
 func (s *PrettySuite) SetUpTest(c *C) {
 	s.out = &strings.Builder{}
-	logger := NewLoggerTo(true, s.out)
+	logger := NewLoggerTo(Trace, s.out)
 	s.logger = logger
 }
 

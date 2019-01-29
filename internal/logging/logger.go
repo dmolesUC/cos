@@ -3,7 +3,6 @@ package logging
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"sync"
 )
@@ -11,128 +10,119 @@ import (
 // ------------------------------------------------------------
 // Exported symbols
 
+type LogLevel int
+
+const (
+	Info LogLevel = iota
+	Detail
+	Trace
+	Default = Info
+)
+
 // The Logger interface represents a minimalist logger, inspired by:
 // - https://dave.cheney.net/2015/11/05/lets-talk-about-logging
 // - https://dave.cheney.net/2017/01/23/the-package-level-logger-anti-pattern
 type Logger interface {
 	Info(a ...interface{})
-	Detail(a ...interface{})
 	Infof(format string, a ...interface{})
+
+	Detail(a ...interface{})
 	Detailf(format string, a ...interface{})
-	Verbose() bool
+
+	Trace(a ...interface{})
+	Tracef(format string, a ...interface{})
+
+	Log(lvl LogLevel, a ...interface{})
+	Logf(lvl LogLevel, format string, a ...interface{})
+
+	MaxLevel() LogLevel
 	String() string
-	TrapFatal(logFatal func (v ...interface{}))
 }
 
-// NewLogger returns a new logger, either verbose or not, as specified
-func NewLogger(verbose bool) Logger {
-	return NewLoggerTo(verbose, os.Stderr)
+func NewLogger(maxLevel LogLevel) Logger {
+	return NewLoggerTo(maxLevel, os.Stderr)
 }
 
-func NewLoggerTo(verbose bool, out io.Writer) Logger {
-	if verbose {
-		return &verboseLogger{ infoLogger {out: out} }
+func NewLoggerTo(maxLevel LogLevel, out io.Writer) Logger {
+	return &writeLogger{maxlevel: maxLevel, out: out}
+}
+
+func (l LogLevel) String() string {
+	if l == Info {
+		return "Info"
 	}
-	return &terseLogger{ infoLogger {out: out} }
+	if l == Detail {
+		return "Detail"
+	}
+	return "Trace"
 }
 
 // ------------------------------
-// infoLogger
+// Implementation
 
-// Partial base Logger implementation
-type infoLogger struct {
-	out    io.Writer
-	mux    sync.Mutex
-	fatalP *func (v ...interface{})
+type writeLogger struct {
+	maxlevel LogLevel
+	out      io.Writer
+	mux      sync.Mutex
 }
 
-func (l *infoLogger) fatal(v ...interface{}) {
-	if l.fatalP == nil {
-		log.Fatal(v...)
-	} else {
-		(*l.fatalP)(v...)
+func (l *writeLogger) Info(a ...interface{}) {
+	l.Log(Info, a...)
+}
+
+func (l *writeLogger) Infof(format string, a ...interface{}) {
+	l.Logf(Info, format, a...)
+}
+
+func (l *writeLogger) Detail(a ...interface{}) {
+	l.Log(Detail, a...)
+}
+
+func (l *writeLogger) Detailf(format string, a ...interface{}) {
+	l.Logf(Detail, format, a...)
+}
+
+func (l *writeLogger) Trace(a ...interface{}) {
+	l.Log(Trace, a...)
+}
+
+func (l *writeLogger) Tracef(format string, a ...interface{}) {
+	l.Logf(Trace, format, a...)
+}
+
+func (l *writeLogger) Log(lvl LogLevel, a ...interface{}) {
+	if lvl > l.maxlevel {
+		return
 	}
-}
-
-func (l *infoLogger) TrapFatal(fatal func(v ...interface{})) {
-	l.fatalP = &fatal
-}
-
-// Logger.Info() implementation: log to stderr
-func (l *infoLogger) Info(a ...interface{}) {
 	l.mux.Lock()
 	defer l.mux.Unlock()
-
 	pretty := Prettify(a...)
 	_, err := fmt.Fprintln(l.out, pretty...)
 	if err != nil {
-		l.fatal(err)
+		// TODO: is this the best we can do?
+		println(err)
 	}
 }
 
-// Logger.Infof() implementation: log to stderr
-func (l *infoLogger) Infof(format string, a ...interface{}) {
+func (l *writeLogger) Logf(lvl LogLevel, format string, a ...interface{}) {
+	if lvl > l.maxlevel {
+		return
+	}
 	l.mux.Lock()
 	defer l.mux.Unlock()
-
 	pretty := Prettify(a...)
 	_, err := fmt.Fprintf(l.out, format, pretty...)
 	if err != nil {
-		l.fatal(err)
+		// TODO: is this the best we can do?
+		println(err)
 	}
 }
 
-// ------------------------------
-// terseLogger
-
-// Logger implementation with no-op Detail()
-type terseLogger struct {
-	infoLogger
+func (l *writeLogger) MaxLevel() LogLevel {
+	return l.maxlevel
 }
 
-// No-op Logger.Detail() impelementation
-func (l *terseLogger) Detail(a ...interface{}) {
-	// does nothing
-}
-
-// No-op Logger.Detailf() impelementation
-func (l *terseLogger) Detailf(format string, a ...interface{}) {
-	// does nothing
-}
-
-// Logger.Verbose() implementation
-func (l *terseLogger) Verbose() bool {
-	return false
-}
-
-func (l *terseLogger) String() string {
-	return "terse"
-}
-
-// ------------------------------
-// verboseLogger
-
-// Logger implementation forwarding Detail() to Info()
-type verboseLogger struct {
-	infoLogger
-}
-
-// Logger.Detail() implementation: forward to Info()
-func (l *verboseLogger) Detail(a ...interface{}) {
-	l.Info(a...)
-}
-
-// Logger.Detailf() implementation: forward to Infof()
-func (l *verboseLogger) Detailf(format string, a ...interface{}) {
-	l.Infof(format, a...)
-}
-
-// Logger.Verbose() implementation
-func (l *verboseLogger) Verbose() bool {
-	return true
-}
-
-func (l *verboseLogger) String() string {
-	return "verbose"
+func (l *writeLogger) String() string {
+	return l.maxlevel.String()
 }
 

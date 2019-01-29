@@ -126,8 +126,8 @@ func (obj *SwiftObject) Create(body io.Reader, length int64) error {
 	if length <= dloSizeThreshold { // 2 GiB
 		out, err = cnx.ObjectCreate(obj.container, obj.objectName, false, "", "", nil)
 	} else {
-		logger.Detailf(
-			"object size %d is greater than single-object maximum %d; creating dynamic large object\n",
+		logger.Tracef(
+			"Object size %d is greater than single-object maximum %d; creating dynamic large object\n",
 			length, dloSizeThreshold,
 		)
 		dloOpts := swift.LargeObjectOpts{
@@ -138,23 +138,23 @@ func (obj *SwiftObject) Create(body io.Reader, length int64) error {
 		out, err = cnx.DynamicLargeObjectCreateFile(&dloOpts)
 	}
 	if err != nil {
-		logger.Detailf("error opening upload stream: %v\n", err)
+		logger.Tracef("Error opening upload stream: %v\n", err)
 		return err
 	}
 
 	defer func() {
 		err := out.Close()
 		if err != nil {
-			logger.Detailf("error closing upload stream: %v\n", err)
+			logger.Tracef("Error closing upload stream: %v\n", err)
 		}
 	}()
 
 	buffer := make([]byte, streaming.DefaultRangeSize)
 	written, err := io.CopyBuffer(out, body, buffer)
 	if err != nil {
-		logger.Detailf("error writing to upload stream: %v\n", err)
+		logger.Tracef("Error writing to upload stream: %v\n", err)
 	}
-	logger.Detailf("wrote %d bytes to %v/%v\n", written, obj.container, obj.objectName)
+	logger.Tracef("Wrote %d bytes to %v/%v\n", written, obj.container, obj.objectName)
 	return err
 }
 
@@ -164,7 +164,14 @@ func (obj *SwiftObject) Delete() (err error) {
 		return err
 	}
 	// TODO: detect DynamicLargeObjects
-	return cnx.ObjectDelete(obj.container, obj.objectName)
+	err = cnx.ObjectDelete(obj.container, obj.objectName)
+	protocolUriStr := ProtocolUriStr(obj)
+	if err == nil {
+		obj.Logger().Infof("Deleted %v\n", protocolUriStr)
+	} else {
+		obj.Logger().Infof("Deleting %v failed: %v", protocolUriStr, err)
+	}
+	return err
 }
 
 // ------------------------------------------------------------

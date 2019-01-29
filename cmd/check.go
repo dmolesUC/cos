@@ -43,7 +43,7 @@ const (
 // checkFlags type
 
 type checkFlags struct {
-	Verbose   bool
+	Verbose  int
 	Expected  []byte
 	Algorithm string
 	Endpoint  string
@@ -68,15 +68,17 @@ func (f checkFlags) String() string {
 	)
 }
 
-
+func (f checkFlags) LogLevel() logging.LogLevel {
+	return logging.LogLevel(f.Verbose)
+}
 
 // ------------------------------------------------------------
 // Functions
 
 func check(objURLStr string, flags checkFlags) error {
-	var logger = logging.NewLogger(flags.Verbose)
-	logger.Detailf("flags: %v\n", flags)
-	logger.Detailf("object URL: %v\n", objURLStr)
+	var logger = logging.NewLogger(flags.LogLevel())
+	logger.Tracef("flags: %v\n", flags)
+	logger.Tracef("object URL: %v\n", objURLStr)
 
 	obj, err := objects.NewObjectBuilder().
 		WithObjectURLStr(objURLStr).
@@ -86,7 +88,7 @@ func check(objURLStr string, flags checkFlags) error {
 	if err != nil {
 		return err
 	}
-	logger.Detailf("object: %v\n", obj)
+	logger.Tracef("object: %v\n", obj)
 
 	var check = pkg.Check{
 		Object:    obj,
@@ -119,11 +121,12 @@ func init() {
 			return check(args[0], flags)
 		},
 	}
-	cmd.Flags().BoolVarP(&flags.Verbose, "verbose", "v", false, "verbose output")
-	cmd.Flags().BytesHexVarP(&flags.Expected, "expected", "x", nil, "expected digest value (exit with error if not matched)")
-	cmd.Flags().StringVarP(&flags.Algorithm, "algorithm", "a", "sha256", "Algorithm: md5 or sha256")
+	cmd.Flags().SortFlags = false
 	cmd.Flags().StringVarP(&flags.Endpoint, "endpoint", "e", "", "endpoint: HTTP(S) URL")
+	cmd.Flags().StringVarP(&flags.Algorithm, "algorithm", "a", "sha256", "Algorithm: md5 or sha256")
+	cmd.Flags().BytesHexVarP(&flags.Expected, "expected", "x", nil, "expected digest value (exit with error if not matched)")
 	cmd.Flags().StringVarP(&flags.Region, "region", "r", "", "S3 region (if not in endpoint URL; default \""+protocols.DefaultAwsRegion+"\")")
+	cmd.Flags().CountVarP(&flags.Verbose, "verbose", "v", "verbose output (-vv for maximum verbosity)")
 
 	rootCmd.AddCommand(cmd)
 }

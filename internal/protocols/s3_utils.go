@@ -53,20 +53,20 @@ func IsEC2() (bool, error) {
 }
 
 func ValidS3Session(endpointP *string, regionStrP *string, logger logging.Logger) (awsSession *session.Session, err error) {
-	awsSession, err = InitS3Session(endpointP, regionStrP, logger.Verbose())
+	awsSession, err = InitS3Session(endpointP, regionStrP, logger.MaxLevel() >= logging.Trace)
 	if err != nil {
 		return nil, err
 	}
 	isEC2, err := IsEC2()
 	if err != nil {
-		logger.Detailf("Error trying to determine whether we're running in EC2 (assume we're not): %v", err)
+		logger.Tracef("Error trying to determine whether we're running in EC2 (assume we're not): %v", err)
 		isEC2 = false
 		err = nil
 	}
 	if isEC2 {
-		logger.Detailf("Running in EC2; allowing IAM role credentials\n")
+		logger.Tracef("Running in EC2; allowing IAM role credentials\n")
 	} else {
-		logger.Detailf("Not running in EC2; disallowing IAM role credentials\n")
+		logger.Tracef("Not running in EC2; disallowing IAM role credentials\n")
 		awsSession, err = DisallowIAMFallback(awsSession)
 	}
 	return
@@ -116,15 +116,15 @@ func EnsureS3Region(region string, endpoint *url.URL, logger logging.Logger) str
 	if region == "" {
 		endpointRegion, err := RegionFromEndpoint(endpoint)
 		if err == nil {
-			logger.Detailf("Found AWS region in endpoint URL %v: %v\n", endpoint, *endpointRegion)
+			logger.Tracef("Found AWS region in endpoint URL %v: %v\n", endpoint, *endpointRegion)
 			region = *endpointRegion
 		} else {
-			logger.Detailf("No AWS region found in endpoint URL '%v' (%v); using default region %v\n", endpoint, err, DefaultAwsRegion)
+			logger.Tracef("No AWS region found in endpoint URL '%v' (%v); using default region %v\n", endpoint, err, DefaultAwsRegion)
 			regionStr := DefaultAwsRegion
 			region = regionStr
 		}
 	} else {
-		logger.Detailf("Using specified AWS region: %v\n", region)
+		logger.Tracef("Using specified AWS region: %v\n", region)
 	}
 	return region
 }

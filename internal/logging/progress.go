@@ -74,7 +74,7 @@ func logProgress(logger Logger, nsStart, currentBytes, expectedBytes int64) {
 	bytesRemaining := expectedBytes - currentBytes
 	nsRemaining := int64(math.Round(nsPerSecondFloat64 * float64(bytesRemaining) / float64(estBytesPerSecond)))
 
-	logger.Infof(
+	logger.Detailf(
 		"%v of %v (%v/s; %v elapsed, %v remaining)\n",
 		FormatBytes(currentBytes),
 		FormatBytes(expectedBytes),

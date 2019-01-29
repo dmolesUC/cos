@@ -143,7 +143,7 @@ func (b ObjectBuilder) WithProtocolUri(protocolURI *url.URL, logger logging.Logg
 	b.protocol = protocolURI.Scheme
 	b.bucket = protocolURI.Host
 	b.key = protocolURI.Path
-	logger.Detailf("Parsed protocol '%v', bucket '%v' and key '%v' from URL '%v'\n", b.protocol, b.bucket, b.key, protocolURI)
+	logger.Tracef("Parsed protocol '%v', bucket '%v' and key '%v' from URL '%v'\n", b.protocol, b.bucket, b.key, protocolURI)
 	return b
 }
 
@@ -164,13 +164,13 @@ func (b ObjectBuilder) parsingObjURLStr(logger logging.Logger) (ObjectBuilder, e
 	var s3Uri *url.URL
 	if scheme == "http" || scheme == "https" {
 		endpointStr := fmt.Sprintf("%v://%v/", scheme, objURL.Host)
-		logger.Detailf("Extracted endpoint URL '%v' from object URL '%v'", endpointStr, objURL)
+		logger.Tracef("Extracted endpoint URL '%v' from object URL '%v'", endpointStr, objURL)
 		b.endpoint, err = url.Parse(endpointStr)
 		if err != nil {
 			return b, err
 		}
 		s3Uri, err = url.Parse("s3:/" + objURL.Path)
-		logger.Detailf("Constructed S3 URI '%v' from object URL '%v'", s3Uri, objURL)
+		logger.Tracef("Constructed S3 URI '%v' from object URL '%v'", s3Uri, objURL)
 		if err != nil {
 			return b, err
 		}

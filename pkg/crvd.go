@@ -14,43 +14,47 @@ type Crvd struct {
 	Object objects.Object
 }
 
-func (c *Crvd) CreateRetrieveVerify(body io.Reader, contentLength int64) (digest []byte, err error) {
+func (c *Crvd) CreateRetrieveVerify(body io.Reader, contentLength int64) error {
 	obj := c.Object
 	logger := obj.Logger()
-	logger.Infof("creating object at %v\n", objects.ProtocolUriStr(obj))
-	digest, err = c.create(body, contentLength)
-	if err == nil {
-		logger.Detailf("calculated digest on upload: %x\n", digest)
+	protocolUriStr := objects.ProtocolUriStr(obj)
 
-		obj.Refresh()
-		var actualLength int64
-		actualLength, err = obj.ContentLength()
-		if err == nil {
-			if actualLength != contentLength {
-				return digest, fmt.Errorf("content-length mismatch: expected: %d, actual: %d", contentLength, actualLength)
-			}
-			logger.Detailf("uploaded %d bytes\n", contentLength)
-			logger.Infof("verifying %v (expected digest: %x)\n", objects.ProtocolUriStr(obj), digest)
-			check := Check{Object: obj, Expected: digest, Algorithm: "sha256"}
-			return check.CalcDigest()
-		} else {
-			err = fmt.Errorf("unable to determine content-length after upload: %v", err)
-		}
+	logger.Infof("Creating object at %v\n", protocolUriStr)
+	expectedDigest, err := c.create(body, contentLength)
+	if err != nil {
+		return err
 	}
-	return digest, err
+	logger.Infof("Created %v (%d bytes)\n", protocolUriStr, contentLength)
+	logger.Tracef("Calculated digest on upload: %x\n", expectedDigest)
+
+	obj.Refresh()
+	var actualLength int64
+	actualLength, err = obj.ContentLength()
+	if err != nil {
+		return fmt.Errorf("unable to determine content-length after upload: %v", err)
+	}
+
+	if actualLength != contentLength {
+		return fmt.Errorf("content-length mismatch: expected: %d, actual: %d", contentLength, actualLength)
+	}
+	logger.Detailf("Uploaded %d bytes\n", contentLength)
+	logger.Detailf("Verifying %v (expected digest: %x)\n", protocolUriStr, expectedDigest)
+	check := Check{Object: obj, Expected: expectedDigest, Algorithm: "sha256"}
+	actualDigest, err := check.CalcDigest()
+	if err == nil {
+		logger.Infof("Verified %v (%d bytes, SHA-256 digest %x)\n", protocolUriStr, contentLength, actualDigest)
+	}
+	return err
 }
 
-func (c *Crvd) CreateRetrieveVerifyDelete(body io.Reader, contentLength int64) (digest []byte, err error) {
-	digest, err = c.CreateRetrieveVerify(body, contentLength)
+func (c *Crvd) CreateRetrieveVerifyDelete(body io.Reader, contentLength int64) error {
+	err := c.CreateRetrieveVerify(body, contentLength)
 	if err == nil {
 		obj := c.Object
-		logger := obj.Logger()
-
 		obj.Refresh()
-		logger.Detailf("verified %v\n", objects.ProtocolUriStr(obj))
 		err = obj.Delete()
 	}
-	return digest, err
+	return err
 }
 
 func (c *Crvd) create(body io.Reader, contentLength int64) ([] byte, error) {
@@ -67,6 +71,6 @@ func (c *Crvd) create(body io.Reader, contentLength int64) ([] byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	logger.Infof("%v to %v\n", logging.FormatBytes(in.TotalBytes()), objects.ProtocolUriStr(obj))
+	logger.Detailf("%v to %v\n", logging.FormatBytes(in.TotalBytes()), objects.ProtocolUriStr(obj))
 	return digest.Sum(nil), err
 }

@@ -1,6 +1,7 @@
 package objects
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -85,12 +86,15 @@ func (obj *S3Object) Key() *string {
 func (obj *S3Object) ContentLength() (int64, error) {
 	goOutput, err := obj.getObject()
 	if err != nil {
-		obj.logger.Detailf("error determining content-length: %v\n", err)
+		obj.logger.Tracef("error determining content-length: %v\n", err)
 		return 0, err
+	}
+	if goOutput == nil {
+		return 0, errors.New("no output returned by GetObject")
 	}
 	contentLength := goOutput.ContentLength
 	if contentLength == nil {
-		return 0, fmt.Errorf("no content-length returned by GetObject")
+		return 0, errors.New("no content-length returned by GetObject")
 	}
 	return *contentLength, nil
 }
@@ -106,9 +110,9 @@ func (obj *S3Object) SupportsRanges() bool {
 			if "bytes" == actual {
 				return true
 			}
-			obj.logger.Detailf("range request not supported; expected accept-ranges: 'bytes' but was '%v'\n", actual)
+			obj.logger.Tracef("range request not supported; expected accept-ranges: 'bytes' but was '%v'\n", actual)
 		} else {
-			obj.logger.Detail("range request not supported; expected accept-ranges: 'bytes' but was no accept-ranges header found")
+			obj.logger.Trace("range request not supported; expected accept-ranges: 'bytes' but was no accept-ranges header found")
 		}
 	}
 	return false
@@ -116,7 +120,7 @@ func (obj *S3Object) SupportsRanges() bool {
 
 func (obj *S3Object) DownloadRange(startInclusive, endInclusive int64, buffer []byte) (int64, error) {
 	if !obj.SupportsRanges() {
-		obj.logger.Detailf("object %v may not support ranged downloads; trying anyway\n", obj)
+		obj.logger.Tracef("object %v may not support ranged downloads; trying anyway\n", obj)
 	}
 	rangeStr := fmt.Sprintf("bytes=%d-%d", startInclusive, endInclusive)
 	goInput := s3.GetObjectInput{
@@ -149,13 +153,14 @@ func (obj *S3Object) Create(body io.Reader, length int64) (err error) {
 		Body:   body,
 	})
 	if err == nil {
-		obj.logger.Detailf("upload successful to %v\n", result.Location)
+		obj.logger.Detailf("Uploaded %d bytes to %v\n", length, result.Location)
 	}
 	return err
 }
 
 func (obj *S3Object) Delete() (err error) {
-	obj.Logger().Detailf("Delete: getting session for %v\n", ProtocolUriStr(obj))
+	protocolUriStr := ProtocolUriStr(obj)
+	obj.Logger().Tracef("Delete: getting session for %v\n", protocolUriStr)
 	awsSession, err := obj.sessionP()
 	if err != nil {
 		return err
@@ -164,8 +169,13 @@ func (obj *S3Object) Delete() (err error) {
 		Bucket: obj.Bucket(),
 		Key:    obj.Key(),
 	}
-	obj.Logger().Detailf("deleting %v\n", ProtocolUriStr(obj))
+	obj.Logger().Detailf("Deleting %v\n", protocolUriStr)
 	_, err = s3.New(awsSession).DeleteObject(&doInput)
+	if err == nil {
+		obj.Logger().Infof("Deleted %v\n", protocolUriStr)
+	} else {
+		obj.Logger().Infof("Deleting %v failed: %v", protocolUriStr, err)
+	}
 	return err
 }
 

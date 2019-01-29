@@ -63,7 +63,7 @@ func Download(obj Object, rangeSize int64, out io.Writer) (totalRead int64, err 
 		}
 		totalRead += bytesRead
 	}
-	logger.Infof("%v from %v\n", logging.FormatBytes(totalRead), ProtocolUriStr(obj))
+	logger.Detailf("%v from %v\n", logging.FormatBytes(totalRead), ProtocolUriStr(obj))
 	return totalRead, err
 }
 

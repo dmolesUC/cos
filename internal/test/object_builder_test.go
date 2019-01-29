@@ -16,7 +16,7 @@ type ObjectSuite struct {
 var _ = Suite(&ObjectSuite{})
 
 func (s *ObjectSuite) SetUpSuite(c *C) {
-	s.logger = logging.NewLogger(false)
+	s.logger = logging.NewLogger(logging.Default)
 }
 
 func (s *ObjectSuite) TestParsingHttpObjectURL(c *C) {

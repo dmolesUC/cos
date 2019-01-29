@@ -53,7 +53,7 @@ const (
 // crvdFlags type
 
 type crvdFlags struct {
-	Verbose  bool
+	Verbose  int
 	Region   string
 	Endpoint string
 	Key      string
@@ -67,7 +67,7 @@ type crvdFlags struct {
 
 func (f crvdFlags) Pretty() string {
 	format := `
-		verbose:   %v
+		log level: %v
 		region:   '%v'
 		endpoint: '%v'
         key:      '%v'
@@ -76,7 +76,11 @@ func (f crvdFlags) Pretty() string {
         zero:      %v
         keep:      %v`
 	format = logging.Untabify(format, "  ")
-	return fmt.Sprintf(format, f.Verbose, f.Region, f.Endpoint, f.Key, f.Size, f.SizeBytes, f.Seed, f.Zero, f.Keep)
+	return fmt.Sprintf(format, f.LogLevel(), f.Region, f.Endpoint, f.Key, f.Size, f.SizeBytes, f.Seed, f.Zero, f.Keep)
+}
+
+func (f crvdFlags) LogLevel() logging.LogLevel {
+	return logging.LogLevel(f.Verbose)
 }
 
 func crvd(bucketStr string, flags crvdFlags) (err error) {
@@ -103,9 +107,9 @@ func crvd(bucketStr string, flags crvdFlags) (err error) {
 		}
 	}
 
-	var logger = logging.NewLogger(flags.Verbose)
-	logger.Detailf("flags: %v\n", flags)
-	logger.Detailf("bucket URL: %v\n", bucketStr)
+	var logger = logging.NewLogger(flags.LogLevel())
+	logger.Tracef("flags: %v\n", flags)
+	logger.Tracef("bucket URL: %v\n", bucketStr)
 
 	if flags.Endpoint == "" {
 		return fmt.Errorf("endpoint URL must be specified")
@@ -130,17 +134,10 @@ func crvd(bucketStr string, flags crvdFlags) (err error) {
 	random := rand.New(rand.NewSource(flags.Seed))
 	body := io.LimitReader(random, flags.SizeBytes)
 
-	var digest []byte
 	if flags.Keep {
-		digest, err = crvd.CreateRetrieveVerify(body, flags.SizeBytes)
-		if err == nil {
-			logger.Infof("created %v (%d bytes, SHA-256 digest %x)\n", objects.ProtocolUriStr(obj), flags.Size, digest)
-		}
+		err = crvd.CreateRetrieveVerify(body, flags.SizeBytes)
 	} else {
-		digest, err = crvd.CreateRetrieveVerifyDelete(body, flags.SizeBytes)
-		if err == nil {
-			logger.Infof("verified and deleted %v (%d bytes, SHA-256 digest %x)\n", objects.ProtocolUriStr(obj), flags.SizeBytes, digest)
-		}
+		err = crvd.CreateRetrieveVerifyDelete(body, flags.SizeBytes)
 	}
 	return err
 }
@@ -159,14 +156,15 @@ func init() {
 			return crvd(args[0], flags)
 		},
 	}
-	cmd.Flags().BoolVarP(&flags.Keep, "keep", "", false, "keep object after verification (defaults to false)")
+	cmd.Flags().SortFlags = false
 	cmd.Flags().StringVarP(&flags.Endpoint, "endpoint", "e", "", "endpoint: HTTP(S) URL (required)")
-	cmd.Flags().StringVarP(&flags.Key, "key", "k", "", "key to create (defaults to cos-crvd-TIMESTAMP.bin)")
-	cmd.Flags().Int64VarP(&flags.Seed, "random-seed", "", 0, "seed for random-number generator (default 0)")
-	cmd.Flags().StringVarP(&flags.Region, "region", "r", "", "S3 region (if not in endpoint URL; default \""+protocols.DefaultAwsRegion+"\")")
 	cmd.Flags().StringVarP(&flags.Size, "size", "s", "1K", "size in bytes of object to create, if --zero not set")
-	cmd.Flags().BoolVarP(&flags.Verbose, "verbose", "v", false, "verbose output")
-	cmd.Flags().BoolVarP(&flags.Zero, "zero", "z", false, "whether to generate a zero-byte file")
+	cmd.Flags().BoolVarP(&flags.Zero, "zero", "z", false, "whether to generate a zero-byte file") // TODO: replace with NoOptDefaultVal
+	cmd.Flags().Int64VarP(&flags.Seed, "random-seed", "", 0, "seed for random-number generator (default 0)")
+	cmd.Flags().StringVarP(&flags.Key, "key", "k", "", "key to create (defaults to cos-crvd-TIMESTAMP.bin)")
+	cmd.Flags().BoolVarP(&flags.Keep, "keep", "", false, "keep object after verification (defaults to false)")
+	cmd.Flags().StringVarP(&flags.Region, "region", "r", "", "S3 region (if not in endpoint URL; default \""+protocols.DefaultAwsRegion+"\")")
+	cmd.Flags().CountVarP(&flags.Verbose, "verbose", "v", "verbose output (-vv for maximum verbosity)")
 
 	rootCmd.AddCommand(cmd)
 }
