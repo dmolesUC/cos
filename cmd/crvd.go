@@ -15,7 +15,6 @@ import (
 
 	"github.com/dmolesUC3/cos/internal/logging"
 	"github.com/dmolesUC3/cos/internal/objects"
-	"github.com/dmolesUC3/cos/internal/protocols"
 	"github.com/dmolesUC3/cos/pkg"
 )
 
@@ -53,9 +52,8 @@ const (
 // crvdFlags type
 
 type crvdFlags struct {
-	Verbose  int
-	Region   string
-	Endpoint string
+	CosFlags
+
 	Key      string
 	Size     string
 	Seed     int64
@@ -77,10 +75,6 @@ func (f crvdFlags) Pretty() string {
         keep:      %v`
 	format = logging.Untabify(format, "  ")
 	return fmt.Sprintf(format, f.LogLevel(), f.Region, f.Endpoint, f.Key, f.Size, f.SizeBytes, f.Seed, f.Zero, f.Keep)
-}
-
-func (f crvdFlags) LogLevel() logging.LogLevel {
-	return logging.LogLevel(f.Verbose)
 }
 
 func crvd(bucketStr string, flags crvdFlags) (err error) {
@@ -156,15 +150,14 @@ func init() {
 			return crvd(args[0], flags)
 		},
 	}
-	cmd.Flags().SortFlags = false
-	cmd.Flags().StringVarP(&flags.Endpoint, "endpoint", "e", "", "endpoint: HTTP(S) URL (required)")
-	cmd.Flags().StringVarP(&flags.Size, "size", "s", "1K", "size in bytes of object to create, if --zero not set")
-	cmd.Flags().BoolVarP(&flags.Zero, "zero", "z", false, "whether to generate a zero-byte file") // TODO: replace with NoOptDefaultVal
-	cmd.Flags().Int64VarP(&flags.Seed, "random-seed", "", 0, "seed for random-number generator (default 0)")
-	cmd.Flags().StringVarP(&flags.Key, "key", "k", "", "key to create (defaults to cos-crvd-TIMESTAMP.bin)")
-	cmd.Flags().BoolVarP(&flags.Keep, "keep", "", false, "keep object after verification (defaults to false)")
-	cmd.Flags().StringVarP(&flags.Region, "region", "r", "", "S3 region (if not in endpoint URL; default \""+protocols.DefaultAwsRegion+"\")")
-	cmd.Flags().CountVarP(&flags.Verbose, "verbose", "v", "verbose output (-vv for maximum verbosity)")
+	cmdFlags := cmd.Flags()
+	flags.AddTo(cmdFlags)
+
+	cmdFlags.StringVarP(&flags.Size, "size", "s", "1K", "size in bytes of object to create, if --zero not set")
+	cmdFlags.BoolVarP(&flags.Zero, "zero", "z", false, "whether to generate a zero-byte file") // TODO: replace with NoOptDefaultVal
+	cmdFlags.Int64VarP(&flags.Seed, "random-seed", "", 0, "seed for random-number generator (default 0)")
+	cmdFlags.StringVarP(&flags.Key, "key", "k", "", "key to create (defaults to cos-crvd-TIMESTAMP.bin)")
+	cmdFlags.BoolVarP(&flags.Keep, "keep", "", false, "keep object after verification (defaults to false)")
 
 	rootCmd.AddCommand(cmd)
 }

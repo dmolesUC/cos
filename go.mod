@@ -10,7 +10,7 @@ require (
 	github.com/onsi/gomega v1.4.3 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/cobra v0.0.3
-	github.com/spf13/pflag v1.0.3 // indirect
+	github.com/spf13/pflag v1.0.3
 	github.com/stretchr/testify v1.2.2 // indirect
 	golang.org/x/net v0.0.0-20181220203305-927f97764cc3 // indirect
 	golang.org/x/sys v0.0.0-20181205085412-a5c9d58dba9a // indirect

@@ -5,7 +5,6 @@ import (
 
 	"github.com/dmolesUC3/cos/internal/logging"
 	"github.com/dmolesUC3/cos/internal/objects"
-	"github.com/dmolesUC3/cos/internal/protocols"
 	"github.com/dmolesUC3/cos/pkg"
 
 	"github.com/spf13/cobra"
@@ -43,11 +42,10 @@ const (
 // checkFlags type
 
 type checkFlags struct {
-	Verbose  int
+	CosFlags
+
 	Expected  []byte
 	Algorithm string
-	Endpoint  string
-	Region    string
 }
 
 func (f checkFlags) Pretty() string {
@@ -66,10 +64,6 @@ func (f checkFlags) String() string {
 		"checkFlags{ verbose: %v, expected: %x, algorithm: '%v', endpoint: '%v', region: '%v'}",
 		f.Verbose, f.Expected, f.Algorithm, f.Endpoint, f.Region,
 	)
-}
-
-func (f checkFlags) LogLevel() logging.LogLevel {
-	return logging.LogLevel(f.Verbose)
 }
 
 // ------------------------------------------------------------
@@ -121,12 +115,11 @@ func init() {
 			return check(args[0], flags)
 		},
 	}
-	cmd.Flags().SortFlags = false
-	cmd.Flags().StringVarP(&flags.Endpoint, "endpoint", "e", "", "endpoint: HTTP(S) URL")
-	cmd.Flags().StringVarP(&flags.Algorithm, "algorithm", "a", "sha256", "Algorithm: md5 or sha256")
-	cmd.Flags().BytesHexVarP(&flags.Expected, "expected", "x", nil, "expected digest value (exit with error if not matched)")
-	cmd.Flags().StringVarP(&flags.Region, "region", "r", "", "S3 region (if not in endpoint URL; default \""+protocols.DefaultAwsRegion+"\")")
-	cmd.Flags().CountVarP(&flags.Verbose, "verbose", "v", "verbose output (-vv for maximum verbosity)")
+	cmdFlags := cmd.Flags()
+	flags.AddTo(cmdFlags)
+
+	cmdFlags.StringVarP(&flags.Algorithm, "algorithm", "a", "sha256", "Algorithm: md5 or sha256")
+	cmdFlags.BytesHexVarP(&flags.Expected, "expected", "x", nil, "expected digest value (exit with error if not matched)")
 
 	rootCmd.AddCommand(cmd)
 }
