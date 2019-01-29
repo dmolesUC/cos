@@ -59,8 +59,22 @@ type crvdFlags struct {
 	Seed     int64
 	Zero     bool
 	Keep     bool
+}
 
-	SizeBytes int64
+func (f crvdFlags) ContentLength() (int64, error) {
+	if f.Zero {
+		return 0, nil
+	}
+	sizeIsNumeric := strings.IndexFunc(f.Size, unicode.IsLetter) == -1
+	if sizeIsNumeric {
+		return strconv.ParseInt(f.Size, 10, 64)
+	}
+
+	bytes, err := bytefmt.ToBytes(f.Size)
+	if err == nil && bytes > math.MaxInt64 {
+		return 0, fmt.Errorf("specified size %d bytes exceeds maximum %d", bytes, math.MaxInt64)
+	}
+	return int64(bytes), err
 }
 
 func (f crvdFlags) Pretty() string {
@@ -74,38 +88,22 @@ func (f crvdFlags) Pretty() string {
         zero:      %v
         keep:      %v`
 	format = logging.Untabify(format, "  ")
-	return fmt.Sprintf(format, f.LogLevel(), f.Region, f.Endpoint, f.Key, f.Size, f.SizeBytes, f.Seed, f.Zero, f.Keep)
+
+	contentLength, _ := f.ContentLength()
+
+	return fmt.Sprintf(format, f.LogLevel(), f.Region, f.Endpoint, f.Key, f.Size, contentLength, f.Seed, f.Zero, f.Keep)
 }
 
-func crvd(bucketStr string, flags crvdFlags) (err error) {
-	if flags.Key == "" {
-		flags.Key = fmt.Sprintf("cos-crvd-%d.bin", time.Now().Unix())
-	}
-	if flags.Zero {
-		flags.SizeBytes = 0
-	} else {
-		if strings.IndexFunc(flags.Size, unicode.IsLetter) == -1 {
-			flags.SizeBytes, err = strconv.ParseInt(flags.Size, 10, 64)
-			if err != nil {
-				return err
-			}
-		} else {
-			sizeBytes, err2 := bytefmt.ToBytes(flags.Size)
-			if err2 != nil {
-				return err2
-			}
-			if sizeBytes >= math.MaxInt64 {
-				return fmt.Errorf("specified size %d bytes exceeds maximum %d", sizeBytes, math.MaxInt64)
-			}
-			flags.SizeBytes = int64(sizeBytes)
-		}
-	}
+func crvd(bucketStr string, f crvdFlags) (err error) {
 
-	var logger = logging.NewLogger(flags.LogLevel())
-	logger.Tracef("flags: %v\n", flags)
+	var logger = logging.NewLogger(f.LogLevel())
+	logger.Tracef("flags: %v\n", f)
 	logger.Tracef("bucket URL: %v\n", bucketStr)
 
-	if flags.Endpoint == "" {
+	if f.Key == "" {
+		f.Key = fmt.Sprintf("cos-crvd-%d.bin", time.Now().Unix())
+	}
+	if f.Endpoint == "" {
 		return fmt.Errorf("endpoint URL must be specified")
 	}
 
@@ -115,23 +113,28 @@ func crvd(bucketStr string, flags crvdFlags) (err error) {
 	}
 
 	obj, err := objects.NewObjectBuilder().
-		WithEndpointStr(flags.Endpoint).
-		WithRegion(flags.Region).
+		WithEndpointStr(f.Endpoint).
+		WithRegion(f.Region).
 		WithProtocolUri(bucketUrl, logger).
-		WithKey(flags.Key).
+		WithKey(f.Key).
 		Build(logger)
 	if err != nil {
 		return err
 	}
 
-	var crvd = pkg.Crvd{Object: obj}
-	random := rand.New(rand.NewSource(flags.Seed))
-	body := io.LimitReader(random, flags.SizeBytes)
+	contentLength, err := f.ContentLength()
+	if err != nil {
+		return err
+	}
 
-	if flags.Keep {
-		err = crvd.CreateRetrieveVerify(body, flags.SizeBytes)
+	var crvd = pkg.Crvd{Object: obj}
+	random := rand.New(rand.NewSource(f.Seed))
+	body := io.LimitReader(random, contentLength)
+
+	if f.Keep {
+		err = crvd.CreateRetrieveVerify(body, contentLength)
 	} else {
-		err = crvd.CreateRetrieveVerifyDelete(body, flags.SizeBytes)
+		err = crvd.CreateRetrieveVerifyDelete(body, contentLength)
 	}
 	return err
 }
@@ -161,3 +164,4 @@ func init() {
 
 	rootCmd.AddCommand(cmd)
 }
+
