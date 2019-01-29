@@ -2,19 +2,15 @@ package cmd
 
 import (
 	"fmt"
-	"io"
 	"math"
-	"math/rand"
 	"strconv"
 	"strings"
-	"time"
 	"unicode"
 
 	"code.cloudfoundry.org/bytefmt"
 	"github.com/spf13/cobra"
 
 	"github.com/dmolesUC3/cos/internal/logging"
-	"github.com/dmolesUC3/cos/internal/objects"
 	"github.com/dmolesUC3/cos/pkg"
 )
 
@@ -54,11 +50,11 @@ const (
 type crvdFlags struct {
 	CosFlags
 
-	Key      string
-	Size     string
-	Seed     int64
-	Zero     bool
-	Keep     bool
+	Key  string
+	Size string
+	Seed int64
+	Zero bool
+	Keep bool
 }
 
 func (f crvdFlags) ContentLength() (int64, error) {
@@ -95,46 +91,32 @@ func (f crvdFlags) Pretty() string {
 }
 
 func crvd(bucketStr string, f crvdFlags) (err error) {
-
 	var logger = logging.NewLogger(f.LogLevel())
 	logger.Tracef("flags: %v\n", f)
 	logger.Tracef("bucket URL: %v\n", bucketStr)
-
-	if f.Key == "" {
-		f.Key = fmt.Sprintf("cos-crvd-%d.bin", time.Now().Unix())
-	}
-	if f.Endpoint == "" {
-		return fmt.Errorf("endpoint URL must be specified")
-	}
-
-	bucketUrl, err := objects.ValidAbsURL(bucketStr)
-	if err != nil {
-		return err
-	}
-
-	obj, err := objects.NewObjectBuilder().
-		WithEndpointStr(f.Endpoint).
-		WithRegion(f.Region).
-		WithProtocolUri(bucketUrl, logger).
-		WithKey(f.Key).
-		Build(logger)
-	if err != nil {
-		return err
-	}
 
 	contentLength, err := f.ContentLength()
 	if err != nil {
 		return err
 	}
 
-	var crvd = pkg.Crvd{Object: obj}
-	random := rand.New(rand.NewSource(f.Seed))
-	body := io.LimitReader(random, contentLength)
+	crvd, err := pkg.NewCrvd(
+		f.Key,
+		f.Endpoint,
+		f.Region,
+		bucketStr,
+		contentLength,
+		f.Seed,
+		logger,
+	)
+	if err != nil {
+		return err
+	}
 
 	if f.Keep {
-		err = crvd.CreateRetrieveVerify(body, contentLength)
+		err = crvd.CreateRetrieveVerify()
 	} else {
-		err = crvd.CreateRetrieveVerifyDelete(body, contentLength)
+		err = crvd.CreateRetrieveVerifyDelete()
 	}
 	return err
 }
@@ -164,4 +146,3 @@ func init() {
 
 	rootCmd.AddCommand(cmd)
 }
-

@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
+	"math/rand"
 	"time"
 
 	"github.com/dmolesUC3/cos/internal/logging"
@@ -11,16 +12,60 @@ import (
 )
 
 type Crvd struct {
-	Object objects.Object
+	Object        objects.Object
+	ContentLength int64
+	RandomSeed    int64
 }
 
-func (c *Crvd) CreateRetrieveVerify(body io.Reader, contentLength int64) error {
+func NewCrvd(key, endpoint, region, bucket string, contentLength, randomSeed int64, logger logging.Logger) (*Crvd, error) {
+	if key == "" {
+		key = fmt.Sprintf("cos-crvd-%d.bin", time.Now().Unix())
+	}
+	if endpoint == "" {
+		return nil, fmt.Errorf("endpoint URL must be specified")
+	}
+
+	bucketUrl, err := objects.ValidAbsURL(bucket)
+	if err != nil {
+		return nil, err
+	}
+
+	obj, err := objects.NewObjectBuilder().
+		WithKey(key).
+		WithEndpointStr(endpoint).
+		WithRegion(region).
+		WithProtocolUri(bucketUrl, logger).
+		Build(logger)
+	if err != nil {
+		return nil, err
+	}
+
+	var crvd = Crvd{
+		Object: obj,
+		ContentLength: contentLength,
+		RandomSeed: randomSeed,
+	}
+	return &crvd, nil
+}
+
+func (c *Crvd) CreateRetrieveVerifyDelete() error {
+	err := c.CreateRetrieveVerify()
+	if err == nil {
+		obj := c.Object
+		obj.Refresh()
+		err = obj.Delete()
+	}
+	return err
+}
+
+func (c *Crvd) CreateRetrieveVerify() error {
 	obj := c.Object
 	logger := obj.Logger()
 	protocolUriStr := objects.ProtocolUriStr(obj)
 
+	contentLength := c.ContentLength
 	logger.Infof("Creating object at %v\n", protocolUriStr)
-	expectedDigest, err := c.create(body, contentLength)
+	expectedDigest, err := c.create()
 	if err != nil {
 		return err
 	}
@@ -47,23 +92,19 @@ func (c *Crvd) CreateRetrieveVerify(body io.Reader, contentLength int64) error {
 	return err
 }
 
-func (c *Crvd) CreateRetrieveVerifyDelete(body io.Reader, contentLength int64) error {
-	err := c.CreateRetrieveVerify(body, contentLength)
-	if err == nil {
-		obj := c.Object
-		obj.Refresh()
-		err = obj.Delete()
-	}
-	return err
+func (c *Crvd) newBody() io.Reader {
+	random := rand.New(rand.NewSource(c.RandomSeed))
+	return io.LimitReader(random, c.ContentLength)
 }
 
-func (c *Crvd) create(body io.Reader, contentLength int64) ([] byte, error) {
+func (c *Crvd) create() ([] byte, error) {
 	obj := c.Object
 	logger := obj.Logger()
 
 	digest := sha256.New()
-	tr := io.TeeReader(body, digest)
+	tr := io.TeeReader(c.newBody(), digest)
 
+	contentLength := c.ContentLength
 	in := logging.NewProgressReader(tr, contentLength)
 	in.LogTo(logger, time.Second)
 
