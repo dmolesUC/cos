@@ -131,13 +131,11 @@ default to “Project SDK” (1.11.x).
 ## Roadmap
 
 - ✅ fixity checking: expected vs. actual
+- ✅ sanity check: can we create/retrieve/verify/delete a file?
+- 🔲 weird filenames
+- 🔲 scalability
+  - large files
+  - large numbers of files per bucket
+  - large numbers of files per key prefix
 - 🔲 streaming download performance
-  - throughput
-  - time download to nowhere 
-  - time download to file
-  - include fixity check
 - 🔲 reliability
-  - same file
-  - different files
-  - retries
->
