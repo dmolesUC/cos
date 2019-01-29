@@ -5,6 +5,7 @@ require (
 	github.com/aws/aws-sdk-go v1.16.13
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/minimaxir/big-list-of-naughty-strings v0.0.0-20181116081547-f56ff6ea82e6
 	github.com/ncw/swift v1.0.43
 	github.com/onsi/ginkgo v1.7.0 // indirect
 	github.com/onsi/gomega v1.4.3 // indirect

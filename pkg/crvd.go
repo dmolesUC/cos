@@ -11,10 +11,19 @@ import (
 	"github.com/dmolesUC3/cos/internal/objects"
 )
 
+const (
+	DefaultContentLengthBytes = 128
+	DefaultRandomSeed = 1
+)
+
 type Crvd struct {
 	Object        objects.Object
 	ContentLength int64
 	RandomSeed    int64
+}
+
+func NewDefaultCrvd(key, endpoint, region, bucket string, logger logging.Logger) (*Crvd, error) {
+	return NewCrvd(key, endpoint, region, bucket, DefaultContentLengthBytes, DefaultRandomSeed, logger)
 }
 
 func NewCrvd(key, endpoint, region, bucket string, contentLength, randomSeed int64, logger logging.Logger) (*Crvd, error) {
@@ -41,9 +50,9 @@ func NewCrvd(key, endpoint, region, bucket string, contentLength, randomSeed int
 	}
 
 	var crvd = Crvd{
-		Object: obj,
+		Object:        obj,
 		ContentLength: contentLength,
-		RandomSeed: randomSeed,
+		RandomSeed:    randomSeed,
 	}
 	return &crvd, nil
 }

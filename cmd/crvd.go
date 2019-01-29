@@ -40,7 +40,7 @@ const (
 
 	exampleCrvd = `
         cos crvd s3://www.dmoles.net/ --endpoint https://s3.us-west-2.amazonaws.com/
-        cos crvd cos check swift://distrib.stage.9001.__c5e/ -e http://cloud.sdsc.edu/auth/v1.0
+        cos crvd swift://distrib.stage.9001.__c5e/ -e http://cloud.sdsc.edu/auth/v1.0
     `
 )
 
@@ -91,7 +91,7 @@ func (f crvdFlags) Pretty() string {
 }
 
 func crvd(bucketStr string, f crvdFlags) (err error) {
-	var logger = logging.NewLogger(f.LogLevel())
+	var logger = f.NewLogger()
 	logger.Tracef("flags: %v\n", f)
 	logger.Tracef("bucket URL: %v\n", bucketStr)
 
@@ -138,9 +138,11 @@ func init() {
 	cmdFlags := cmd.Flags()
 	flags.AddTo(cmdFlags)
 
-	cmdFlags.StringVarP(&flags.Size, "size", "s", "1K", "size in bytes of object to create, if --zero not set")
+	sizeDefault := bytefmt.ByteSize(pkg.DefaultContentLengthBytes)
+
+	cmdFlags.StringVarP(&flags.Size, "size", "s", sizeDefault, "size in bytes of object to create, if --zero not set")
 	cmdFlags.BoolVarP(&flags.Zero, "zero", "z", false, "whether to generate a zero-byte file") // TODO: replace with NoOptDefaultVal
-	cmdFlags.Int64VarP(&flags.Seed, "random-seed", "", 0, "seed for random-number generator (default 0)")
+	cmdFlags.Int64VarP(&flags.Seed, "random-seed", "", pkg.DefaultRandomSeed, "seed for random-number generator (default 0)")
 	cmdFlags.StringVarP(&flags.Key, "key", "k", "", "key to create (defaults to cos-crvd-TIMESTAMP.bin)")
 	cmdFlags.BoolVarP(&flags.Keep, "keep", "", false, "keep object after verification (defaults to false)")
 

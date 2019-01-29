@@ -69,15 +69,15 @@ func (f checkFlags) String() string {
 // ------------------------------------------------------------
 // Functions
 
-func check(objURLStr string, flags checkFlags) error {
-	var logger = logging.NewLogger(flags.LogLevel())
-	logger.Tracef("flags: %v\n", flags)
+func check(objURLStr string, f checkFlags) error {
+	var logger = f.NewLogger()
+	logger.Tracef("flags: %v\n", f)
 	logger.Tracef("object URL: %v\n", objURLStr)
 
 	obj, err := objects.NewObjectBuilder().
 		WithObjectURLStr(objURLStr).
-		WithEndpointStr(flags.Endpoint).
-		WithRegion(flags.Region).
+		WithEndpointStr(f.Endpoint).
+		WithRegion(f.Region).
 		Build(logger)
 	if err != nil {
 		return err
@@ -86,8 +86,8 @@ func check(objURLStr string, flags checkFlags) error {
 
 	var check = pkg.Check{
 		Object:    obj,
-		Expected:  flags.Expected,
-		Algorithm: flags.Algorithm,
+		Expected:  f.Expected,
+		Algorithm: f.Algorithm,
 	}
 	digest, err := check.CalcDigest()
 	if err != nil {
