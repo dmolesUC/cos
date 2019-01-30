@@ -23,10 +23,13 @@ type KeyFailure struct {
 	Error  error
 }
 
-func (k *Keys) CheckAll(source keys.Source) ([]KeyFailure, error) {
+func (k *Keys) CheckAll(source keys.Source, startIndex int, endIndex int) ([]KeyFailure, error) {
 	var failures []KeyFailure
-	for index, key := range source.Keys() {
-		f, err := k.Check(source.Name(), index, source.Count(), key)
+	sourceKeys := source.Keys()
+	count := source.Count()
+	for index := startIndex; index < endIndex; index ++ {
+		key := sourceKeys[index]
+		f, err := k.Check(source.Name(), index, count, key)
 		if err != nil {
 			return nil, err
 		}

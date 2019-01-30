@@ -28,8 +28,15 @@ const (
 	`
 )
 
+type keysFlags struct {
+	CosFlags
+
+	From int
+	To   int
+}
+
 func init() {
-	flags := CosFlags{}
+	flags := keysFlags{}
 	cmd := &cobra.Command{
 		Use:           usageKeys,
 		Short:         shortDescKeys,
@@ -44,23 +51,33 @@ func init() {
 	}
 	cmdFlags := cmd.Flags()
 	flags.AddTo(cmdFlags)
+	cmdFlags.IntVarP(&flags.From, "from", "f", 1, "first key to check (1-indexed, inclusive)")
+	cmdFlags.IntVarP(&flags.To, "to", "t", -1, "last key to check (1-indexed, inclusive); -1 to check all keys")
 	rootCmd.AddCommand(cmd)
 }
 
-func checkKeys(bucketStr string, f CosFlags) error {
+func checkKeys(bucketStr string, f keysFlags) error {
 	logger := f.NewLogger()
 	logger.Tracef("flags: %v\n", f)
 	logger.Tracef("bucket URL: %v\n", bucketStr)
 
-	k := pkg.NewKeys(f.Endpoint, f.Region, bucketStr, logger)
 	source := keys.NaughtyStrings()
-	failures, err := k.CheckAll(source)
+
+	startIndex := f.From - 1
+	endIndex := f.To
+	if endIndex <= 0 {
+		endIndex = source.Count()
+	}
+
+	k := pkg.NewKeys(f.Endpoint, f.Region, bucketStr, logger)
+	failures, err := k.CheckAll(source, endIndex, startIndex)
 	if err != nil {
 		return err
 	}
 	failureCount := len(failures)
 	if failureCount > 0 {
-		return fmt.Errorf("%d of %d keys failed", failureCount, source.Count())
+		totalExpected := startIndex - endIndex
+		return fmt.Errorf("%d of %d keys failed", failureCount, totalExpected)
 	}
 	return nil
 }
