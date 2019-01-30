@@ -2,7 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"runtime"
+	"runtime/pprof"
 
 	"github.com/spf13/cobra"
 
@@ -34,23 +37,26 @@ type keysFlags struct {
 
 	From int
 	To   int
+
+	MemProfile string
 }
 
 func (f keysFlags) Pretty() string {
 	format := `
-		log level: %v
-		region:   '%v'
-		endpoint: '%v'
-		from:      %d
-        to:        %d
+		log level:  %v
+		region:     %#v
+		endpoint:   %#v
+		from:       %d
+        to:         %d
+        memprofile: %#v
 	`
 	format = logging.Untabify(format, "  ")
 
-	return fmt.Sprintf(format, f.LogLevel(), f.Region, f.Endpoint, f.From, f.To)
+	return fmt.Sprintf(format, f.LogLevel(), f.Region, f.Endpoint, f.From, f.To, f.MemProfile)
 }
 
 func init() {
-	flags := keysFlags{}
+	f := keysFlags{}
 	cmd := &cobra.Command{
 		Use:           usageKeys,
 		Short:         shortDescKeys,
@@ -60,20 +66,40 @@ func init() {
 		SilenceErrors: true,
 		Example:       logging.Untabify(exampleKeys, "  "),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkKeys(args[0], flags)
+			err := checkKeys(args[0], f)
 			if err != nil {
 				_, _ = fmt.Fprintln(os.Stderr, err)
 			}
 		},
 	}
 	cmdFlags := cmd.Flags()
-	flags.AddTo(cmdFlags)
-	cmdFlags.IntVarP(&flags.From, "from", "f", 1, "first key to check (1-indexed, inclusive)")
-	cmdFlags.IntVarP(&flags.To, "to", "t", -1, "last key to check (1-indexed, inclusive); -1 to check all keys")
+	f.AddTo(cmdFlags)
+	cmdFlags.IntVarP(&f.From, "from", "f", 1, "first key to check (1-indexed, inclusive)")
+	cmdFlags.IntVarP(&f.To, "to", "t", -1, "last key to check (1-indexed, inclusive); -1 to check all keys")
+
+	cmdFlags.StringVarP(&f.MemProfile, "memprofile", "", "", "write memory profile to `file`")
+
 	rootCmd.AddCommand(cmd)
 }
 
 func checkKeys(bucketStr string, f keysFlags) error {
+	defer func() {
+		if f.MemProfile != "" {
+			f, err := os.Create(f.MemProfile)
+			if err != nil {
+				log.Fatal("could not create memory profile: ", err)
+			}
+			runtime.GC() // get up-to-date statistics
+			if err := pprof.WriteHeapProfile(f); err != nil {
+				log.Fatal("could not write memory profile: ", err)
+			}
+			err = f.Close()
+			if err != nil {
+				log.Fatal("could not close memory profile: ", err)
+			}
+		}
+	}()
+
 	logger := f.NewLogger()
 	logger.Tracef("flags: %v\n", f)
 	logger.Tracef("bucket URL: %v\n", bucketStr)
