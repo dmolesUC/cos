@@ -51,17 +51,21 @@ func (k *Keys) Check(sourceName string, index, count int, key string) (*KeyFailu
 	}
 	logger.Detailf("%d of %d from %v\n", 1 + index, count, sourceName)
 	err = crvd.CreateRetrieveVerifyDelete()
-	if err != nil {
-		msg := fmt.Sprintf("%#v (%d of %d from %v) failed: %v",
-			key,
-			1+index,
-			count,
-			sourceName,
-			strings.Replace(err.Error(), "\n", "\\n", -1),
-		)
-		fmt.Println(msg)
-		logger.Detail(msg)
-		return &KeyFailure{sourceName, index, key, err}, nil
+	if err == nil {
+		return nil, nil
 	}
-	return nil, err
+	if strings.Contains(fmt.Sprintf("%v", err), "no such host") {
+		return nil, err
+	}
+
+	msg := fmt.Sprintf("%#v (%d of %d from %v) failed: %v",
+		key,
+		1+index,
+		count,
+		sourceName,
+		strings.Replace(err.Error(), "\n", "\\n", -1),
+	)
+	fmt.Println(msg)
+	logger.Detail(msg)
+	return &KeyFailure{sourceName, index, key, err}, nil
 }
