@@ -72,12 +72,12 @@ func (c *Crvd) CreateRetrieveVerify() error {
 	protocolUriStr := objects.ProtocolUriStr(obj)
 
 	contentLength := c.ContentLength
-	logger.Infof("Creating object at %v\n", protocolUriStr)
+	logger.Detailf("Creating object at %v\n", protocolUriStr)
 	expectedDigest, err := c.create()
 	if err != nil {
 		return err
 	}
-	logger.Infof("Created %v (%d bytes)\n", protocolUriStr, contentLength)
+	logger.Detailf("Created %v (%d bytes)\n", protocolUriStr, contentLength)
 	logger.Tracef("Calculated digest on upload: %x\n", expectedDigest)
 
 	obj.Refresh()

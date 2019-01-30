@@ -172,7 +172,7 @@ func (obj *S3Object) Delete() (err error) {
 	obj.Logger().Detailf("Deleting %v\n", protocolUriStr)
 	_, err = s3.New(awsSession).DeleteObject(&doInput)
 	if err == nil {
-		obj.Logger().Infof("Deleted %v\n", protocolUriStr)
+		obj.Logger().Detailf("Deleted %v\n", protocolUriStr)
 	} else {
 		obj.Logger().Infof("Deleting %v failed: %v", protocolUriStr, err)
 	}

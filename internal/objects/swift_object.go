@@ -167,7 +167,7 @@ func (obj *SwiftObject) Delete() (err error) {
 	err = cnx.ObjectDelete(obj.container, obj.objectName)
 	protocolUriStr := ProtocolUriStr(obj)
 	if err == nil {
-		obj.Logger().Infof("Deleted %v\n", protocolUriStr)
+		obj.Logger().Detailf("Deleted %v\n", protocolUriStr)
 	} else {
 		obj.Logger().Infof("Deleting %v failed: %v", protocolUriStr, err)
 	}

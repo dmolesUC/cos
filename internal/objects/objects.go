@@ -34,7 +34,8 @@ type Object interface {
 }
 
 func ProtocolUriStr(obj Object) string {
-	return fmt.Sprintf("%v://%v/%v", obj.Protocol(), logging.PrettyStrP(obj.Bucket()), logging.PrettyStrP(obj.Key()))
+	uriStr := fmt.Sprintf("%v://%v/%v", obj.Protocol(), logging.PrettyStrP(obj.Bucket()), logging.PrettyStrP(obj.Key()))
+	return fmt.Sprintf("%#v", uriStr)
 }
 
 func Download(obj Object, rangeSize int64, out io.Writer) (totalRead int64, err error) {
