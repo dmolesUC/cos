@@ -95,7 +95,7 @@ func (c *Crvd) CreateRetrieveVerify() error {
 	check := Check{Object: obj, Expected: expectedDigest, Algorithm: "sha256"}
 	actualDigest, err := check.CalcDigest()
 	if err == nil {
-		logger.Infof("Verified %v (%d bytes, SHA-256 digest %x)\n", protocolUriStr, contentLength, actualDigest)
+		logger.Detailf("Verified %v (%d bytes, SHA-256 digest %x)\n", protocolUriStr, contentLength, actualDigest)
 	}
 	return err
 }
