@@ -35,6 +35,19 @@ type keysFlags struct {
 	To   int
 }
 
+func (f keysFlags) Pretty() string {
+	format := `
+		log level: %v
+		region:   '%v'
+		endpoint: '%v'
+		from:      %d
+        to:        %d
+	`
+	format = logging.Untabify(format, "  ")
+
+	return fmt.Sprintf(format, f.LogLevel(), f.Region, f.Endpoint, f.From, f.To)
+}
+
 func init() {
 	flags := keysFlags{}
 	cmd := &cobra.Command{
@@ -68,9 +81,10 @@ func checkKeys(bucketStr string, f keysFlags) error {
 	if endIndex <= 0 {
 		endIndex = source.Count()
 	}
+	logger.Tracef("startIndex: %d, endIndex: %d\n", startIndex, endIndex)
 
 	k := pkg.NewKeys(f.Endpoint, f.Region, bucketStr, logger)
-	failures, err := k.CheckAll(source, endIndex, startIndex)
+	failures, err := k.CheckAll(source, startIndex, endIndex)
 	if err != nil {
 		return err
 	}

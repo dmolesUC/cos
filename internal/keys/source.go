@@ -1,6 +1,7 @@
 package keys
 
 import (
+	"fmt"
 	"strings"
 
 	ns "github.com/minimaxir/big-list-of-naughty-strings/naughtystrings"
@@ -26,10 +27,12 @@ func (n *naughtyStrings) Name() string {
 
 func (n *naughtyStrings) Keys() []string {
 	if len(n.keys) == 0 {
-		for _, k := range ns.Unencoded() {
+		for index, k := range ns.Unencoded() {
 			if exclude(k) {
+				fmt.Printf("excluding %d: %#v\n", index + 1, k)
 				continue
 			}
+			//fmt.Printf("including %d: %#v", index + 1, k)
 			n.keys = append(n.keys, k)
 		}
 	}
