@@ -59,10 +59,9 @@ func NewCrvd(key, endpoint, region, bucket string, contentLength, randomSeed int
 
 func (c *Crvd) CreateRetrieveVerifyDelete() error {
 	err := c.CreateRetrieveVerify()
+	err2 := c.Object.Delete()
 	if err == nil {
-		obj := c.Object
-		obj.Refresh()
-		err = obj.Delete()
+		return err2
 	}
 	return err
 }
