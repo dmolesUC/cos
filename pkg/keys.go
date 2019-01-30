@@ -45,6 +45,7 @@ func (k *Keys) Check(sourceName string, index, count int, key string) (*KeyFailu
 	k.logger.Infof("%d of %d from %v\n", 1 + index, count, sourceName)
 	err = crvd.CreateRetrieveVerifyDelete()
 	if err != nil {
+		// TODO: write failures to stdout instead of stderr
 		k.logger.Infof("%#v (%d of %d from %v) failed: %v\n", key, 1 + index, count, sourceName, err)
 		return &KeyFailure{sourceName, index, key, err}, nil
 	}
