@@ -174,7 +174,7 @@ func (obj *S3Object) Delete() (err error) {
 	if err == nil {
 		obj.Logger().Detailf("Deleted %v\n", protocolUriStr)
 	} else {
-		obj.Logger().Infof("Deleting %v failed: %v", protocolUriStr, err)
+		obj.Logger().Detailf("Deleting %v failed: %v", protocolUriStr, err)
 	}
 	return err
 }

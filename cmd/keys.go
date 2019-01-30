@@ -5,6 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/dmolesUC3/cos/internal/keys"
+
 	"github.com/dmolesUC3/cos/internal/logging"
 	"github.com/dmolesUC3/cos/pkg"
 )
@@ -37,7 +39,7 @@ func init() {
 		SilenceErrors: true,
 		Example:       logging.Untabify(exampleKeys, "  "),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return keys(args[0], flags)
+			return checkKeys(args[0], flags)
 		},
 	}
 	cmdFlags := cmd.Flags()
@@ -45,19 +47,20 @@ func init() {
 	rootCmd.AddCommand(cmd)
 }
 
-func keys(bucketStr string, f CosFlags) error {
+func checkKeys(bucketStr string, f CosFlags) error {
 	logger := f.NewLogger()
 	logger.Tracef("flags: %v\n", f)
 	logger.Tracef("bucket URL: %v\n", bucketStr)
 
 	k := pkg.NewKeys(f.Endpoint, f.Region, bucketStr, logger)
-	failures, err := k.CheckAll()
+	source := keys.NaughtyStrings()
+	failures, err := k.CheckAll(source)
 	if err != nil {
 		return err
 	}
 	failureCount := len(failures)
 	if failureCount > 0 {
-		return fmt.Errorf("%d of %d keys failed", failureCount, k.TotalKeys())
+		return fmt.Errorf("%d of %d keys failed", failureCount, source.Count())
 	}
 	return nil
 }

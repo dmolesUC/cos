@@ -1,8 +1,7 @@
 package pkg
 
 import (
-	ns "github.com/minimaxir/big-list-of-naughty-strings/naughtystrings"
-
+	"github.com/dmolesUC3/cos/internal/keys"
 	"github.com/dmolesUC3/cos/internal/logging"
 )
 
@@ -24,17 +23,10 @@ type KeyFailure struct {
 	Error  error
 }
 
-func (k *Keys) TotalKeys() int {
-	return len(ns.Unencoded())
-}
-
-func (k *Keys) CheckAll() ([]KeyFailure, error) {
-	source := ns.Unencoded()
-	count := len(source)
-	sourceName := "minimaxir/big-list-of-naughty-strings"
+func (k *Keys) CheckAll(source keys.Source) ([]KeyFailure, error) {
 	var failures []KeyFailure
-	for index, key := range source {
-		f, err := k.Check(sourceName, index, count, key)
+	for index, key := range source.Keys() {
+		f, err := k.Check(source.Name(), index, source.Count(), key)
 		if err != nil {
 			return nil, err
 		}
@@ -45,20 +37,16 @@ func (k *Keys) CheckAll() ([]KeyFailure, error) {
 	return failures, nil
 }
 
-func (k *Keys) Check(source string, index, count int, key string) (*KeyFailure, error) {
-	endpoint := k.endpoint
-	region := k.region
-	bucket := k.bucket
-	logger := k.logger
-	crvd, err := NewDefaultCrvd(key, endpoint, region, bucket, logger)
+func (k *Keys) Check(sourceName string, index, count int, key string) (*KeyFailure, error) {
+	crvd, err := NewDefaultCrvd(key, k.endpoint, k.region, k.bucket, k.logger)
 	if err != nil {
 		return nil, err
 	}
-	k.logger.Infof("%d of %d from %v\n", 1 + index, count, source)
+	k.logger.Infof("%d of %d from %v\n", 1 + index, count, sourceName)
 	err = crvd.CreateRetrieveVerifyDelete()
 	if err != nil {
-		k.logger.Infof("%#v (%d of %d from %v) failed: %v\n", key, 1 + index, count, source, err)
-		return &KeyFailure{source, index, key, err}, nil
+		k.logger.Infof("%#v (%d of %d from %v) failed: %v\n", key, 1 + index, count, sourceName, err)
+		return &KeyFailure{sourceName, index, key, err}, nil
 	}
 	return nil, err
 }
