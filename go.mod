@@ -5,7 +5,7 @@ require (
 	github.com/aws/aws-sdk-go v1.16.13
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
-	github.com/minimaxir/big-list-of-naughty-strings v0.0.0-20181116081547-f56ff6ea82e6
+	github.com/minimaxir/big-list-of-naughty-strings/naughtystrings v0.0.0
 	github.com/ncw/swift v1.0.43
 	github.com/onsi/ginkgo v1.7.0 // indirect
 	github.com/onsi/gomega v1.4.3 // indirect
@@ -18,3 +18,5 @@ require (
 	gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405
 	gopkg.in/yaml.v2 v2.2.2 // indirect
 )
+
+replace github.com/minimaxir/big-list-of-naughty-strings/naughtystrings => github.com/dmolesUC3/big-list-of-naughty-strings/naughtystrings v0.0.0-20190129235316-1531f613e06a
