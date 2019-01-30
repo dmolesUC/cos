@@ -49,7 +49,7 @@ func exclude(k string) bool {
 	if k == "." {
 		return true
 	}
-	if strings.HasPrefix("..", k) {
+	if strings.HasPrefix(k, "..") {
 		return true
 	}
 	return false
