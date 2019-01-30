@@ -23,7 +23,7 @@ type S3Object struct {
 	key        string
 	logger     logging.Logger
 	awsSession *session.Session
-	goOutput   *s3.GetObjectOutput
+	head       *s3.HeadObjectOutput
 }
 
 func (obj *S3Object) Protocol() string {
@@ -53,7 +53,7 @@ func (obj *S3Object) String() string {
 
 func (obj *S3Object) Refresh() {
 	obj.awsSession = nil
-	obj.goOutput = nil
+	obj.head = nil
 }
 
 func (obj *S3Object) Logger() logging.Logger {
@@ -84,7 +84,7 @@ func (obj *S3Object) Key() *string {
 // ContentLength gets the size of the object in bytes, or returns an
 // error if the size cannot be determined.
 func (obj *S3Object) ContentLength() (int64, error) {
-	goOutput, err := obj.getObject()
+	goOutput, err := obj.Head()
 	if err != nil {
 		obj.logger.Tracef("error determining content-length: %v\n", err)
 		return 0, err
@@ -102,7 +102,7 @@ func (obj *S3Object) ContentLength() (int64, error) {
 // SupportsRanges returns true if the object supports ranged downloads,
 // false otherwise
 func (obj *S3Object) SupportsRanges() bool {
-	goOutput, err := obj.getObject()
+	goOutput, err := obj.Head()
 	if err == nil {
 		acceptRanges := goOutput.AcceptRanges
 		if acceptRanges != nil {
@@ -176,6 +176,7 @@ func (obj *S3Object) Delete() (err error) {
 	} else {
 		obj.Logger().Detailf("Deleting %v failed: %v", protocolUriStr, err)
 	}
+	obj.Refresh()
 	return err
 }
 
@@ -200,31 +201,32 @@ func (obj *S3Object) sessionP() (*session.Session, error) {
 	return obj.awsSession, err
 }
 
-func (obj *S3Object) toGetObjectInput() *s3.GetObjectInput {
-	goInput := s3.GetObjectInput{
+func (obj *S3Object) toHeadObjectInput() *s3.HeadObjectInput {
+	goInput := s3.HeadObjectInput{
 		Bucket: obj.Bucket(),
 		Key:    obj.Key(),
 	}
 	return &goInput
 }
 
-func (obj *S3Object) getObject() (*s3.GetObjectOutput, error) {
+func (obj *S3Object) Head() (*s3.HeadObjectOutput, error) {
 	var err error
-	if obj.goOutput == nil {
+	if obj.head == nil {
 		awsSession, err := obj.sessionP()
 		if err == nil {
 			s3Svc := s3.New(awsSession)
-			goOutput, err := s3Svc.GetObject(obj.toGetObjectInput())
+			head, err := s3Svc.HeadObject(obj.toHeadObjectInput())
 			if err != nil {
 				return nil, err
 			}
-			if goOutput == nil {
-				return nil, fmt.Errorf("nil *GetObjectOutput returned by S3.GetObject")
+			if head == nil {
+				return nil, fmt.Errorf("nil *HeadObjectOutput returned by S3.HeadObject")
 			}
-			obj.goOutput = goOutput
+			obj.head = head
+
 		}
 	}
-	return obj.goOutput, err
+	return obj.head, err
 }
 
 func (obj *S3Object) formatSession() string {
