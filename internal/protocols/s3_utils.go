@@ -52,8 +52,17 @@ func IsEC2() (bool, error) {
 	return false, nil
 }
 
+type S3Logger struct {
+	logger logging.Logger
+}
+
+// Log implements the aws.Logger interface
+func (s3l *S3Logger) Log(a ...interface{}) {
+	s3l.logger.Trace(a...)
+}
+
 func ValidS3Session(endpointP *string, regionStrP *string, logger logging.Logger) (awsSession *session.Session, err error) {
-	awsSession, err = InitS3Session(endpointP, regionStrP, logger.MaxLevel() >= logging.Trace)
+	awsSession, err = InitS3Session(endpointP, regionStrP, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -73,15 +82,20 @@ func ValidS3Session(endpointP *string, regionStrP *string, logger logging.Logger
 }
 
 // InitS3Session returns a new AWS session configured for S3 access via the specified endpoint and region.
-// The credentialsChainVerboseErrors controls whether to return verbose error messages in the event AWS
-// credentials cannot be determined.
-func InitS3Session(endpointP *string, regionStrP *string, credentialsChainVerboseErrors bool) (*session.Session, error) {
+// The verboseLogging parameter controls whether to return verbose error messages.
+func InitS3Session(endpointP *string, regionStrP *string, logger logging.Logger) (*session.Session, error) {
+	verboseLogging := logger.MaxLevel() >= logging.Trace
 	s3Config := aws.Config{
 		Endpoint:                      endpointP,
 		Region:                        regionStrP,
 		S3ForcePathStyle:              aws.Bool(true),
-		CredentialsChainVerboseErrors: aws.Bool(credentialsChainVerboseErrors),
+		CredentialsChainVerboseErrors: aws.Bool(verboseLogging),
 	}
+	if verboseLogging {
+		s3Config.LogLevel = aws.LogLevel(aws.LogDebugWithRequestErrors | aws.LogDebugWithRequestRetries)
+		s3Config.Logger = &S3Logger{logger}
+	}
+
 	s3Opts := session.Options{
 		Config:            s3Config,
 		SharedConfigState: session.SharedConfigEnable,
