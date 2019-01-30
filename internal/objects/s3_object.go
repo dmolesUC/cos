@@ -190,6 +190,7 @@ func (obj *S3Object) regionP() *string {
 	return &obj.region
 }
 
+// TODO: cache sessions above the object level?
 func (obj *S3Object) sessionP() (*session.Session, error) {
 	var err error
 	if obj.awsSession == nil {
