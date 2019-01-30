@@ -40,10 +40,10 @@ func NewCrvd(key, endpoint, region, bucket string, contentLength, randomSeed int
 	}
 
 	obj, err := objects.NewObjectBuilder().
-		WithKey(key).
 		WithEndpointStr(endpoint).
 		WithRegion(region).
 		WithProtocolUri(bucketUrl, logger).
+		WithKey(key). // TODO: fix builder so we can set this first
 		Build(logger)
 	if err != nil {
 		return nil, err
