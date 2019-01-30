@@ -1,6 +1,9 @@
 package pkg
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/dmolesUC3/cos/internal/keys"
 	"github.com/dmolesUC3/cos/internal/logging"
 )
@@ -41,15 +44,23 @@ func (k *Keys) CheckAll(source keys.Source, startIndex int, endIndex int) ([]Key
 }
 
 func (k *Keys) Check(sourceName string, index, count int, key string) (*KeyFailure, error) {
-	crvd, err := NewDefaultCrvd(key, k.endpoint, k.region, k.bucket, k.logger)
+	logger := k.logger
+	crvd, err := NewDefaultCrvd(key, k.endpoint, k.region, k.bucket, logger)
 	if err != nil {
 		return nil, err
 	}
-	k.logger.Infof("%d of %d from %v\n", 1 + index, count, sourceName)
+	logger.Detailf("%d of %d from %v\n", 1 + index, count, sourceName)
 	err = crvd.CreateRetrieveVerifyDelete()
 	if err != nil {
-		// TODO: write failures to stdout instead of stderr
-		k.logger.Infof("%#v (%d of %d from %v) failed: %v\n", key, 1 + index, count, sourceName, err)
+		msg := fmt.Sprintf("%#v (%d of %d from %v) failed: %v",
+			key,
+			1+index,
+			count,
+			sourceName,
+			strings.Replace(err.Error(), "\n", "\\n", -1),
+		)
+		fmt.Println(msg)
+		logger.Detail(msg)
 		return &KeyFailure{sourceName, index, key, err}, nil
 	}
 	return nil, err

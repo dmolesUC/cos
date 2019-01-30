@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -58,8 +59,11 @@ func init() {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		Example:       logging.Untabify(exampleKeys, "  "),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return checkKeys(args[0], flags)
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkKeys(args[0], flags)
+			if err != nil {
+				_, _ = fmt.Fprintln(os.Stderr, err)
+			}
 		},
 	}
 	cmdFlags := cmd.Flags()
