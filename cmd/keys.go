@@ -100,7 +100,7 @@ func checkKeys(bucketStr string, f keysFlags) error {
 		}
 	}()
 
-	logger := f.NewLogger()
+	logger := logging.DefaultLoggerWithLevel(f.LogLevel())
 	logger.Tracef("flags: %v\n", f)
 	logger.Tracef("bucket URL: %v\n", bucketStr)
 
@@ -113,7 +113,7 @@ func checkKeys(bucketStr string, f keysFlags) error {
 	}
 	logger.Tracef("startIndex: %d, endIndex: %d\n", startIndex, endIndex)
 
-	k := pkg.NewKeys(f.Endpoint, f.Region, bucketStr, logger)
+	k := pkg.NewKeys(f.Endpoint, f.Region, bucketStr)
 	failures, err := k.CheckAll(source, startIndex, endIndex)
 	if err != nil {
 		return err

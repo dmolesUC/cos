@@ -4,19 +4,19 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/dmolesUC3/cos/internal/keys"
 	"github.com/dmolesUC3/cos/internal/logging"
+
+	"github.com/dmolesUC3/cos/internal/keys"
 )
 
 type Keys struct {
 	endpoint string
 	region   string
 	bucket   string
-	logger   logging.Logger
 }
 
-func NewKeys(endpoint, region, bucket string, logger logging.Logger) Keys {
-	return Keys{endpoint, region, bucket, logger}
+func NewKeys(endpoint, region, bucket string) Keys {
+	return Keys{endpoint, region, bucket}
 }
 
 type KeyFailure struct {
@@ -44,8 +44,8 @@ func (k *Keys) CheckAll(source keys.Source, startIndex int, endIndex int) ([]Key
 }
 
 func (k *Keys) Check(sourceName string, index, count int, key string) (*KeyFailure, error) {
-	logger := k.logger
-	crvd, err := NewDefaultCrvd(key, k.endpoint, k.region, k.bucket, logger)
+	logger := logging.DefaultLogger()
+	crvd, err := NewDefaultCrvd(key, k.endpoint, k.region, k.bucket)
 	if err != nil {
 		return nil, err
 	}

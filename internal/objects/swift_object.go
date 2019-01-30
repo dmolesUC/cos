@@ -24,7 +24,6 @@ type SwiftObject struct {
 	container       string
 	objectName      string
 	cnxParams       protocols.SwiftConnectionParams
-	logger          logging.Logger
 	swiftConnection *swift.Connection
 }
 
@@ -37,11 +36,10 @@ func (obj *SwiftObject) Pretty() string {
 		container:      '%v' 
 		objectName:     '%v' 
 		cnxParams:       %v 
-		logger:          %v 
 		swiftConnection: %v
 	}`
 	format = logging.Untabify(format, " ")
-	args := logging.Prettify(obj.container, obj.objectName, obj.cnxParams, obj.logger, obj.swiftConnection)
+	args := logging.Prettify(obj.container, obj.objectName, obj.cnxParams, obj.swiftConnection)
 	return fmt.Sprintf(format, args...)
 }
 
@@ -50,17 +48,12 @@ func (obj *SwiftObject) Refresh() {
 }
 
 func (obj *SwiftObject) String() string {
-	return fmt.Sprintf("SwiftObject { container: '%v', objectName: '%v', cnxParams: %v, logger: %v, swiftConnection: %v }",
+	return fmt.Sprintf("SwiftObject { container: '%v', objectName: '%v', cnxParams: %v, swiftConnection: %v }",
 		obj.container,
 		obj.objectName,
 		obj.cnxParams,
-		obj.logger,
 		obj.swiftConnection,
 	)
-}
-
-func (obj *SwiftObject) Logger() logging.Logger {
-	return obj.logger
 }
 
 // Endpoint returns the Swift authentication URL
@@ -119,7 +112,7 @@ func (obj *SwiftObject) Create(body io.Reader, length int64) error {
 	if err != nil {
 		return err
 	}
-	logger := obj.logger
+	logger := logging.DefaultLogger()
 
 	// TODO: allow object to include an expected MD5
 	var out io.WriteCloser
@@ -166,10 +159,11 @@ func (obj *SwiftObject) Delete() (err error) {
 	// TODO: detect DynamicLargeObjects
 	err = cnx.ObjectDelete(obj.container, obj.objectName)
 	protocolUriStr := ProtocolUriStr(obj)
+	logger := logging.DefaultLogger()
 	if err == nil {
-		obj.Logger().Detailf("Deleted %v\n", protocolUriStr)
+		logger.Detailf("Deleted %v\n", protocolUriStr)
 	} else {
-		obj.Logger().Detailf("Deleting %v failed: %v", protocolUriStr, err)
+		logger.Detailf("Deleting %v failed: %v", protocolUriStr, err)
 	}
 	return err
 }

@@ -70,7 +70,7 @@ func (f checkFlags) String() string {
 // Functions
 
 func check(objURLStr string, f checkFlags) error {
-	var logger = f.NewLogger()
+	logger := logging.DefaultLoggerWithLevel(f.LogLevel())
 	logger.Tracef("flags: %v\n", f)
 	logger.Tracef("object URL: %v\n", objURLStr)
 
@@ -78,7 +78,7 @@ func check(objURLStr string, f checkFlags) error {
 		WithObjectURLStr(objURLStr).
 		WithEndpointStr(f.Endpoint).
 		WithRegion(f.Region).
-		Build(logger)
+		Build()
 	if err != nil {
 		return err
 	}

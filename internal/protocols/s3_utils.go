@@ -53,19 +53,19 @@ func IsEC2() (bool, error) {
 }
 
 type S3Logger struct {
-	logger logging.Logger
 }
 
 // Log implements the aws.Logger interface
-func (s3l *S3Logger) Log(a ...interface{}) {
-	s3l.logger.Trace(a...)
+func (*S3Logger) Log(a ...interface{}) {
+	logging.DefaultLogger().Trace(a...)
 }
 
-func ValidS3Session(endpointP *string, regionStrP *string, logger logging.Logger) (awsSession *session.Session, err error) {
-	awsSession, err = InitS3Session(endpointP, regionStrP, logger)
+func ValidS3Session(endpointP *string, regionStrP *string) (awsSession *session.Session, err error) {
+	awsSession, err = InitS3Session(endpointP, regionStrP)
 	if err != nil {
 		return nil, err
 	}
+	logger := logging.DefaultLogger()
 	isEC2, err := IsEC2()
 	if err != nil {
 		logger.Tracef("Error trying to determine whether we're running in EC2 (assume we're not): %v", err)
@@ -83,7 +83,8 @@ func ValidS3Session(endpointP *string, regionStrP *string, logger logging.Logger
 
 // InitS3Session returns a new AWS session configured for S3 access via the specified endpoint and region.
 // The verboseLogging parameter controls whether to return verbose error messages.
-func InitS3Session(endpointP *string, regionStrP *string, logger logging.Logger) (*session.Session, error) {
+func InitS3Session(endpointP *string, regionStrP *string) (*session.Session, error) {
+	logger := logging.DefaultLogger()
 	verboseLogging := logger.MaxLevel() >= logging.Trace
 	s3Config := aws.Config{
 		Endpoint:                      endpointP,
@@ -93,7 +94,7 @@ func InitS3Session(endpointP *string, regionStrP *string, logger logging.Logger)
 	}
 	if verboseLogging {
 		s3Config.LogLevel = aws.LogLevel(aws.LogDebugWithRequestErrors | aws.LogDebugWithRequestRetries)
-		s3Config.Logger = &S3Logger{logger}
+		s3Config.Logger = &S3Logger{}
 	}
 
 	s3Opts := session.Options{
@@ -126,7 +127,8 @@ func DisallowIAMFallback(awsSession *session.Session) (*session.Session, error) 
 	return awsSession, nil
 }
 
-func EnsureS3Region(region string, endpoint *url.URL, logger logging.Logger) string {
+func EnsureS3Region(region string, endpoint *url.URL) string {
+	logger := logging.DefaultLogger()
 	if region == "" {
 		endpointRegion, err := RegionFromEndpoint(endpoint)
 		if err == nil {

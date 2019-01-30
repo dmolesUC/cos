@@ -22,11 +22,11 @@ type Crvd struct {
 	RandomSeed    int64
 }
 
-func NewDefaultCrvd(key, endpoint, region, bucket string, logger logging.Logger) (*Crvd, error) {
-	return NewCrvd(key, endpoint, region, bucket, DefaultContentLengthBytes, DefaultRandomSeed, logger)
+func NewDefaultCrvd(key, endpoint, region, bucket string) (*Crvd, error) {
+	return NewCrvd(key, endpoint, region, bucket, DefaultContentLengthBytes, DefaultRandomSeed)
 }
 
-func NewCrvd(key, endpoint, region, bucket string, contentLength, randomSeed int64, logger logging.Logger) (*Crvd, error) {
+func NewCrvd(key, endpoint, region, bucket string, contentLength, randomSeed int64) (*Crvd, error) {
 	if key == "" {
 		key = fmt.Sprintf("cos-crvd-%d.bin", time.Now().Unix())
 	}
@@ -42,9 +42,9 @@ func NewCrvd(key, endpoint, region, bucket string, contentLength, randomSeed int
 	obj, err := objects.NewObjectBuilder().
 		WithEndpointStr(endpoint).
 		WithRegion(region).
-		WithProtocolUri(bucketUrl, logger).
+		WithProtocolUri(bucketUrl).
 		WithKey(key). // TODO: fix builder so we can set this first
-		Build(logger)
+		Build()
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func (c *Crvd) CreateRetrieveVerifyDelete() error {
 
 func (c *Crvd) CreateRetrieveVerify() error {
 	obj := c.Object
-	logger := obj.Logger()
+	logger := logging.DefaultLogger()
 	protocolUriStr := objects.ProtocolUriStr(obj)
 
 	contentLength := c.ContentLength
@@ -107,7 +107,7 @@ func (c *Crvd) newBody() io.Reader {
 
 func (c *Crvd) create() ([] byte, error) {
 	obj := c.Object
-	logger := obj.Logger()
+	logger := logging.DefaultLogger()
 
 	digest := sha256.New()
 	tr := io.TeeReader(c.newBody(), digest)

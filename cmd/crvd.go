@@ -91,7 +91,7 @@ func (f crvdFlags) Pretty() string {
 }
 
 func crvd(bucketStr string, f crvdFlags) (err error) {
-	var logger = f.NewLogger()
+	logger := logging.DefaultLoggerWithLevel(f.LogLevel())
 	logger.Tracef("flags: %v\n", f)
 	logger.Tracef("bucket URL: %v\n", bucketStr)
 
@@ -107,7 +107,6 @@ func crvd(bucketStr string, f crvdFlags) (err error) {
 		bucketStr,
 		contentLength,
 		f.Seed,
-		logger,
 	)
 	if err != nil {
 		return err

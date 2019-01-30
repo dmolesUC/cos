@@ -68,8 +68,8 @@ func (b ObjectBuilder) WithObjectURLStr(objURLStr string) ObjectBuilder {
 }
 
 // Build builds a new Object from the state of this ObjectBuilder
-func (b ObjectBuilder) Build(logger logging.Logger) (Object, error) {
-	builder, err := b.parsingObjURLStr(logger)
+func (b ObjectBuilder) Build() (Object, error) {
+	builder, err := b.parsingObjURLStr()
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (b ObjectBuilder) Build(logger logging.Logger) (Object, error) {
 		return nil, err
 	}
 	if builder.protocol == protocolS3 {
-		builder.region = protocols.EnsureS3Region(builder.region, builder.endpoint, logger)
+		builder.region = protocols.EnsureS3Region(builder.region, builder.endpoint)
 		if builder.region == "" {
 			return nil, fmt.Errorf("unable to determine region for S3 object")
 		}
@@ -90,7 +90,6 @@ func (b ObjectBuilder) Build(logger logging.Logger) (Object, error) {
 			endpoint: builder.endpoint,
 			bucket:   builder.bucket,
 			key:      builder.key,
-			logger:   logger,
 		}, nil
 	}
 
@@ -110,7 +109,6 @@ func (b ObjectBuilder) Build(logger logging.Logger) (Object, error) {
 	return &SwiftObject{
 		container:  builder.bucket,
 		objectName: objName,
-		logger:     logger,
 		cnxParams: protocols.SwiftConnectionParams{
 			UserName: swiftAPIUser,
 			APIKey:   swiftAPIKey,
@@ -139,15 +137,15 @@ func (b ObjectBuilder) checkRequiredFields() error {
 	return fmt.Errorf("missing fields: %v", strings.Join(missing, ", "))
 }
 
-func (b ObjectBuilder) WithProtocolUri(protocolURI *url.URL, logger logging.Logger) (ObjectBuilder) {
+func (b ObjectBuilder) WithProtocolUri(protocolURI *url.URL) ObjectBuilder {
 	b.protocol = protocolURI.Scheme
 	b.bucket = protocolURI.Host
 	b.key = protocolURI.Path
-	logger.Tracef("Parsed protocol '%v', bucket '%v' and key '%v' from URL '%v'\n", b.protocol, b.bucket, b.key, protocolURI)
+	logging.DefaultLogger().Tracef("Parsed protocol '%v', bucket '%v' and key '%v' from URL '%v'\n", b.protocol, b.bucket, b.key, protocolURI)
 	return b
 }
 
-func (b ObjectBuilder) parsingObjURLStr(logger logging.Logger) (ObjectBuilder, error) {
+func (b ObjectBuilder) parsingObjURLStr() (ObjectBuilder, error) {
 	if b.objURLStr == "" {
 		return b, nil
 	}
@@ -158,11 +156,12 @@ func (b ObjectBuilder) parsingObjURLStr(logger logging.Logger) (ObjectBuilder, e
 
 	scheme := objURL.Scheme
 	if scheme == protocolSwift || scheme == protocolS3 {
-		return b.WithProtocolUri(objURL, logger), nil
+		return b.WithProtocolUri(objURL), nil
 	}
 
 	var s3Uri *url.URL
 	if scheme == "http" || scheme == "https" {
+		logger := logging.DefaultLogger()
 		endpointStr := fmt.Sprintf("%v://%v/", scheme, objURL.Host)
 		logger.Tracef("Extracted endpoint URL '%v' from object URL '%v'", endpointStr, objURL)
 		b.endpoint, err = url.Parse(endpointStr)
@@ -174,7 +173,7 @@ func (b ObjectBuilder) parsingObjURLStr(logger logging.Logger) (ObjectBuilder, e
 		if err != nil {
 			return b, err
 		}
-		return b.WithProtocolUri(s3Uri, logger), nil
+		return b.WithProtocolUri(s3Uri), nil
 	}
 	return b, fmt.Errorf("object URL '%v' is not of form s3://<bucket>/<key>, swift://<container>//<name>, or http(s)://<S3 endpoint>/<bucket>/<key>", objURL)
 }

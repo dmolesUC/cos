@@ -21,7 +21,6 @@ type S3Object struct {
 	endpoint   *url.URL
 	bucket     string
 	key        string
-	logger     logging.Logger
 	awsSession *session.Session
 	head       *s3.HeadObjectOutput
 }
@@ -36,28 +35,23 @@ func (obj *S3Object) Pretty() string {
 				endpoint: %v 
 				bucket:  '%v' 
 		        key :    '%v'
-				logger:   %v 
 				session: '%v'
 			}`
 	format = logging.Untabify(format, " ")
-	args := logging.Prettify(obj.region, obj.formatEndpoint(), obj.bucket, obj.key, obj.logger, obj.formatSession())
+	args := logging.Prettify(obj.region, obj.formatEndpoint(), obj.bucket, obj.key, obj.formatSession())
 	return fmt.Sprintf(format, args...)
 }
 
 func (obj *S3Object) String() string {
 	return fmt.Sprintf(
-		"{region: %v, endpoint: %v, bucket: %v, key: %v, logger: %v, awsSession: %v}",
-		obj.region, obj.formatEndpoint(), obj.bucket, obj.key, obj.logger, obj.formatSession(),
+		"{region: %v, endpoint: %v, bucket: %v, key: %v, awsSession: %v}",
+		obj.region, obj.formatEndpoint(), obj.bucket, obj.key, obj.formatSession(),
 	)
 }
 
 func (obj *S3Object) Refresh() {
 	obj.awsSession = nil
 	obj.head = nil
-}
-
-func (obj *S3Object) Logger() logging.Logger {
-	return obj.logger
 }
 
 // Endpoint returns the endpoint URL used to access the object
@@ -86,7 +80,7 @@ func (obj *S3Object) Key() *string {
 func (obj *S3Object) ContentLength() (int64, error) {
 	goOutput, err := obj.Head()
 	if err != nil {
-		obj.logger.Tracef("error determining content-length: %v\n", err)
+		logging.DefaultLogger().Tracef("error determining content-length: %v\n", err)
 		return 0, err
 	}
 	if goOutput == nil {
@@ -104,15 +98,16 @@ func (obj *S3Object) ContentLength() (int64, error) {
 func (obj *S3Object) SupportsRanges() bool {
 	goOutput, err := obj.Head()
 	if err == nil {
+		logger := logging.DefaultLogger()
 		acceptRanges := goOutput.AcceptRanges
 		if acceptRanges != nil {
 			actual := *acceptRanges
 			if "bytes" == actual {
 				return true
 			}
-			obj.logger.Tracef("range request not supported; expected accept-ranges: 'bytes' but was '%v'\n", actual)
+			logger.Tracef("range request not supported; expected accept-ranges: 'bytes' but was '%v'\n", actual)
 		} else {
-			obj.logger.Trace("range request not supported; expected accept-ranges: 'bytes' but was no accept-ranges header found")
+			logger.Trace("range request not supported; expected accept-ranges: 'bytes' but was no accept-ranges header found")
 		}
 	}
 	return false
@@ -120,7 +115,7 @@ func (obj *S3Object) SupportsRanges() bool {
 
 func (obj *S3Object) DownloadRange(startInclusive, endInclusive int64, buffer []byte) (int64, error) {
 	if !obj.SupportsRanges() {
-		obj.logger.Tracef("object %v may not support ranged downloads; trying anyway\n", obj)
+		logging.DefaultLogger().Tracef("object %v may not support ranged downloads; trying anyway\n", obj)
 	}
 	rangeStr := fmt.Sprintf("bytes=%d-%d", startInclusive, endInclusive)
 	goInput := s3.GetObjectInput{
@@ -143,7 +138,7 @@ func (obj *S3Object) Create(body io.Reader, length int64) (err error) {
 	if err != nil {
 		return err
 	}
-	obj.Logger().Detailf("Uploading %d bytes to %v\n", length, ProtocolUriStr(obj))
+	logging.DefaultLogger().Detailf("Uploading %d bytes to %v\n", length, ProtocolUriStr(obj))
 
 	// TODO: allow object to include an expected MD5
 	uploader := s3manager.NewUploader(awsSession)
@@ -153,14 +148,14 @@ func (obj *S3Object) Create(body io.Reader, length int64) (err error) {
 		Body:   body,
 	})
 	if err == nil {
-		obj.logger.Detailf("Uploaded %d bytes to %v\n", length, result.Location)
+		logging.DefaultLogger().Detailf("Uploaded %d bytes to %v\n", length, result.Location)
 	}
 	return err
 }
 
 func (obj *S3Object) Delete() (err error) {
 	protocolUriStr := ProtocolUriStr(obj)
-	obj.Logger().Tracef("Delete: getting session for %v\n", protocolUriStr)
+	logging.DefaultLogger().Tracef("Delete: getting session for %v\n", protocolUriStr)
 	awsSession, err := obj.sessionP()
 	if err != nil {
 		return err
@@ -169,12 +164,12 @@ func (obj *S3Object) Delete() (err error) {
 		Bucket: obj.Bucket(),
 		Key:    obj.Key(),
 	}
-	obj.Logger().Detailf("Deleting %v\n", protocolUriStr)
+	logging.DefaultLogger().Detailf("Deleting %v\n", protocolUriStr)
 	_, err = s3.New(awsSession).DeleteObject(&doInput)
 	if err == nil {
-		obj.Logger().Detailf("Deleted %v\n", protocolUriStr)
+		logging.DefaultLogger().Detailf("Deleted %v\n", protocolUriStr)
 	} else {
-		obj.Logger().Detailf("Deleting %v failed: %v", protocolUriStr, err)
+		logging.DefaultLogger().Detailf("Deleting %v failed: %v", protocolUriStr, err)
 	}
 	obj.Refresh()
 	return err
@@ -196,7 +191,7 @@ func (obj *S3Object) sessionP() (*session.Session, error) {
 	var err error
 	if obj.awsSession == nil {
 		endpointStr := obj.endpoint.String()
-		obj.awsSession, err = protocols.ValidS3Session(&endpointStr, obj.regionP(), obj.logger)
+		obj.awsSession, err = protocols.ValidS3Session(&endpointStr, obj.regionP())
 	}
 	return obj.awsSession, err
 }

@@ -5,18 +5,15 @@ import (
 
 	. "gopkg.in/check.v1"
 
-	"github.com/dmolesUC3/cos/internal/logging"
 	. "github.com/dmolesUC3/cos/internal/objects"
 )
 
 type ObjectSuite struct {
-	logger logging.Logger
 }
 
 var _ = Suite(&ObjectSuite{})
 
 func (s *ObjectSuite) SetUpSuite(c *C) {
-	s.logger = logging.NewLogger(logging.Default)
 }
 
 func (s *ObjectSuite) TestParsingHttpObjectURL(c *C) {
@@ -27,7 +24,7 @@ func (s *ObjectSuite) TestParsingHttpObjectURL(c *C) {
 	expectedEndpoint, _ := url.Parse("https://s3-cn-north-1.amazonaws.com/")
 
 	b := NewObjectBuilder().WithObjectURLStr(inputURLStr)
-	o, err := b.Build(s.logger)
+	o, err := b.Build()
 	c.Assert(err, IsNil)
 	c.Assert(*o.Key(), Equals, expectedKey)
 	c.Assert(*o.Bucket(), Equals, expectedBucket)
@@ -44,7 +41,7 @@ func (s *ObjectSuite) TestParsingHttpObjectURLEmptyEndpoint(c *C) {
 	b := NewObjectBuilder().
 		WithObjectURLStr(inputURLStr).
 		WithEndpointStr("")
-	o, err := b.Build(s.logger)
+	o, err := b.Build()
 	c.Assert(err, IsNil)
 	//c.Assert(*o.Region(), Equals, expectedRegion)
 	c.Assert(*o.Key(), Equals, expectedKey)
@@ -63,7 +60,7 @@ func (s *ObjectSuite) TestParsingS3ObjectURL(c *C) {
 		WithObjectURLStr(inputURLStr).
 		WithEndpoint(expectedEndpoint)
 
-	o, err := b.Build(s.logger)
+	o, err := b.Build()
 	c.Assert(err, IsNil)
 	//c.Assert(*o.Region(), Equals, expectedRegion)
 	c.Assert(*o.Key(), Equals, expectedKey)
@@ -79,7 +76,7 @@ func (s *ObjectSuite) TestValidationFailureNoEndpoint(c *C) {
 		WithKey(expectedKey).
 		WithBucket(expectedBucket)
 
-	_, err := b.Build(s.logger)
+	_, err := b.Build()
 	c.Assert(err, ErrorMatches, ".*endpoint.*")
 }
 
@@ -91,7 +88,7 @@ func (s *ObjectSuite) TestValidationFailureNoBucket(c *C) {
 		WithKey(expectedKey).
 		WithEndpoint(expectedEndpoint)
 
-	_, err := b.Build(s.logger)
+	_, err := b.Build()
 	c.Assert(err, ErrorMatches, ".*bucket.*")
 }
 
@@ -103,6 +100,6 @@ func (s *ObjectSuite) TestValidationFailureNoKey(c *C) {
 		WithBucket(expectedBucket).
 		WithEndpoint(expectedEndpoint)
 
-	_, err := b.Build(s.logger)
+	_, err := b.Build()
 	c.Assert(err, ErrorMatches, ".*key.*")
 }

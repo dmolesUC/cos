@@ -13,8 +13,6 @@ type CosFlags struct {
 	Verbose int
 }
 
-// TODO: can we share any of Pretty() or String()?
-
 func (f *CosFlags) LogLevel() logging.LogLevel {
 	return logging.LogLevel(f.Verbose)
 }
@@ -23,8 +21,4 @@ func (f *CosFlags) AddTo(cmdFlags *pflag.FlagSet) {
 	cmdFlags.StringVarP(&f.Endpoint, "endpoint", "e", "", "endpoint: HTTP(S) URL")
 	cmdFlags.StringVarP(&f.Region, "region", "r", "", "S3 region (if not in endpoint URL; default \""+protocols.DefaultAwsRegion+"\")")
 	cmdFlags.CountVarP(&f.Verbose, "verbose", "v", "verbose output (-vv for maximum verbosity)")
-}
-
-func (f *CosFlags) NewLogger() logging.Logger {
-	return logging.NewLogger(f.LogLevel())
 }

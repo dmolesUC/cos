@@ -24,8 +24,6 @@ type Object interface {
 
 	Refresh()
 
-	Logger() logging.Logger
-
 	ContentLength() (int64, error)
 
 	Create(body io.Reader, length int64) (err error)
@@ -44,7 +42,7 @@ func Download(obj Object, rangeSize int64, out io.Writer) (totalRead int64, err 
 	if err != nil {
 		return 0, err
 	}
-	logger := obj.Logger()
+	logger := logging.DefaultLogger()
 
 	target := logging.NewProgressWriter(out, contentLength)
 	target.LogTo(logger, time.Second)
