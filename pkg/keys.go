@@ -30,10 +30,11 @@ func (k *Keys) TotalKeys() int {
 
 func (k *Keys) CheckAll() ([]KeyFailure, error) {
 	source := ns.Unencoded()
+	count := len(source)
 	sourceName := "minimaxir/big-list-of-naughty-strings"
 	var failures []KeyFailure
 	for index, key := range source {
-		f, err := k.Check(sourceName, index, key)
+		f, err := k.Check(sourceName, index, count, key)
 		if err != nil {
 			return nil, err
 		}
@@ -44,7 +45,7 @@ func (k *Keys) CheckAll() ([]KeyFailure, error) {
 	return failures, nil
 }
 
-func (k *Keys) Check(source string, index int, key string) (*KeyFailure, error) {
+func (k *Keys) Check(source string, index, count int, key string) (*KeyFailure, error) {
 	endpoint := k.endpoint
 	region := k.region
 	bucket := k.bucket
@@ -53,9 +54,10 @@ func (k *Keys) Check(source string, index int, key string) (*KeyFailure, error) 
 	if err != nil {
 		return nil, err
 	}
+	k.logger.Infof("%d of %d from %v\n", index, count, source)
 	err = crvd.CreateRetrieveVerifyDelete()
 	if err != nil {
-		k.logger.Infof("%#v (%d of %v): %v\n", key, index, source, err)
+		k.logger.Infof("%#v (%d of %d from %v) failed: %v\n", key, index, count, source, err)
 		return &KeyFailure{source, index, key, err}, nil
 	}
 	return nil, err
