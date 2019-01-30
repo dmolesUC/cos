@@ -76,7 +76,7 @@ func checkKeys(bucketStr string, f keysFlags) error {
 	}
 	failureCount := len(failures)
 	if failureCount > 0 {
-		totalExpected := startIndex - endIndex
+		totalExpected := endIndex - startIndex
 		return fmt.Errorf("%d of %d keys failed", failureCount, totalExpected)
 	}
 	return nil
