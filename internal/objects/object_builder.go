@@ -13,6 +13,8 @@ import (
 const protocolSwift = "swift"
 const protocolS3 = "s3"
 
+// TODO: extract an explicit session builder or other representation of an endpoint, & replace this with that
+
 // An ObjectBuilder builds an Object
 type ObjectBuilder struct {
 	region      string
