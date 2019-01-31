@@ -62,7 +62,7 @@ Minio example with explicit credentials:
 ```
 AWS_ACCESS_KEY_ID=<access key> \
 AWS_SECRET_ACCESS_KEY=<secret access key> \
-cos check http://127.0.0.1:9000/mrt-test/inusitatum.png -a md5 -x cadf871cd4135212419f488f42c62482`
+cos check s3://mrt-test/inusitatum.png -e http://127.0.0.1:9000 -a md5 -x cadf871cd4135212419f488f42c62482`
 ```
 
 Amazon example with explicit credentials:
@@ -70,15 +70,13 @@ Amazon example with explicit credentials:
 ```
 AWS_ACCESS_KEY_ID=<access key> \
 AWS_SECRET_ACCESS_KEY=<secret access key> \
-cos check https://s3-us-west-2.amazonaws.com/www.dmoles.net/images/fa/archive.svg
+cos check s3://www.dmoles.net/images/fa/archive.svg -e https://s3-us-west-2.amazonaws.com
 ```
 
 #### OpenStack/Swift
 
 Note that for OpenStack Swift, the credentials must always be specified
-explicitly with the SWIFT_API_USER and SWIFT_API_KEY environment variables, and
-the object URL must be in `swift://<container>/<name>` form, with an explicit
-`--endpoint` parameter.
+explicitly with the SWIFT_API_USER and SWIFT_API_KEY environment variables.
 
 ```
 SWIFT_API_USER=<user> \

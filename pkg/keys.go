@@ -4,32 +4,34 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/dmolesUC3/cos/internal/logging"
+	"github.com/minimaxir/big-list-of-naughty-strings/naughtystrings"
 
-	"github.com/dmolesUC3/cos/internal/keys"
+	"github.com/dmolesUC3/cos/internal/logging"
+	. "github.com/dmolesUC3/cos/internal/objects"
 )
 
 type Keys struct {
-	endpoint string
-	region   string
-	bucket   string
+	Endpoint Target
+	Source   KeySource
 }
 
-func NewKeys(endpoint, region, bucket string) Keys {
-	return Keys{endpoint, region, bucket}
+func NewKeys(target Target, source KeySource) Keys {
+	return Keys{Endpoint: target, Source: source}
 }
 
 type KeyFailure struct {
-	Source string
-	Index  int
-	Key    string
-	Error  error
+	SourceName string
+	Index      int
+	Key        string
+	Error      error
 }
 
-func (k *Keys) CheckAll(source keys.Source, startIndex int, endIndex int) ([]KeyFailure, error) {
-	var failures []KeyFailure
+func (k *Keys) CheckAll(startIndex int, endIndex int) ([]KeyFailure, error) {
+	source := k.Source
 	sourceKeys := source.Keys()
 	count := source.Count()
+
+	var failures []KeyFailure
 	for index := startIndex; index < endIndex; index ++ {
 		key := sourceKeys[index]
 		f, err := k.Check(source.Name(), index, count, key)
@@ -45,7 +47,7 @@ func (k *Keys) CheckAll(source keys.Source, startIndex int, endIndex int) ([]Key
 
 func (k *Keys) Check(sourceName string, index, count int, key string) (*KeyFailure, error) {
 	logger := logging.DefaultLogger()
-	crvd, err := NewDefaultCrvd(key, k.endpoint, k.region, k.bucket)
+	crvd, err := NewDefaultCrvd(k.Endpoint, key)
 	if err != nil {
 		return nil, err
 	}
@@ -68,4 +70,54 @@ func (k *Keys) Check(sourceName string, index, count int, key string) (*KeyFailu
 	fmt.Println(msg)
 	logger.Detail(msg)
 	return &KeyFailure{sourceName, index, key, err}, nil
+}
+
+type KeySource interface {
+	Name() string
+	Keys() []string
+	Count() int
+}
+
+func NaughtyStrings() KeySource {
+	return &naughtyStrings{}
+}
+
+type naughtyStrings struct {
+	keys []string
+}
+
+func (n *naughtyStrings) Name() string {
+	return "minimaxir/big-list-of-naughty-strings"
+}
+
+func (n *naughtyStrings) Keys() []string {
+	if len(n.keys) == 0 {
+		for _, k := range naughtystrings.Unencoded() {
+			if exclude(k) {
+				continue
+			}
+			//fmt.Printf("including %d: %#v", index + 1, k)
+			n.keys = append(n.keys, k)
+		}
+	}
+	return n.keys
+}
+
+func (n *naughtyStrings) Count() int {
+	return len(n.Keys())
+}
+
+func exclude(k string) bool {
+	// silly
+	if k == "" {
+		return true
+	}
+	// known not to work with AWS, and dangerous
+	if k == "." {
+		return true
+	}
+	if strings.HasPrefix(k, "..") {
+		return true
+	}
+	return false
 }

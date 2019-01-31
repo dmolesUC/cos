@@ -7,48 +7,31 @@ import (
 	"math/rand"
 	"time"
 
+	. "github.com/dmolesUC3/cos/internal/objects"
+
 	"github.com/dmolesUC3/cos/internal/logging"
-	"github.com/dmolesUC3/cos/internal/objects"
 )
 
 const (
 	DefaultContentLengthBytes = 128
-	DefaultRandomSeed = 1
+	DefaultRandomSeed         = 1
 )
 
 type Crvd struct {
-	Object        objects.Object
+	Object        Object
 	ContentLength int64
 	RandomSeed    int64
 }
 
-func NewDefaultCrvd(key, endpoint, region, bucket string) (*Crvd, error) {
-	return NewCrvd(key, endpoint, region, bucket, DefaultContentLengthBytes, DefaultRandomSeed)
+func NewDefaultCrvd(target Target, key string) (*Crvd, error) {
+	return NewCrvd(target, key, DefaultContentLengthBytes, DefaultRandomSeed)
 }
 
-func NewCrvd(key, endpoint, region, bucket string, contentLength, randomSeed int64) (*Crvd, error) {
+func NewCrvd(target Target, key string, contentLength int64, randomSeed int64) (*Crvd, error) {
 	if key == "" {
 		key = fmt.Sprintf("cos-crvd-%d.bin", time.Now().Unix())
 	}
-	if endpoint == "" {
-		return nil, fmt.Errorf("endpoint URL must be specified")
-	}
-
-	bucketUrl, err := objects.ValidAbsURL(bucket)
-	if err != nil {
-		return nil, err
-	}
-
-	obj, err := objects.NewObjectBuilder().
-		WithEndpointStr(endpoint).
-		WithRegion(region).
-		WithProtocolUri(bucketUrl).
-		WithKey(key). // TODO: fix builder so we can set this first
-		Build()
-	if err != nil {
-		return nil, err
-	}
-
+	obj := target.Object(key)
 	var crvd = Crvd{
 		Object:        obj,
 		ContentLength: contentLength,
@@ -68,19 +51,17 @@ func (c *Crvd) CreateRetrieveVerifyDelete() error {
 
 func (c *Crvd) CreateRetrieveVerify() error {
 	obj := c.Object
-	logger := logging.DefaultLogger()
-	protocolUriStr := objects.ProtocolUriStr(obj)
-
 	contentLength := c.ContentLength
-	logger.Detailf("Creating object at %v\n", protocolUriStr)
+
+	logger := logging.DefaultLogger()
+	logger.Detailf("Creating object (%v) at %v\n", logging.FormatBytes(contentLength), obj)
 	expectedDigest, err := c.create()
 	if err != nil {
 		return err
 	}
-	logger.Detailf("Created %v (%d bytes)\n", protocolUriStr, contentLength)
+	logger.Detailf("Created %v (%d bytes)\n", obj, contentLength)
 	logger.Tracef("Calculated digest on upload: %x\n", expectedDigest)
 
-	obj.Refresh()
 	var actualLength int64
 	actualLength, err = obj.ContentLength()
 	if err != nil {
@@ -91,11 +72,11 @@ func (c *Crvd) CreateRetrieveVerify() error {
 		return fmt.Errorf("content-length mismatch: expected: %d, actual: %d", contentLength, actualLength)
 	}
 	logger.Detailf("Uploaded %d bytes\n", contentLength)
-	logger.Detailf("Verifying %v (expected digest: %x)\n", protocolUriStr, expectedDigest)
+	logger.Detailf("Verifying %v (expected digest: %x)\n", obj, expectedDigest)
 	check := Check{Object: obj, Expected: expectedDigest, Algorithm: "sha256"}
-	actualDigest, err := check.CalcDigest()
+	actualDigest, err := check.VerifyDigest()
 	if err == nil {
-		logger.Detailf("Verified %v (%d bytes, SHA-256 digest %x)\n", protocolUriStr, contentLength, actualDigest)
+		logger.Detailf("Verified %v (%d bytes, SHA-256 digest %x)\n", obj, contentLength, actualDigest)
 	}
 	return err
 }
@@ -120,6 +101,6 @@ func (c *Crvd) create() ([] byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	logger.Detailf("%v to %v\n", logging.FormatBytes(in.TotalBytes()), objects.ProtocolUriStr(obj))
+	logger.Detailf("%v to %v\n", logging.FormatBytes(in.TotalBytes()), obj)
 	return digest.Sum(nil), err
 }

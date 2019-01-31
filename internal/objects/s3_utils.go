@@ -1,4 +1,4 @@
-package protocols
+package objects
 
 import (
 	"fmt"

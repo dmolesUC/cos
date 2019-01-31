@@ -11,6 +11,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/dmolesUC3/cos/internal/logging"
+
+	"github.com/dmolesUC3/cos/internal/objects"
+	"github.com/dmolesUC3/cos/internal/streaming"
 	"github.com/dmolesUC3/cos/pkg"
 )
 
@@ -95,19 +98,27 @@ func crvd(bucketStr string, f crvdFlags) (err error) {
 	logger.Tracef("flags: %v\n", f)
 	logger.Tracef("bucket URL: %v\n", bucketStr)
 
+	endpointURL, err := streaming.ValidAbsURL(f.Endpoint)
+	if err != nil {
+		return err
+	}
+
+	bucketURL, err := streaming.ValidAbsURL(bucketStr)
+	if err != nil {
+		return err
+	}
+
+	endpoint, err := objects.NewTarget(endpointURL, bucketURL, f.Region)
+	if err != nil {
+		return err
+	}
+
 	contentLength, err := f.ContentLength()
 	if err != nil {
 		return err
 	}
 
-	crvd, err := pkg.NewCrvd(
-		f.Key,
-		f.Endpoint,
-		f.Region,
-		bucketStr,
-		contentLength,
-		f.Seed,
-	)
+	crvd, err := pkg.NewCrvd(endpoint, f.Key, contentLength, f.Seed)
 	if err != nil {
 		return err
 	}

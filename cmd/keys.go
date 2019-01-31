@@ -9,9 +9,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/dmolesUC3/cos/internal/keys"
-
 	"github.com/dmolesUC3/cos/internal/logging"
+	"github.com/dmolesUC3/cos/internal/objects"
+	"github.com/dmolesUC3/cos/internal/streaming"
 	"github.com/dmolesUC3/cos/pkg"
 )
 
@@ -104,8 +104,22 @@ func checkKeys(bucketStr string, f keysFlags) error {
 	logger.Tracef("flags: %v\n", f)
 	logger.Tracef("bucket URL: %v\n", bucketStr)
 
-	source := keys.NaughtyStrings()
+	endpointURL, err := streaming.ValidAbsURL(f.Endpoint)
+	if err != nil {
+		return err
+	}
 
+	bucketURL, err := streaming.ValidAbsURL(bucketStr)
+	if err != nil {
+		return err
+	}
+
+	target, err := objects.NewTarget(endpointURL, bucketURL, f.Region)
+	if err != nil {
+		return err
+	}
+
+	source := pkg.NaughtyStrings()
 	startIndex := f.From - 1
 	endIndex := f.To
 	if endIndex <= 0 {
@@ -113,8 +127,8 @@ func checkKeys(bucketStr string, f keysFlags) error {
 	}
 	logger.Tracef("startIndex: %d, endIndex: %d\n", startIndex, endIndex)
 
-	k := pkg.NewKeys(f.Endpoint, f.Region, bucketStr)
-	failures, err := k.CheckAll(source, startIndex, endIndex)
+	k := pkg.NewKeys(target, source)
+	failures, err := k.CheckAll(startIndex, endIndex)
 	if err != nil {
 		return err
 	}

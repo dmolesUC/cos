@@ -3,100 +3,59 @@ package objects
 import (
 	"fmt"
 	"io"
-	"net/url"
 
 	"code.cloudfoundry.org/bytefmt"
 	"github.com/ncw/swift"
 
 	"github.com/dmolesUC3/cos/internal/logging"
-	"github.com/dmolesUC3/cos/internal/protocols"
 	"github.com/dmolesUC3/cos/internal/streaming"
 )
 
 const (
-	defaultRetries   = 3
 	dloSizeThreshold = int64(2 * bytefmt.GIGABYTE)
-	//dloSegmentSize   = int64(bytefmt.GIGABYTE) // TODO: any way to set this?
 )
 
-// SwiftObject is an OpenStack Swift implementation of Object
 type SwiftObject struct {
-	container       string
-	objectName      string
-	cnxParams       protocols.SwiftConnectionParams
-	swiftConnection *swift.Connection
+	Endpoint  *SwiftTarget
+	Container string
+	Name      string
 }
 
-func (obj *SwiftObject) Protocol() string {
-	return protocolSwift
-}
+// ------------------------------
+// Object implementation
 
 func (obj *SwiftObject) Pretty() string {
-	format := `SwiftObject { 
-		container:      '%v' 
-		objectName:     '%v' 
-		cnxParams:       %v 
-		swiftConnection: %v
-	}`
-	format = logging.Untabify(format, " ")
-	args := logging.Prettify(obj.container, obj.objectName, obj.cnxParams, obj.swiftConnection)
-	return fmt.Sprintf(format, args...)
-}
-
-func (obj *SwiftObject) Refresh() {
-	obj.swiftConnection = nil
+	return fmt.Sprintf("swift://%v/%v", obj.Container, obj.Name)
 }
 
 func (obj *SwiftObject) String() string {
-	return fmt.Sprintf("SwiftObject { container: '%v', objectName: '%v', cnxParams: %v, swiftConnection: %v }",
-		obj.container,
-		obj.objectName,
-		obj.cnxParams,
-		obj.swiftConnection,
-	)
+	return obj.Pretty()
 }
 
-// Endpoint returns the Swift authentication URL
-func (obj *SwiftObject) Endpoint() *url.URL {
-	return obj.cnxParams.AuthURL
+func (obj *SwiftObject) GetEndpoint() Target {
+	return obj.Endpoint
 }
 
-// Bucket returns the Swift container
-func (obj *SwiftObject) Bucket() *string {
-	if obj.container == "" {
-		return nil
-	}
-	return &obj.container
-}
-
-// Key returns the Swift object name
-func (obj *SwiftObject) Key() *string {
-	if obj.objectName == "" {
-		return nil
-	}
-	return &obj.objectName
-}
-
-func (obj *SwiftObject) ContentLength() (int64, error) {
-	cnx, err := obj.connection()
+func (obj *SwiftObject) ContentLength() (length int64, err error) {
+	cnx, err := obj.Endpoint.Connection()
 	if err != nil {
 		return 0, err
 	}
-	info, _, err := cnx.Object(obj.container, obj.objectName)
+	info, _, err := cnx.Object(obj.Container, obj.Name)
 	if err != nil {
 		return 0, err
 	}
 	return info.Bytes, nil
 }
 
-func (obj *SwiftObject) DownloadRange(startInclusive, endInclusive int64, buffer []byte) (int64, error) {
-	cnx, err := obj.connection()
+func (obj *SwiftObject) DownloadRange(startInclusive, endInclusive int64, buffer []byte) (n int64, err error) {
+	cnx, err := obj.Endpoint.Connection()
 	if err != nil {
 		return 0, err
 	}
 	rangeStr := fmt.Sprintf("bytes=%d-%d", startInclusive, endInclusive)
 	headers := map[string]string{"Range": rangeStr}
-	file, _, err := cnx.ObjectOpen(obj.container, obj.objectName, false, headers)
+	file, _, err := cnx.ObjectOpen(obj.Container, obj.Name, false, headers)
 	if err != nil {
 		return 0, err
 	}
@@ -107,25 +66,24 @@ func (obj *SwiftObject) DownloadRange(startInclusive, endInclusive int64, buffer
 	return int64(len(buffer)), nil
 }
 
-func (obj *SwiftObject) Create(body io.Reader, length int64) error {
-	cnx, err := obj.connection()
+func (obj *SwiftObject) Create(body io.Reader, length int64) (err error) {
+	cnx, err := obj.Endpoint.Connection()
 	if err != nil {
 		return err
 	}
-	logger := logging.DefaultLogger()
 
-	// TODO: allow object to include an expected MD5
+	logger := logging.DefaultLogger()
 	var out io.WriteCloser
 	if length <= dloSizeThreshold { // 2 GiB
-		out, err = cnx.ObjectCreate(obj.container, obj.objectName, false, "", "", nil)
+		out, err = cnx.ObjectCreate(obj.Container, obj.Name, false, "", "", nil)
 	} else {
 		logger.Tracef(
 			"Object size %d is greater than single-object maximum %d; creating dynamic large object\n",
 			length, dloSizeThreshold,
 		)
 		dloOpts := swift.LargeObjectOpts{
-			Container:  obj.container,
-			ObjectName: obj.objectName,
+			Container:  obj.Container,
+			ObjectName: obj.Name,
 			ChunkSize:  streaming.DefaultRangeSize, // 5 MiB
 		}
 		out, err = cnx.DynamicLargeObjectCreateFile(&dloOpts)
@@ -147,42 +105,26 @@ func (obj *SwiftObject) Create(body io.Reader, length int64) error {
 	if err != nil {
 		logger.Tracef("Error writing to upload stream: %v\n", err)
 	}
-	logger.Tracef("Wrote %d bytes to %v/%v\n", written, obj.container, obj.objectName)
+	logger.Tracef("Wrote %d bytes to %v\n", written, obj)
 	return err
 }
 
 func (obj *SwiftObject) Delete() (err error) {
-	cnx, err := obj.connection()
+	cnx, err := obj.Endpoint.Connection()
 	if err != nil {
 		return err
 	}
+
 	// TODO: detect DynamicLargeObjects
-	err = cnx.ObjectDelete(obj.container, obj.objectName)
-	protocolUriStr := ProtocolUriStr(obj)
+	err = cnx.ObjectDelete(obj.Container, obj.Name)
 	logger := logging.DefaultLogger()
+	logger.Detailf("Deleting %v\n", obj)
 	if err == nil {
-		logger.Detailf("Deleted %v\n", protocolUriStr)
+		logger.Detailf("Deleted %v\n", obj)
 	} else {
-		logger.Detailf("Deleting %v failed: %v", protocolUriStr, err)
+		logger.Detailf("Deleting %v failed: %v", obj, err)
 	}
 	return err
+
 }
 
-// ------------------------------------------------------------
-// Unexported functions
-
-func (obj *SwiftObject) connection() (*swift.Connection, error) {
-	cnxParams := obj.cnxParams
-	authUrl := cnxParams.AuthURL
-	if authUrl == nil {
-		return nil, fmt.Errorf("authUrl not set in connection parameters: %v", cnxParams)
-	}
-	authUrlStr := authUrl.String()
-	cnx := swift.Connection{
-		UserName: cnxParams.UserName,
-		ApiKey:   cnxParams.APIKey,
-		AuthUrl:  authUrlStr,
-		Retries:  defaultRetries,
-	}
-	return &cnx, nil
-}

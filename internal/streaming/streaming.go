@@ -1,8 +1,10 @@
 package streaming
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"net/url"
 
 	"code.cloudfoundry.org/bytefmt"
 )
@@ -44,3 +46,18 @@ func WriteExactly(out io.Writer, data []byte) (err error) {
 	}
 	return
 }
+
+// ValidAbsURL parses the specified URL string, returning an error if the
+// URL cannot be parsed, or is not absolute (i.e., does not have a scheme)
+func ValidAbsURL(urlStr string) (*url.URL, error) {
+	u, err := url.Parse(urlStr)
+	if err != nil {
+		return u, err
+	}
+	if !u.IsAbs() {
+		msg := fmt.Sprintf("URL '%v' must have a scheme", urlStr)
+		return nil, errors.New(msg)
+	}
+	return u, nil
+}
+
