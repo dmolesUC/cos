@@ -22,10 +22,6 @@ type KeyList interface {
 	Count() int
 }
 
-func DefaultKeyList() KeyList {
-	return listsByName[DefaultKeyListName]
-}
-
 func AllKeyLists() []KeyList {
 	var names []string
 	for name := range listsByName {
@@ -51,7 +47,7 @@ func newKeyList(name string, desc string, keys []string) KeyList {
 	if _, ok := listsByName[name]; ok {
 		panic(fmt.Sprintf("source %#v already exists", name))
 	}
-	source := &keyList{name, desc, keys}
+	source := &simpleKeyList{name, desc, keys}
 	listsByName[name] = source
 	return source
 }

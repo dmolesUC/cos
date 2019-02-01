@@ -4,7 +4,6 @@ github.com/aws/aws-sdk-go v1.16.13 h1:W2uL0Wb8m1jVR0ZzAfJQ0DSF4YqzGBJY4vyiVP0tGk
 github.com/aws/aws-sdk-go v1.16.13/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/dmolesUC3/big-list-of-naughty-strings/naughtystrings v0.0.0-20190129235316-1531f613e06a h1:ZMVZYVnaEyYeD7gf6ai4aMvei5hPV9BPxz/9343G36A=
 github.com/dmolesUC3/big-list-of-naughty-strings/naughtystrings v0.0.0-20190129235316-1531f613e06a/go.mod h1:JbjHlMEuA7AKSWQPyEFPQ0hIRsl6ob4RBLPvGhwqddU=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
@@ -16,8 +15,6 @@ github.com/inconshreveable/mousetrap v1.0.0 h1:Z8tu5sraLXCXIcARxBp/8cbvlwVa7Z1NH
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af h1:pmfjZENx5imkbgOkpRUYLnmbU7UEFbjtDA2hxJ1ichM=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=
-github.com/minimaxir/big-list-of-naughty-strings v0.0.0-20181116081547-f56ff6ea82e6 h1:okjrzXBqOu4Se9tJkKC+pbSBbOuO5kOyIEH7CGtxD2s=
-github.com/minimaxir/big-list-of-naughty-strings v0.0.0-20181116081547-f56ff6ea82e6/go.mod h1:TS/dFiKjuGj0UIEv4s9E86lHtXWf26eETj5VxUvKSR8=
 github.com/ncw/swift v1.0.43 h1:TZn2l/bPV0CqG+/G5BFh/ROWnyX7dL2D0URaOjNQRsw=
 github.com/ncw/swift v1.0.43/go.mod h1:23YIA4yWVnGwv2dQlN4bB7egfYX6YLn0Yo/S6zZO/ZM=
 github.com/onsi/ginkgo v1.6.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=
