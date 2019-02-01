@@ -6,8 +6,12 @@ import (
 	"os"
 	"runtime"
 	"runtime/pprof"
+	"strings"
+	"text/tabwriter"
 
 	"github.com/spf13/cobra"
+
+	"github.com/dmolesUC3/cos/internal/keys"
 
 	"github.com/dmolesUC3/cos/internal/logging"
 	"github.com/dmolesUC3/cos/internal/objects"
@@ -23,10 +27,11 @@ const (
 	longDescKeys = shortDescKeys + `
 
 		Creates, retrieves, verifies, and deletes a small object for each 
-        value in the Big List of Naughty Strings
-        (https://github.com/minimaxir/big-list-of-naughty-strings).
+        value in the specified key list.
+
+        Available lists:
 	`
-	
+
 	exampleKeys = `
 		cos keys s3://www.dmoles.net/ --endpoint https://s3.us-west-2.amazonaws.com/
 	`
@@ -35,8 +40,9 @@ const (
 type keysFlags struct {
 	CosFlags
 
-	From int
-	To   int
+	From     int
+	To       int
+	ListName string
 
 	MemProfile string
 }
@@ -55,12 +61,39 @@ func (f keysFlags) Pretty() string {
 	return fmt.Sprintf(format, f.LogLevel(), f.Region, f.Endpoint, f.From, f.To, f.MemProfile)
 }
 
+func longDescription() string {
+	listList, err := availableKeyLists()
+	if err != nil {
+		panic(err)
+	}
+	longDesc := longDescKeys + "\n" + *listList
+	longDescription := logging.Untabify(longDesc, "")
+	return longDescription
+}
+
+func availableKeyLists() (*string, error) {
+	var sb strings.Builder
+	w := tabwriter.NewWriter(&sb, 0, 0, 2, ' ', tabwriter.DiscardEmptyColumns)
+	for _, list := range keys.AllKeyLists() {
+		_, err := fmt.Fprintf(w, "- %v\t%v\n", list.Name(), list.Desc())
+		if err != nil {
+			return nil, err
+		}
+	}
+	err := w.Flush()
+	if err != nil {
+		return nil, err
+	}
+	listList := sb.String()
+	return &listList, nil
+}
+
 func init() {
 	f := keysFlags{}
 	cmd := &cobra.Command{
 		Use:           usageKeys,
 		Short:         shortDescKeys,
-		Long:          logging.Untabify(longDescKeys, ""),
+		Long:          longDescription(),
 		Args:          cobra.ExactArgs(1),
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -74,8 +107,10 @@ func init() {
 	}
 	cmdFlags := cmd.Flags()
 	f.AddTo(cmdFlags)
+
 	cmdFlags.IntVarP(&f.From, "from", "f", 1, "first key to check (1-indexed, inclusive)")
-	cmdFlags.IntVarP(&f.To, "to", "t", -1, "last key to check (1-indexed, inclusive); -1 to check all keys")
+	cmdFlags.IntVarP(&f.To, "to", "t", -1, "last key to check (1-indexed, inclusive); -1 to check all keys in list")
+	cmdFlags.StringVarP(&f.ListName, "list", "l", keys.DefaultKeyListName, "key list to check")
 
 	cmdFlags.StringVarP(&f.MemProfile, "memprofile", "", "", "write memory profile to `file`")
 
@@ -119,15 +154,20 @@ func checkKeys(bucketStr string, f keysFlags) error {
 		return err
 	}
 
-	source := pkg.NaughtyStrings()
+	listName := f.ListName
+	keyList, err := keys.KeyListForName(listName)
+	if err != nil {
+		return err
+	}
+
 	startIndex := f.From - 1
 	endIndex := f.To
 	if endIndex <= 0 {
-		endIndex = source.Count()
+		endIndex = keyList.Count()
 	}
-	logger.Tracef("startIndex: %d, endIndex: %d\n", startIndex, endIndex)
+	logger.Tracef("list: %v, startIndex: %d, endIndex: %d\n", listName, startIndex, endIndex)
 
-	k := pkg.NewKeys(target, source)
+	k := pkg.NewKeys(target, keyList)
 	failures, err := k.CheckAll(startIndex, endIndex)
 	if err != nil {
 		return err
@@ -135,7 +175,7 @@ func checkKeys(bucketStr string, f keysFlags) error {
 	failureCount := len(failures)
 	if failureCount > 0 {
 		totalExpected := endIndex - startIndex
-		return fmt.Errorf("%d of %d keys failed", failureCount, totalExpected)
+		return fmt.Errorf("%v: %d of %d keys failed", listName, failureCount, totalExpected)
 	}
 	return nil
 }
