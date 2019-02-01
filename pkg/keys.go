@@ -1,73 +1,78 @@
 package pkg
 
 import (
-	"fmt"
+	"io"
 	"strings"
 
-	"github.com/dmolesUC3/cos/internal/keys"
+	. "github.com/dmolesUC3/cos/internal/keys"
 	"github.com/dmolesUC3/cos/internal/logging"
 	. "github.com/dmolesUC3/cos/internal/objects"
 )
 
 type Keys struct {
 	Endpoint Target
-	KeyList  keys.KeyList
+	KeyList  KeyList
 }
 
-func NewKeys(target Target, keyList keys.KeyList) Keys {
-	return Keys{Endpoint: target, KeyList: keyList}
+func NewKeys(target Target, keyList KeyList) Keys {
+	return Keys{
+		Endpoint: target,
+		KeyList:  keyList,
+	}
 }
 
-type KeyFailure struct {
-	SourceName string
-	Index      int
-	Key        string
-	Error      error
-}
+func (k *Keys) CheckAll(startIndex int, endIndex int, okOut io.Writer, badOut io.Writer, raw bool) ([]KeyResult, error) {
+	if okOutC, ok := okOut.(io.WriteCloser); ok {
+		//noinspection GoUnhandledErrorResult
+		defer okOutC.Close()
+	}
+	if badOutC, bad := badOut.(io.WriteCloser); bad {
+		//noinspection GoUnhandledErrorResult
+		defer badOutC.Close()
+	}
 
-func (k *Keys) CheckAll(startIndex int, endIndex int) ([]KeyFailure, error) {
-	keyList := k.KeyList
-	listKeys := keyList.Keys()
-	count := keyList.Count()
+	logger := logging.DefaultLogger()
 
-	var failures []KeyFailure
+	var failures []KeyResult
 	for index := startIndex; index < endIndex; index ++ {
-		key := listKeys[index]
-		f, err := k.Check(keyList.Name(), index, count, key)
-		if err != nil {
+		key := k.KeyList.Keys()[index]
+		err := k.Check(key)
+		if err != nil && strings.Contains(err.Error(), "no such host") {
+			// network problem, or we ran out of file handles
 			return nil, err
 		}
-		if f != nil {
-			failures = append(failures, *f)
+		result := &KeyResult {
+			List: k.KeyList,
+			Index: index,
+			Key: key,
+			Error: err,
+		}
+		logger.Detailf(result.Pretty())
+
+		if result.Success() {
+			if okOut != nil {
+				err = result.WriteTo(okOut, raw)
+				if err != nil {
+					return nil, err
+				}
+			}
+		} else {
+			failures = append(failures, *result)
+			if badOut != nil {
+				err = result.WriteTo(badOut, raw)
+				if err != nil {
+					return nil, err
+				}
+			}
 		}
 	}
 	return failures, nil
 }
 
-func (k *Keys) Check(listName string, index, count int, key string) (*KeyFailure, error) {
-	logger := logging.DefaultLogger()
+func (k *Keys) Check(key string) (err error) {
 	crvd, err := NewDefaultCrvd(k.Endpoint, key)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	logger.Detailf("%d of %d from %v\n", 1 + index, count, listName)
-	err = crvd.CreateRetrieveVerifyDelete()
-	if err == nil {
-		return nil, nil
-	}
-	if strings.Contains(fmt.Sprintf("%v", err), "no such host") {
-		return nil, err
-	}
-
-	msg := fmt.Sprintf("%#v (%d of %d from %v) failed: %v",
-		key,
-		1+index,
-		count,
-		listName,
-		strings.Replace(err.Error(), "\n", "\\n", -1),
-	)
-	fmt.Println(msg)
-	logger.Detail(msg)
-	return &KeyFailure{listName, index, key, err}, nil
+	return crvd.CreateRetrieveVerifyDelete()
 }
-

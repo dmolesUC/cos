@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"runtime"
@@ -33,32 +34,55 @@ const (
 	`
 
 	exampleKeys = `
-		cos keys s3://www.dmoles.net/ --endpoint https://s3.us-west-2.amazonaws.com/
+		cos keys --endpoint https://s3.us-west-2.amazonaws.com/s3://www.dmoles.net/ 
+		cos keys --list naughty-strings --endpoint https://s3.us-west-2.amazonaws.com/ s3://www.dmoles.net/  
+		cos keys --raw --ok keys.ok --bad keys.bad --endpoint https://s3.us-west-2.amazonaws.com/ s3://www.dmoles.net/  
 	`
 )
 
 type keysFlags struct {
 	CosFlags
 
+	Raw      bool
+	OkFile   string
+	BadFile  string
+	ListName string
 	From     int
 	To       int
-	ListName string
 
 	MemProfile string
 }
 
 func (f keysFlags) Pretty() string {
 	format := `
-		log level:  %v
-		region:     %#v
-		endpoint:   %#v
+		raw:        %v
+        okFile:     %v
+        badFile:    %v
+		listName:   %d
 		from:       %d
         to:         %d
         memprofile: %#v
+		region:     %#v
+		endpoint:   %#v
+		log level:  %v
 	`
 	format = logging.Untabify(format, "  ")
 
-	return fmt.Sprintf(format, f.LogLevel(), f.Region, f.Endpoint, f.From, f.To, f.MemProfile)
+	// TODO: clean up order of flags in other commands
+	return fmt.Sprintf(format,
+		f.Raw,
+		f.OkFile,
+		f.BadFile,
+		f.ListName,
+		f.From,
+		f.To,
+
+		f.MemProfile,
+
+		f.Region,
+		f.Endpoint,
+		f.LogLevel(),
+	)
 }
 
 func longDescription() string {
@@ -75,7 +99,7 @@ func availableKeyLists() (*string, error) {
 	var sb strings.Builder
 	w := tabwriter.NewWriter(&sb, 0, 0, 2, ' ', tabwriter.DiscardEmptyColumns)
 	for i, list := range keys.AllKeyLists() {
-		_, err := fmt.Fprintf(w, "%d.\t%v\t%v\n", i + 1, list.Name(), list.Desc())
+		_, err := fmt.Fprintf(w, "%d.\t%v\t%v\n", i+1, list.Name(), list.Desc())
 		if err != nil {
 			return nil, err
 		}
@@ -108,9 +132,13 @@ func init() {
 	cmdFlags := cmd.Flags()
 	f.AddTo(cmdFlags)
 
+	cmdFlags.BoolVar(&f.Raw, "raw", false, "whether to write keys in raw format (default format is quoted)")
+	cmdFlags.StringVarP(&f.OkFile, "ok", "o", "", "file to write successful ('OK') keys (not written by default)")
+	cmdFlags.StringVarP(&f.BadFile, "bad", "b", "", "file to write failed ('bad') keys (written to stdout by default)")
+	cmdFlags.StringVarP(&f.ListName, "list", "l", keys.DefaultKeyListName, "key list to check")
+
 	cmdFlags.IntVarP(&f.From, "from", "f", 1, "first key to check (1-indexed, inclusive)")
 	cmdFlags.IntVarP(&f.To, "to", "t", -1, "last key to check (1-indexed, inclusive); -1 to check all keys in list")
-	cmdFlags.StringVarP(&f.ListName, "list", "l", keys.DefaultKeyListName, "key list to check")
 
 	cmdFlags.StringVarP(&f.MemProfile, "memprofile", "", "", "write memory profile to `file`")
 
@@ -167,8 +195,23 @@ func checkKeys(bucketStr string, f keysFlags) error {
 	}
 	logger.Tracef("list: %v, startIndex: %d, endIndex: %d\n", listName, startIndex, endIndex)
 
+	var okOut io.Writer
+	if f.OkFile != "" {
+		okOut, err = os.Create(f.OkFile)
+		if err != nil {
+			return err
+		}
+	}
+	var badOut io.Writer
+	if f.BadFile != "" {
+		badOut, err = os.Create(f.BadFile)
+		if err != nil {
+			return err
+		}
+	}
+
 	k := pkg.NewKeys(target, keyList)
-	failures, err := k.CheckAll(startIndex, endIndex)
+	failures, err := k.CheckAll(startIndex, endIndex, okOut, badOut, f.Raw)
 	if err != nil {
 		return err
 	}
