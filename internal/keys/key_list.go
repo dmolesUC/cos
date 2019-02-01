@@ -61,6 +61,7 @@ func newKeyList(name string, desc string, keys []string) KeyList {
 
 const defaultFilter = "^$|^\\.$|^\\.{2,}"
 const backslash = "\\\\"
+const doubleBackslash = backslash + backslash
 
 var listsByName map[string]KeyList
 
@@ -74,15 +75,19 @@ func init() {
 	)
 	defaultSource := newKeyList(
 		DefaultKeyListName,
-		fmt.Sprintf("Default source (naughty-strings, filtering out /%v/)", defaultFilter),
+		fmt.Sprintf("default source (as naughty-strings, filtering out %#v, %#v, and leading %#v)", "", ".", ".."),
 		FilterKeys(naughtyStringSource.Keys(), defaultFilter),
 	)
-	disallowBackslash := newKeyList(
+	_ = newKeyList(
 		"disallow-backslash",
-		"default source, disallowing backlash",
+		"as default source, disallowing backlash",
 		FilterKeys(defaultSource.Keys(), backslash),
 	)
-	_ = disallowBackslash
+	_ = newKeyList(
+		"disallow-double-backslash",
+		"as default source, disallowing double backlash",
+		FilterKeys(defaultSource.Keys(), doubleBackslash),
+	)
 }
 
 func FilterKeys(keys []string, re string) []string {

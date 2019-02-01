@@ -74,8 +74,8 @@ func longDescription() string {
 func availableKeyLists() (*string, error) {
 	var sb strings.Builder
 	w := tabwriter.NewWriter(&sb, 0, 0, 2, ' ', tabwriter.DiscardEmptyColumns)
-	for _, list := range keys.AllKeyLists() {
-		_, err := fmt.Fprintf(w, "- %v\t%v\n", list.Name(), list.Desc())
+	for i, list := range keys.AllKeyLists() {
+		_, err := fmt.Fprintf(w, "%d.\t%v\t%v\n", i + 1, list.Name(), list.Desc())
 		if err != nil {
 			return nil, err
 		}
