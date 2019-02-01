@@ -2,7 +2,6 @@ package keys
 
 import (
 	"fmt"
-	"io"
 	"strings"
 )
 
@@ -35,15 +34,3 @@ func (f *KeyResult) Pretty() string {
 		strings.Replace(f.Error.Error(), "\n", "\\n", -1),
 	)
 }
-
-func (f *KeyResult) WriteTo(w io.Writer, raw bool) error {
-	var msg string
-	if raw {
-		msg = f.Key
-	} else {
-		msg = f.Pretty()
-	}
-	_, err := fmt.Fprintln(w, msg)
-	return err
-}
-

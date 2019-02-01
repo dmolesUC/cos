@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"fmt"
 	"io"
 	"strings"
 
@@ -41,28 +42,24 @@ func (k *Keys) CheckAll(startIndex int, endIndex int, okOut io.Writer, badOut io
 			// network problem, or we ran out of file handles
 			return nil, err
 		}
-		result := &KeyResult {
-			List: k.KeyList,
+		result := &KeyResult{
+			List:  k.KeyList,
 			Index: index,
-			Key: key,
+			Key:   key,
 			Error: err,
 		}
 		logger.Detailf(result.Pretty())
 
 		if result.Success() {
-			if okOut != nil {
-				err = result.WriteTo(okOut, raw)
-				if err != nil {
-					return nil, err
-				}
+			err = writeKey(okOut, key, raw)
+			if err != nil {
+				return nil, err
 			}
 		} else {
 			failures = append(failures, *result)
-			if badOut != nil {
-				err = result.WriteTo(badOut, raw)
-				if err != nil {
-					return nil, err
-				}
+			err = writeKey(badOut, key, raw)
+			if err != nil {
+				return nil, err
 			}
 		}
 	}
@@ -75,4 +72,16 @@ func (k *Keys) Check(key string) (err error) {
 		return err
 	}
 	return crvd.CreateRetrieveVerifyDelete()
+}
+
+func writeKey(w io.Writer, key string, raw bool) (err error) {
+	if w == nil {
+		return
+	}
+	if raw {
+		_, err = fmt.Fprintln(w, key)
+	} else {
+		_, err = fmt.Fprintf(w, "%#v\n", key)
+	}
+	return
 }

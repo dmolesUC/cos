@@ -27,8 +27,14 @@ const (
 
 	longDescKeys = shortDescKeys + `
 
-		Creates, retrieves, verifies, and deletes a small object for each 
-        value in the specified key list.
+		Creates, retrieves, verifies, and deletes a small object for each value in
+        the specified key list. By default, writes each failed key to standard output
+        as a quoted Go string literal (see https://golang.org/pkg/strconv/); use the
+        --raw option to write the keys without quoting or escaping. (Note however that
+        any newlines in keys will -also- not be escaped!)
+
+        Use the --ok option to write successful keys to a file, and the --bad option
+        (or shell redirection) to write failed keys to a file instead of stdout.
 
         Available lists:
 	`
@@ -39,6 +45,9 @@ const (
 		cos keys --raw --ok keys.ok --bad keys.bad --endpoint https://s3.us-west-2.amazonaws.com/ s3://www.dmoles.net/  
 	`
 )
+
+// TODO: accept lists from a file
+// TODO: more output formats other than --raw and quoted-Go-literal, e.g. --ascii
 
 type keysFlags struct {
 	CosFlags
@@ -203,7 +212,9 @@ func checkKeys(bucketStr string, f keysFlags) error {
 		}
 	}
 	var badOut io.Writer
-	if f.BadFile != "" {
+	if f.BadFile == "" {
+		badOut = os.Stdout
+	} else {
 		badOut, err = os.Create(f.BadFile)
 		if err != nil {
 			return err
