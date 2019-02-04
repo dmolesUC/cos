@@ -87,7 +87,7 @@ func init() {
 	_ = newKeyList(
 		"misc",
 		"miscellenous potential problems, incl. path elements & unicode blocks",
-		allMiscKeys,
+		MiscKeys(),
 	)
 }
 

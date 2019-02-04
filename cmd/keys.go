@@ -67,7 +67,7 @@ func (f keysFlags) Pretty() string {
 		raw:        %v
         okFile:     %v
         badFile:    %v
-		listName:   %d
+		listName:   %v
 		from:       %d
         to:         %d
         memprofile: %#v
@@ -108,7 +108,7 @@ func availableKeyLists() (*string, error) {
 	var sb strings.Builder
 	w := tabwriter.NewWriter(&sb, 0, 0, 2, ' ', tabwriter.DiscardEmptyColumns)
 	for i, list := range keys.AllKeyLists() {
-		_, err := fmt.Fprintf(w, "%d.\t%v\t%v\n", i+1, list.Name(), list.Desc())
+		_, err := fmt.Fprintf(w, "%d.\t%v\t%v (%d keys)\n", i+1, list.Name(), list.Desc(), list.Count())
 		if err != nil {
 			return nil, err
 		}
