@@ -33,6 +33,10 @@ func MiscKeys() []string {
 			formatKeys("..", "double-dot"),
 			formatKeys("...", "triple-dot"),
 
+			formatKeys(":", "colon"),
+			formatKeys("::", "double-colon"),
+			formatKeys(":::", "triple-colon"),
+
 			formatKeys("/", "slash"),
 			formatKeys("//", "double-slash"),
 			formatKeys("///", "triple-slash"),
