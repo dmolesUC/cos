@@ -31,8 +31,8 @@ All `cos` commands support the following flags:
 
 | Flag | Short form | Description |
 | :-- | :-- | :-- |
-| `--endpoint` | `-e` | HTTP(S) endpoint URL (required) |
-| `--region` | `-r` | AWS region (optional) |
+| `--endpoint ENDPOINT` | `-e` | HTTP(S) endpoint URL (required) |
+| `--region REGION` | `-r` | AWS region (optional) |
 | `--verbose` | `-v` | Verbose output |
 | `--help` | `-h` | Print help and exit |
 
@@ -51,16 +51,16 @@ Additional command-specific flags are listed below.
 ### `cos check`
 
 The `check` command computes and (optionally) verifies the digest of an
-object. The object is streamed in 5-MiB chunks, each chunk being added to
-the digest computation and then discarded, thus making it possible to 
-verify objects of arbitary size, not limited by local storage space.
+object. The object is streamed in five-megabyte chunks, each chunk being
+added to the digest computation and then discarded, thus making it possible
+to verify objects of arbitary size, not limited by local storage space.
 
-In addition to the flags listed above, the `check` command supports the following:
+In addition to the global flags listed above, the `check` command supports the following:
 
 | Flag | Short form | Description |
 | :-- | :-- | :-- |
-| `--algorithm` | `-a` | Digest algorithm (md5 or sha256; defaults to sha256) |
-| `--expected` | `-x` | Expected digest value |
+| `--algorithm ALG` | `-a` | Digest algorithm (md5 or sha256; defaults to sha256) |
+| `--expected DIGEST` | `-x` | Expected digest value |
 
 By default, `check` outputs the digest to standard output, and exits:
 
@@ -82,7 +82,32 @@ actual: c99ad299fa53d5d9688909164cf25b386b33bea8d4247310d80f615be29978f5
 
 ### `cos crvd`
 
-> #### TODO: document this
+The `crvd` command creates, retrieves, verifies, and deletes an object.
+The object consists of a stream of random bytes of the specified size.
+
+The size may be specified as an exact number of bytes, or using human-readable
+quantities such as "5K" (4 KiB or 4096 bytes), "3.5M" (3.5 MiB or 3670016 bytes),
+etc. The units supported are bytes (B), binary kilobytes (K, KB, KiB), 
+binary megabytes (M, MB, MiB), binary gigabytes (G, GB, GiB), and binary 
+terabytes (T, TB, TiB). If no unit is specified, bytes are assumed.
+
+Random bytes are generated using the Go default random number generator, with
+a default seed of 0, for repeatability. An alternative seed can be specified
+with the `--random-seed` flag.
+
+In addition to the global flags listed above, the `check` command supports the following:
+
+| Flag | Short form | Description |
+| :-- | :-- | :-- |
+| `--size SIZE` | `-s` | size of object to create (default 128 bytes) |
+| `--key KEY` | `-k` | key to create (defaults to `cos-crvd-TIMESTAMP.bin` |
+| `--random-seed SEED` | | seed for random-number generator (default 1) |
+| `--keep` | | keep object after verification (default false) |
+
+```
+$ crvd swift://distrib.stage.9001.__c5e/ -e http://cloud.sdsc.edu/auth/v1.0 
+128B object created, retrieved, verified, and deleted (swift://distrib.stage.9001.__c5e/cos-crvd-1549324512.bin)
+```
 
 ### `cos keys`
 
