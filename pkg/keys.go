@@ -22,7 +22,7 @@ func NewKeys(target Target, keyList KeyList) Keys {
 	}
 }
 
-func (k *Keys) CheckAll(startIndex int, endIndex int, okOut io.Writer, badOut io.Writer, raw bool) ([]KeyResult, error) {
+func (k *Keys) CheckAll(okOut io.Writer, badOut io.Writer, raw bool) ([]KeyResult, error) {
 	if okOutC, ok := okOut.(io.WriteCloser); ok {
 		//noinspection GoUnhandledErrorResult
 		defer okOutC.Close()
@@ -35,8 +35,7 @@ func (k *Keys) CheckAll(startIndex int, endIndex int, okOut io.Writer, badOut io
 	logger := logging.DefaultLogger()
 
 	var failures []KeyResult
-	for index := startIndex; index < endIndex; index ++ {
-		key := k.KeyList.Keys()[index]
+	for index, key := range k.KeyList.Keys() {
 		err := k.Check(key)
 		if err != nil && strings.Contains(err.Error(), "no such host") {
 			// network problem, or we ran out of file handles

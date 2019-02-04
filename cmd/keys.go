@@ -56,8 +56,6 @@ type keysFlags struct {
 	OkFile   string
 	BadFile  string
 	ListName string
-	From     int
-	To       int
 
 	MemProfile string
 }
@@ -68,8 +66,6 @@ func (f keysFlags) Pretty() string {
         okFile:     %v
         badFile:    %v
 		listName:   %v
-		from:       %d
-        to:         %d
         memprofile: %#v
 		region:     %#v
 		endpoint:   %#v
@@ -83,8 +79,6 @@ func (f keysFlags) Pretty() string {
 		f.OkFile,
 		f.BadFile,
 		f.ListName,
-		f.From,
-		f.To,
 
 		f.MemProfile,
 
@@ -146,9 +140,6 @@ func init() {
 	cmdFlags.StringVarP(&f.BadFile, "bad", "b", "", "file to write failed ('bad') keys (written to stdout by default)")
 	cmdFlags.StringVarP(&f.ListName, "list", "l", keys.DefaultKeyListName, "key list to check")
 
-	cmdFlags.IntVarP(&f.From, "from", "f", 1, "first key to check (1-indexed, inclusive)")
-	cmdFlags.IntVarP(&f.To, "to", "t", -1, "last key to check (1-indexed, inclusive); -1 to check all keys in list")
-
 	cmdFlags.StringVarP(&f.MemProfile, "memprofile", "", "", "write memory profile to `file`")
 
 	rootCmd.AddCommand(cmd)
@@ -197,13 +188,6 @@ func checkKeys(bucketStr string, f keysFlags) error {
 		return err
 	}
 
-	startIndex := f.From - 1
-	endIndex := f.To
-	if endIndex <= 0 {
-		endIndex = keyList.Count()
-	}
-	logger.Tracef("list: %v, startIndex: %d, endIndex: %d\n", listName, startIndex, endIndex)
-
 	var okOut io.Writer
 	if f.OkFile != "" {
 		okOut, err = os.Create(f.OkFile)
@@ -222,14 +206,13 @@ func checkKeys(bucketStr string, f keysFlags) error {
 	}
 
 	k := pkg.NewKeys(target, keyList)
-	failures, err := k.CheckAll(startIndex, endIndex, okOut, badOut, f.Raw)
+	failures, err := k.CheckAll(okOut, badOut, f.Raw)
 	if err != nil {
 		return err
 	}
 	failureCount := len(failures)
 	if failureCount > 0 {
-		totalExpected := endIndex - startIndex
-		return fmt.Errorf("%v: %d of %d keys failed", listName, failureCount, totalExpected)
+		return fmt.Errorf("%v: %d of %d keys failed", listName, failureCount, keyList.Count())
 	}
 	return nil
 }
