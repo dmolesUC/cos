@@ -49,7 +49,7 @@ func WriteExactly(out io.Writer, data []byte) (err error) {
 
 // ValidAbsURL parses the specified URL string, returning an error if the
 // URL cannot be parsed, or is not absolute (i.e., does not have a scheme)
-func ValidAbsURL(urlStr string) (*url.URL, error) {
+func ValidAbsURL(urlStr string) (*url.URL, error) { // TODO: add an error hint
 	u, err := url.Parse(urlStr)
 	if err != nil {
 		return u, err

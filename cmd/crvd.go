@@ -56,14 +56,10 @@ type crvdFlags struct {
 	Key  string
 	Size string
 	Seed int64
-	Zero bool
 	Keep bool
 }
 
 func (f crvdFlags) ContentLength() (int64, error) {
-	if f.Zero {
-		return 0, nil
-	}
 	sizeIsNumeric := strings.IndexFunc(f.Size, unicode.IsLetter) == -1
 	if sizeIsNumeric {
 		return strconv.ParseInt(f.Size, 10, 64)
@@ -84,13 +80,12 @@ func (f crvdFlags) Pretty() string {
         key:      '%v'
 		size:      %v (%d bytes)
         seed:      %d
-        zero:      %v
         keep:      %v`
 	format = logging.Untabify(format, "  ")
 
 	contentLength, _ := f.ContentLength()
 
-	return fmt.Sprintf(format, f.LogLevel(), f.Region, f.Endpoint, f.Key, f.Size, contentLength, f.Seed, f.Zero, f.Keep)
+	return fmt.Sprintf(format, f.LogLevel(), f.Region, f.Endpoint, f.Key, f.Size, contentLength, f.Seed, f.Keep)
 }
 
 func crvd(bucketStr string, f crvdFlags) (err error) {
@@ -108,7 +103,7 @@ func crvd(bucketStr string, f crvdFlags) (err error) {
 		return err
 	}
 
-	endpoint, err := objects.NewTarget(endpointURL, bucketURL, f.Region)
+	target, err := objects.NewTarget(endpointURL, bucketURL, f.Region)
 	if err != nil {
 		return err
 	}
@@ -118,7 +113,7 @@ func crvd(bucketStr string, f crvdFlags) (err error) {
 		return err
 	}
 
-	crvd, err := pkg.NewCrvd(endpoint, f.Key, contentLength, f.Seed)
+	crvd, err := pkg.NewCrvd(target, f.Key, contentLength, f.Seed)
 	if err != nil {
 		return err
 	}
@@ -150,11 +145,10 @@ func init() {
 
 	sizeDefault := bytefmt.ByteSize(pkg.DefaultContentLengthBytes)
 
-	cmdFlags.StringVarP(&flags.Size, "size", "s", sizeDefault, "size in bytes of object to create, if --zero not set")
-	cmdFlags.BoolVarP(&flags.Zero, "zero", "z", false, "whether to generate a zero-byte file") // TODO: replace with NoOptDefaultVal
-	cmdFlags.Int64VarP(&flags.Seed, "random-seed", "", pkg.DefaultRandomSeed, "seed for random-number generator (default 0)")
+	cmdFlags.StringVarP(&flags.Size, "size", "s", sizeDefault, "size in bytes of object to create")
 	cmdFlags.StringVarP(&flags.Key, "key", "k", "", "key to create (defaults to cos-crvd-TIMESTAMP.bin)")
 	cmdFlags.BoolVarP(&flags.Keep, "keep", "", false, "keep object after verification (defaults to false)")
+	cmdFlags.Int64VarP(&flags.Seed, "random-seed", "", pkg.DefaultRandomSeed, "seed for random-number generator (default 0)")
 
 	rootCmd.AddCommand(cmd)
 }
