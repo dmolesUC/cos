@@ -84,6 +84,11 @@ func init() {
 		"as default source, disallowing double backlash",
 		FilterKeys(defaultSource.Keys(), doubleBackslash),
 	)
+	_ = newKeyList(
+		"misc",
+		"miscellenous potential problems, incl. path elements & unicode blocks",
+		allMiscKeys,
+	)
 }
 
 func FilterKeys(keys []string, re string) []string {
