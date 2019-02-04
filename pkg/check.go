@@ -25,7 +25,7 @@ func (c Check) VerifyDigest() ([]byte, error) {
 	expectedDigest := c.Expected
 	if len(expectedDigest) > 0 {
 		if !bytes.Equal(expectedDigest, actualDigest) {
-			err = fmt.Errorf("digest mismatch: expected: %x, actual: %x", expectedDigest, actualDigest)
+			err = fmt.Errorf("digest mismatch:\nexpected:\n%x\nactual: %x", expectedDigest, actualDigest)
 		}
 	}
 	return actualDigest, err
