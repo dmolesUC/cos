@@ -19,7 +19,9 @@ func (f *CosFlags) LogLevel() logging.LogLevel {
 }
 
 func (f *CosFlags) AddTo(cmdFlags *pflag.FlagSet) {
-	cmdFlags.StringVarP(&f.Endpoint, "endpoint", "e", "", "endpoint: HTTP(S) URL (required)")
-	cmdFlags.StringVarP(&f.Region, "region", "r", "", "S3 region (if not in endpoint URL; default \""+objects.DefaultAwsRegion+"\")")
+	cmdFlags.SortFlags = false
+
+	cmdFlags.StringVarP(&f.Endpoint, "endpoint", "e", "", "HTTP(S) endpoint URL (required)")
+	cmdFlags.StringVarP(&f.Region, "region", "r", "", "AWS region (if not in endpoint URL; default \""+objects.DefaultAwsRegion+"\")")
 	cmdFlags.CountVarP(&f.Verbose, "verbose", "v", "verbose output (-vv for maximum verbosity)")
 }

@@ -23,11 +23,11 @@ import (
 const (
 	usageKeys = "keys <BUCKET-URL>"
 
-	shortDescKeys = "keys: test creating, retrieving, verifying and deleting potentially problematic keys"
+	shortDescKeys = "keys: test the keys supported by an object storage endpoint"
 
 	longDescKeys = shortDescKeys + `
 
-		Creates, retrieves, verifies, and deletes a small object for each value in
+	Creates, retrieves, verifies, and deletes a small object for each value in
         the specified key list. By default, writes each failed key to standard output
         as a quoted Go string literal (see https://golang.org/pkg/strconv/); use the
         --raw option to write the keys without quoting or escaping. (Note however that

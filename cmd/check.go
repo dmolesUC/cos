@@ -121,7 +121,7 @@ func init() {
 	cmdFlags := cmd.Flags()
 	flags.AddTo(cmdFlags)
 
-	cmdFlags.StringVarP(&flags.Algorithm, "algorithm", "a", "sha256", "Algorithm: md5 or sha256")
+	cmdFlags.StringVarP(&flags.Algorithm, "algorithm", "a", "sha256", "digest algorithm (md5 or sha256)")
 	cmdFlags.BytesHexVarP(&flags.Expected, "expected", "x", nil, "expected digest value (exit with error if not matched)")
 
 	rootCmd.AddCommand(cmd)
