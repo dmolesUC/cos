@@ -1,90 +1,92 @@
 # cos
 
-A tool for checking cloud object storage.
+A tool for testing and validating cloud object storage.
 
-## Running
+## Invocation
 
-### Create/retrieve/verify/delete with `cos crvd`
-
-#### S3 (including Minio)
-
-Amazon (Merritt Stage) example with implicit credentials:
+Invocation is in the form
 
 ```
-cos crvd s3://uc3-s3mrt5001-stg/ -e https://s3-s3-us-west-2.amazonaws.com/
+cos <command> [flags] [URL]
 ```
 
-Minio example with explicit credentials:
+where `<command>` is one of:
+
+- [`check`](https://github.com/dmolesUC3/cos#cos-check): 
+  compute and (optionally) verify the digest of an object
+- [`crvd`](https://github.com/dmolesUC3/cos#cos-crvd): 
+  create, retrieve, verify, and delete an object
+- [`keys`](https://github.com/dmolesUC3/cos#cos-keys): 
+  test the keys supported by an object storage endpoint
+- `help`: 
+  list these commands, or get help for a subcommand
+
+and `[URL]` can be the URL of an object or of a bucket/container, depending
+on the context. The protocol (`s3://` or `swift://`) of the URL is used to
+determine the cloud storage API to use.
+
+### Flags
+
+All `cos` commands support the following flags:
+
+| Flag | Short form | Description |
+| :-- | :-- | :-- |
+| `--endpoint` | `-e` | HTTP(S) endpoint URL (required) |
+| `--region` | `-r` | AWS region (optional) |
+| `--verbose` | `-v` | Verbose output |
+| `--help` | `-h` | Print help and exit |
+
+For Amazon S3 buckets, the region can usually be determined from the
+endpoint URL. If not, and if the `--region` flag is not provided, it
+defaults to `us-west-2`.
+
+For OpenStack Swift containers, the `--region` flag is ignored.
+
+Additional command-specific flags are listed below.
+
+> #### TODO: document authentication for both Swift and S3
+
+## Commands
+
+### `cos check`
+
+The `check` command computes and (optionally) verifies the digest of an
+object. The object is streamed in 5-MiB chunks, each chunk being added to
+the digest computation and then discarded, thus making it possible to 
+verify objects of arbitary size, not limited by local storage space.
+
+In addition to the flags listed above, the `check` command supports the following:
+
+| Flag | Short form | Description |
+| :-- | :-- | :-- |
+| `--algorithm` | `-a` | Digest algorithm (md5 or sha256; defaults to sha256) |
+| `--expected` | `-x` | Expected digest value |
+
+By default, `check` outputs the digest to standard output, and exits:
 
 ```
-AWS_ACCESS_KEY_ID=<access key> \
-AWS_SECRET_ACCESS_KEY=<secret access key> \
-cos crvd s3://mrt-test/ -e http://localhost:9000/
+$ cos check --endpoint https://s3.us-west-2.amazonaws.com/ s3://www.dmoles.net/images/fa/archive.svg/
+c99ad299fa53d5d9688909164cf25b386b33bea8d4247310d80f615be29978f5
 ```
 
-#### OpenStack/Swift
-
-Note that for OpenStack Swift, the credentials must always be specified
-explicitly with the SWIFT_API_USER and SWIFT_API_KEY environment variables, and
-the bucket URL must be in `swift://<container>/` form, with an explicit
-`--endpoint` parameter.
+If given an expected value that does not match, prints a message to standard
+error, and exits with a nonzero (unsuccessful) exit code.
 
 ```
-SWIFT_API_USER=<user> \
-SWIFT_API_KEY=<key> \
-cos crvd -v swift://distrib.stage.9001.__c5e/ -e http://cloud.sdsc.edu/auth/v1.0 
+$ cos check --endpoint https://s3.us-west-2.amazonaws.com/ s3://www.dmoles.net/images/fa/archive.svg/ \
+  -x 5f87992eb516f08d0137424d8aeb33b683b52fc4619098869d5d35af992da99c
+digest mismatch: 
+expected: 5f87992eb516f08d0137424d8aeb33b683b52fc4619098869d5d35af992da99c
+actual: c99ad299fa53d5d9688909164cf25b386b33bea8d4247310d80f615be29978f5
 ```
 
-### Fixity checking with `cos check`
+### `cos crvd`
 
-#### S3 (including Minio)
+> #### TODO: document this
 
-Amazon (Merritt Stage) example with implicit credentials:
+### `cos keys`
 
-```
-cos check -v \
-  's3://uc3-s3mrt5001-stg/ark:/99999/fk46w9nc06|1|producer/1500MBTestObject.blob' \
-  -e 'https://s3-us-west-2.amazonaws.com/' \
-  -x d0487cf92819b6f70a4769419348ab51ed77c519664a6262283e0016b9a6235c
-```
-
-```
-cos check -v \
-  's3://uc3-s3mrt5001-prd/ark:/13030/qt30c9r5qj|1|producer/content/supp/FreeSolv_paper.tar.gz' \
-  -e 'https://s3-us-west-2.amazonaws.com/' \
-  -x c0916ef45d917578e4dcdc3045d9340738d0e750c0ab9f6a8e866aa28da677df
-```
-
-(S3 keys for Merritt objects are of the form `<ark>|<version>|<pathname>`.) 
-
-Minio example with explicit credentials:
-
-```
-AWS_ACCESS_KEY_ID=<access key> \
-AWS_SECRET_ACCESS_KEY=<secret access key> \
-cos check s3://mrt-test/inusitatum.png -e http://127.0.0.1:9000 -a md5 -x cadf871cd4135212419f488f42c62482`
-```
-
-Amazon example with explicit credentials:
-
-```
-AWS_ACCESS_KEY_ID=<access key> \
-AWS_SECRET_ACCESS_KEY=<secret access key> \
-cos check s3://www.dmoles.net/images/fa/archive.svg -e https://s3-us-west-2.amazonaws.com
-```
-
-#### OpenStack/Swift
-
-Note that for OpenStack Swift, the credentials must always be specified
-explicitly with the SWIFT_API_USER and SWIFT_API_KEY environment variables.
-
-```
-SWIFT_API_USER=<user> \
-SWIFT_API_KEY=<key> \
-cos check -v \
-  -e 'http://cloud.sdsc.edu/auth/v1.0' \
-  'swift://distrib.stage.9001.__c5e/ark:/99999/fk4kw5kc1z|1|producer/6GBZeroFile.txt'
-```
+> #### TODO: document this
 
 ## For developers
 
@@ -100,6 +102,14 @@ From the project root:
 - to build `cos`, writing the executable to the source directory, use `go build`.
 - to build `cos` and install it in `$GOPATH/bin`, use `go install`.
 
+#### Cross-compiling
+
+To cross-compile for Linux (Intel, 64-bit):
+
+```
+GOOS=linux GOARCH=amd64 go build -o <output file>
+```
+
 ### Running tests
 
 To run all tests in all subpackages, from the project root, use `go test ./...`.
@@ -109,14 +119,6 @@ To run all tests in all subpackages with coverage and view a coverage report, us
 ```
 go test -coverprofile=coverage.out ./... \
 && go tool cover -html=coverage.out
-```
-
-#### Cross-compiling
-
-To cross-compile for Linux (Intel, 64-bit):
-
-```
-GOOS=linux GOARCH=amd64 go build -o <output file>
 ```
 
 ### Configuring JetBrains IDEs (GoLand or IDEA)
@@ -130,10 +132,10 @@ default to “Project SDK” (1.11.x).
 
 - ✅ fixity checking: expected vs. actual
 - ✅ sanity check: can we create/retrieve/verify/delete a file?
-- 🔲 weird filenames
+- ✅ weird filenames
 - 🔲 scalability
   - large files
   - large numbers of files per bucket
   - large numbers of files per key prefix
 - 🔲 streaming download performance
-- 🔲 reliability
+- 🔲 reliability 
