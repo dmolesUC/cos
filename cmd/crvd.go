@@ -147,8 +147,8 @@ func init() {
 
 	cmdFlags.StringVarP(&flags.Size, "size", "s", sizeDefault, "size in bytes of object to create")
 	cmdFlags.StringVarP(&flags.Key, "key", "k", "", "key to create (defaults to cos-crvd-TIMESTAMP.bin)")
+	cmdFlags.Int64VarP(&flags.Seed, "random-seed", "", pkg.DefaultRandomSeed, "seed for random-number generator")
 	cmdFlags.BoolVarP(&flags.Keep, "keep", "", false, "keep object after verification (defaults to false)")
-	cmdFlags.Int64VarP(&flags.Seed, "random-seed", "", pkg.DefaultRandomSeed, "seed for random-number generator (default 0)")
 
 	rootCmd.AddCommand(cmd)
 }
