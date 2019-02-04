@@ -100,7 +100,7 @@ In addition to the global flags listed above, the `check` command supports the f
 | Flag | Short form | Description |
 | :-- | :-- | :-- |
 | `--size SIZE` | `-s` | size of object to create (default 128 bytes) |
-| `--key KEY` | `-k` | key to create (defaults to `cos-crvd-TIMESTAMP.bin` |
+| `--key KEY` | `-k` | key to create (defaults to `cos-crvd-TIMESTAMP.bin`) |
 | `--random-seed SEED` | | seed for random-number generator (default 1) |
 | `--keep` | | keep object after verification (default false) |
 
