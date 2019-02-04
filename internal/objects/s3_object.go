@@ -43,7 +43,26 @@ func (obj *S3Object) ContentLength() (length int64, err error) {
 	}
 	lengthP := h.ContentLength
 	if lengthP == nil {
-		return 0, errors.New("s3.HeadObject() returned nil content-length")
+		logger := logging.DefaultLogger()
+		logger.Tracef("s3.HeadObject() returned nil content-length; trying GetObject()\n")
+		o, err := obj.Get()
+		if o != nil {
+			defer func() {
+				if o.Body == nil {
+					return
+				}
+				if err := o.Body.Close(); err != nil {
+					logger.Tracef("error closing object body: %v\n", err.Error())
+				}
+			}()
+			lengthP = o.ContentLength
+			if lengthP == nil {
+				return 0, fmt.Errorf("s3.GetObject() returned nil content-length")
+			}
+		}
+		if err != nil {
+			return 0, err
+		}
 	}
 	return *lengthP, nil
 }
@@ -146,3 +165,21 @@ func (obj *S3Object) Head() (h *s3.HeadObjectOutput, err error) {
 		return nil, errors.New("s3.HeadObject() returned nil")
 	}
 }
+
+func (obj *S3Object) Get() (h *s3.GetObjectOutput, err error) {
+	s3Svc, err := obj.Endpoint.S3()
+	if err != nil {
+		return nil, err
+	}
+
+	h, err = s3Svc.GetObject(&s3.GetObjectInput{
+		Bucket: &obj.Bucket,
+		Key:    &obj.Key,
+	})
+	if h != nil {
+		return h, nil
+	} else {
+		return nil, errors.New("s3.GetObject() returned nil")
+	}
+}
+
