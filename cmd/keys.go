@@ -45,8 +45,8 @@ const (
 	exampleKeys = `
 		cos keys --endpoint https://s3.us-west-2.amazonaws.com/s3://www.dmoles.net/ 
 		cos keys --list naughty-strings --endpoint https://s3.us-west-2.amazonaws.com/ s3://www.dmoles.net/  
-		cos keys --raw --ok keys-ok.txt --bad keys-bad.txt --endpoint https://s3.us-west-2.amazonaws.com/ s3://www.dmoles.net/
-		cos keys --file keys-bad.txt --endpoint https://s3.us-west-2.amazonaws.com/ s3://www.dmoles.net/
+		cos keys --raw --ok ok.txt --bad bad.txt --endpoint https://s3.us-west-2.amazonaws.com/ s3://www.dmoles.net/
+		cos keys --file my-keys.txt --endpoint https://s3.us-west-2.amazonaws.com/ s3://www.dmoles.net/
 	`
 )
 
