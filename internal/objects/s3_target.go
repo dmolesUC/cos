@@ -32,7 +32,7 @@ func NewS3Target(region string, endpointURL *url.URL, bucket string) *S3Target {
 // Target implementation
 
 func (e *S3Target) Object(key string) Object {
-	return &S3Object{Endpoint: e, Bucket: e.Bucket, Key: key}
+	return &S3Object{Endpoint: e, Key: key}
 }
 
 func (e *S3Target) Pretty() string {

@@ -17,7 +17,6 @@ import (
 
 type S3Object struct {
 	Endpoint *S3Target
-	Bucket   string
 	Key      string
 }
 
@@ -25,7 +24,7 @@ type S3Object struct {
 // Object implementation
 
 func (obj *S3Object) Pretty() string {
-	return fmt.Sprintf("s3://%v/%v", obj.Bucket, obj.Key)
+	return fmt.Sprintf("s3://%v/%v", obj.Endpoint.Bucket, obj.Key)
 }
 
 func (obj *S3Object) String() string {
@@ -101,7 +100,7 @@ func (obj *S3Object) DownloadRange(startInclusive, endInclusive int64, buffer []
 	rangeStr := fmt.Sprintf("bytes=%d-%d", startInclusive, endInclusive)
 	downloader := s3manager.NewDownloader(awsSession)
 	return downloader.Download(out, &s3.GetObjectInput{
-		Bucket: &obj.Bucket,
+		Bucket: &obj.Endpoint.Bucket,
 		Key:    &obj.Key,
 		Range:  &rangeStr,
 	})
@@ -116,7 +115,7 @@ func (obj *S3Object) Create(body io.Reader, length int64) (err error) {
 
 	uploader := s3manager.NewUploader(awsSession)
 	result, err := uploader.Upload(&s3manager.UploadInput{
-		Bucket: &obj.Bucket,
+		Bucket: &obj.Endpoint.Bucket,
 		Key:    &obj.Key,
 		Body:   body,
 	})
@@ -135,7 +134,7 @@ func (obj *S3Object) Delete() (err error) {
 	logger := logging.DefaultLogger()
 	logger.Detailf("Deleting %v\n", protocolUriStr)
 	_, err = s3.New(awsSession).DeleteObject(&s3.DeleteObjectInput{
-		Bucket: &obj.Bucket,
+		Bucket: &obj.Endpoint.Bucket,
 		Key:    &obj.Key,
 	})
 	if err == nil {
@@ -156,7 +155,7 @@ func (obj *S3Object) Head() (h *s3.HeadObjectOutput, err error) {
 	}
 
 	h, err = s3Svc.HeadObject(&s3.HeadObjectInput{
-		Bucket: &obj.Bucket,
+		Bucket: &obj.Endpoint.Bucket,
 		Key:    &obj.Key,
 	})
 	if h != nil {
@@ -173,7 +172,7 @@ func (obj *S3Object) Get() (h *s3.GetObjectOutput, err error) {
 	}
 
 	h, err = s3Svc.GetObject(&s3.GetObjectInput{
-		Bucket: &obj.Bucket,
+		Bucket: &obj.Endpoint.Bucket,
 		Key:    &obj.Key,
 	})
 	if h != nil {
