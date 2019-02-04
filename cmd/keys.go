@@ -36,17 +36,20 @@ const (
         Use the --ok option to write successful keys to a file, and the --bad option
         (or shell redirection) to write failed keys to a file instead of stdout.
 
+        Use the --file option to specify a file containing keys to test, one key per
+        file, separated by newlines (LF, \n).
+
         Available lists:
 	`
 
 	exampleKeys = `
 		cos keys --endpoint https://s3.us-west-2.amazonaws.com/s3://www.dmoles.net/ 
 		cos keys --list naughty-strings --endpoint https://s3.us-west-2.amazonaws.com/ s3://www.dmoles.net/  
-		cos keys --raw --ok keys.ok --bad keys.bad --endpoint https://s3.us-west-2.amazonaws.com/ s3://www.dmoles.net/  
+		cos keys --raw --ok keys-ok.txt --bad keys-bad.txt --endpoint https://s3.us-west-2.amazonaws.com/ s3://www.dmoles.net/
+		cos keys --file keys-bad.txt --endpoint https://s3.us-west-2.amazonaws.com/ s3://www.dmoles.net/
 	`
 )
 
-// TODO: accept lists from a file
 // TODO: more output formats other than --raw and quoted-Go-literal, e.g. --ascii
 
 type keysFlags struct {
@@ -56,6 +59,7 @@ type keysFlags struct {
 	OkFile   string
 	BadFile  string
 	ListName string
+	KeyFile  string
 
 	MemProfile string
 }
@@ -66,6 +70,7 @@ func (f keysFlags) Pretty() string {
         okFile:     %v
         badFile:    %v
 		listName:   %v
+		listFile:	%v
         memprofile: %#v
 		region:     %#v
 		endpoint:   %#v
@@ -79,6 +84,7 @@ func (f keysFlags) Pretty() string {
 		f.OkFile,
 		f.BadFile,
 		f.ListName,
+		f.KeyFile,
 
 		f.MemProfile,
 
@@ -101,7 +107,7 @@ func longDescription() string {
 func availableKeyLists() (*string, error) {
 	var sb strings.Builder
 	w := tabwriter.NewWriter(&sb, 0, 0, 2, ' ', tabwriter.DiscardEmptyColumns)
-	for i, list := range keys.AllKeyLists() {
+	for i, list := range keys.KnownKeyLists() {
 		_, err := fmt.Fprintf(w, "%d.\t%v\t%v (%d keys)\n", i+1, list.Name(), list.Desc(), list.Count())
 		if err != nil {
 			return nil, err
@@ -139,6 +145,7 @@ func init() {
 	cmdFlags.StringVarP(&f.OkFile, "ok", "o", "", "file to write successful ('OK') keys (not written by default)")
 	cmdFlags.StringVarP(&f.BadFile, "bad", "b", "", "file to write failed ('bad') keys (written to stdout by default)")
 	cmdFlags.StringVarP(&f.ListName, "list", "l", keys.DefaultKeyListName, "key list to check")
+	cmdFlags.StringVarP(&f.KeyFile, "file", "f", "", "file of keys to check")
 
 	cmdFlags.StringVarP(&f.MemProfile, "memprofile", "", "", "write memory profile to `file`")
 
@@ -182,8 +189,14 @@ func checkKeys(bucketStr string, f keysFlags) error {
 		return err
 	}
 
-	listName := f.ListName
-	keyList, err := keys.KeyListForName(listName)
+	keyFile := f.KeyFile
+	var keyList keys.KeyList
+	if keyFile != "" {
+		keyList, err = keys.KeyListForFile(keyFile)
+	} else {
+		listName := f.ListName
+		keyList, err = keys.KeyListForName(listName)
+	}
 	if err != nil {
 		return err
 	}
@@ -212,7 +225,7 @@ func checkKeys(bucketStr string, f keysFlags) error {
 	}
 	failureCount := len(failures)
 	if failureCount > 0 {
-		return fmt.Errorf("%v: %d of %d keys failed", listName, failureCount, keyList.Count())
+		return fmt.Errorf("%v: %d of %d keys failed", keyList.Name(), failureCount, keyList.Count())
 	}
 	return nil
 }

@@ -1,10 +1,14 @@
 package keys
 
 import (
+	"bufio"
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 
+	"github.com/dmolesUC3/cos/internal/logging"
 	ns "github.com/minimaxir/big-list-of-naughty-strings/naughtystrings"
 )
 
@@ -22,34 +26,56 @@ type KeyList interface {
 	Count() int
 }
 
-func AllKeyLists() []KeyList {
+func KnownKeyLists() []KeyList {
 	var names []string
-	for name := range listsByName {
+	for name := range knownListsByName {
 		names = append(names, name)
 	}
 	sort.Strings(names)
 
 	var lists []KeyList
 	for _, name := range names {
-		lists = append(lists, listsByName[name])
+		lists = append(lists, knownListsByName[name])
 	}
 	return lists
 }
 
+func NewKeyList(name string, desc string, keys []string) KeyList {
+	return &simpleKeyList{name, desc, keys}
+}
+
 func KeyListForName(name string) (KeyList, error) {
-	if s, ok := listsByName[name]; ok {
+	if s, ok := knownListsByName[name]; ok {
 		return s, nil
 	}
 	return nil, fmt.Errorf("no such source: %#v", name)
 }
 
-func newKeyList(name string, desc string, keys []string) KeyList {
-	if _, ok := listsByName[name]; ok {
-		panic(fmt.Sprintf("source %#v already exists", name))
+func KeyListForFile(path string) (KeyList, error) {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return nil, err
 	}
-	source := &simpleKeyList{name, desc, keys}
-	listsByName[name] = source
-	return source
+
+	infile, err := os.Open(absPath)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := infile.Close(); err != nil {
+			logging.DefaultLogger().Infof("error closing file %v: %v", absPath, err.Error())
+		}
+	}()
+
+	var keys []string
+	scanner := bufio.NewScanner(infile)
+	for scanner.Scan() {
+		if err := scanner.Err(); err != nil {
+			return nil, err
+		}
+		keys = append(keys, scanner.Text())
+	}
+	return NewKeyList(path, absPath, keys), nil
 }
 
 // ------------------------------------------------------------
@@ -59,39 +85,48 @@ const defaultFilter = "^$|^\\.$|^\\.{2,}"
 const backslash = "\\\\"
 const doubleBackslash = backslash + backslash
 
-var listsByName map[string]KeyList
+var knownListsByName map[string]KeyList
 
 func init() {
-	listsByName = map[string]KeyList{}
+	knownListsByName = map[string]KeyList{}
 
-	naughtyStringSource := newKeyList(
+	naughtyStringSource := NewKeyList(
 		"naughty-strings",
 		"Big List of Naughty Strings (https://github.com/minimaxir/big-list-of-naughty-strings)",
 		ns.Unencoded(),
 	)
-	defaultSource := newKeyList(
+	addKeyList(naughtyStringSource)
+
+	defaultSource := NewKeyList(
 		DefaultKeyListName,
 		fmt.Sprintf("default source (as naughty-strings, filtering out %#v, %#v, and leading %#v)", "", ".", ".."),
-		FilterKeys(naughtyStringSource.Keys(), defaultFilter),
+		filterKeys(naughtyStringSource.Keys(), defaultFilter),
 	)
-	_ = newKeyList(
+	addKeyList(defaultSource)
+
+	disallowBackslash := NewKeyList(
 		"disallow-backslash",
 		"as default source, disallowing backlash",
-		FilterKeys(defaultSource.Keys(), backslash),
+		filterKeys(defaultSource.Keys(), backslash),
 	)
-	_ = newKeyList(
+	addKeyList(disallowBackslash)
+
+	disallowDoubleBackslash := NewKeyList(
 		"disallow-double-backslash",
 		"as default source, disallowing double backlash",
-		FilterKeys(defaultSource.Keys(), doubleBackslash),
+		filterKeys(defaultSource.Keys(), doubleBackslash),
 	)
-	_ = newKeyList(
+	addKeyList(disallowDoubleBackslash)
+
+	misc := NewKeyList(
 		"misc",
 		"miscellenous potential problems, incl. path elements & unicode blocks",
 		MiscKeys(),
 	)
+	addKeyList(misc)
 }
 
-func FilterKeys(keys []string, re string) []string {
+func filterKeys(keys []string, re string) []string {
 	regexpP := regexp.MustCompile(re)
 	var filtered []string
 	for _, k := range keys {
@@ -101,3 +136,12 @@ func FilterKeys(keys []string, re string) []string {
 	}
 	return filtered
 }
+
+func addKeyList(list KeyList) {
+	name := list.Name()
+	if _, ok := knownListsByName[name]; ok {
+		panic(fmt.Sprintf("list %#v already exists", name))
+	}
+	knownListsByName[name] = list
+}
+
