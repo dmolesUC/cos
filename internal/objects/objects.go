@@ -35,7 +35,8 @@ func NewObject(objURL, endpointURL *url.URL, regionStr string) (Object, error) {
 	bucket := objURL.Host
 	key := objURL.Path
 
-	bucketURL, err := url.Parse(fmt.Sprintf("%v:/%v", protocol, bucket))
+	bucketUrlStr := fmt.Sprintf("%v://%v", protocol, bucket)
+	bucketURL, err := url.Parse(bucketUrlStr)
 	if err != nil {
 		return nil, err
 	}
