@@ -54,12 +54,12 @@ func (c *Crvd) CreateRetrieveVerify() error {
 	contentLength := c.ContentLength
 
 	logger := logging.DefaultLogger()
-	logger.Detailf("Creating object (%v) at %v\n", logging.FormatBytes(contentLength), obj)
+	logger.Tracef("Creating object (%v) at %v\n", logging.FormatBytes(contentLength), obj)
 	expectedDigest, err := c.create()
 	if err != nil {
 		return err
 	}
-	logger.Detailf("Created %v (%d bytes)\n", obj, contentLength)
+	logger.Tracef("Created %v (%d bytes)\n", obj, contentLength)
 	logger.Tracef("Calculated digest on upload: %x\n", expectedDigest)
 
 	var actualLength int64
@@ -71,12 +71,12 @@ func (c *Crvd) CreateRetrieveVerify() error {
 	if actualLength != contentLength {
 		return fmt.Errorf("content-length mismatch: expected: %d, actual: %d", contentLength, actualLength)
 	}
-	logger.Detailf("Uploaded %d bytes\n", contentLength)
-	logger.Detailf("Verifying %v (expected digest: %x)\n", obj, expectedDigest)
+	logger.Tracef("Uploaded %d bytes\n", contentLength)
+	logger.Tracef("Verifying %v (expected digest: %x)\n", obj, expectedDigest)
 	check := Check{Object: obj, Expected: expectedDigest, Algorithm: "sha256"}
 	actualDigest, err := check.VerifyDigest()
 	if err == nil {
-		logger.Detailf("Verified %v (%d bytes, SHA-256 digest %x)\n", obj, contentLength, actualDigest)
+		logger.Tracef("Verified %v (%d bytes, SHA-256 digest %x)\n", obj, contentLength, actualDigest)
 	}
 	return err
 }

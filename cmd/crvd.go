@@ -120,8 +120,14 @@ func crvd(bucketStr string, f crvdFlags) (err error) {
 
 	if f.Keep {
 		err = crvd.CreateRetrieveVerify()
+		if err == nil {
+			fmt.Printf("%v object created, retrieved, and verified; keeping %v\n", logging.FormatBytes(crvd.ContentLength), crvd.Object.Pretty())
+		}
 	} else {
 		err = crvd.CreateRetrieveVerifyDelete()
+		if err == nil {
+			fmt.Printf("%v object created, retrieved, verified, and deleted (%v)\n", logging.FormatBytes(crvd.ContentLength), crvd.Object.Pretty())
+		}
 	}
 	return err
 }
@@ -145,10 +151,10 @@ func init() {
 
 	sizeDefault := bytefmt.ByteSize(pkg.DefaultContentLengthBytes)
 
-	cmdFlags.StringVarP(&flags.Size, "size", "s", sizeDefault, "size in bytes of object to create")
+	cmdFlags.StringVarP(&flags.Size, "size", "s", sizeDefault, "size object to create")
 	cmdFlags.StringVarP(&flags.Key, "key", "k", "", "key to create (defaults to cos-crvd-TIMESTAMP.bin)")
 	cmdFlags.Int64VarP(&flags.Seed, "random-seed", "", pkg.DefaultRandomSeed, "seed for random-number generator")
-	cmdFlags.BoolVarP(&flags.Keep, "keep", "", false, "keep object after verification (defaults to false)")
+	cmdFlags.BoolVarP(&flags.Keep, "keep", "", false, "keep object after verification (default false)")
 
 	rootCmd.AddCommand(cmd)
 }

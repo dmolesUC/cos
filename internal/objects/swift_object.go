@@ -118,11 +118,11 @@ func (obj *SwiftObject) Delete() (err error) {
 	// TODO: detect DynamicLargeObjects
 	err = cnx.ObjectDelete(obj.Container, obj.Name)
 	logger := logging.DefaultLogger()
-	logger.Detailf("Deleting %v\n", obj)
+	logger.Tracef("Deleting %v\n", obj)
 	if err == nil {
-		logger.Detailf("Deleted %v\n", obj)
+		logger.Tracef("Deleted %v\n", obj)
 	} else {
-		logger.Detailf("Deleting %v failed: %v", obj, err)
+		logger.Tracef("Deleting %v failed: %v", obj, err)
 	}
 	return err
 

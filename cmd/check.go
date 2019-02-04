@@ -23,15 +23,21 @@ const (
 
 	longDescCheck = shortDescCheck + `
 
-		Verifies the digest of an object in cloud object storage, using SHA-256 (by
-		default) or MD5 (optionally). 
+	Verifies the digest of an object in cloud object storage, using SHA-256 (by
+	default) or MD5 (optionally). 
+
+	The object is streamed in five-megabyte chunks, each chunk
+	being added to the digest computation and then discarded, thus
+	making it possible to verify objects of arbitary size, not
+	limited by local storage space.
+
 	`
 
 	exampleCheck = ` 
-		cos check s3://www.dmoles.net/images/fa/archive.svg --endpoint https://s3.us-west-2.amazonaws.com/
-		cos check s3://www.dmoles.net/images/fa/archive.svg -e https://s3.us-west-2.amazonaws.com/ -x c99ad299fa53d5d9688909164cf25b386b33bea8d4247310d80f615be29978f5
-		cos check s3://mrt-test/inusitatum.png -e http://127.0.0.1:9000/ -a md5 -x cadf871cd4135212419f488f42c62482
-	    SWIFT_API_USER=<user> SWIFT_API_KEY=<key> cos check 'swift://distrib.stage.9001.__c5e/ark:/99999/fk4kw5kc1z|1|producer/6GBZeroFile.txt' -e http://cloud.sdsc.edu/auth/v1.0
+	cos check s3://www.dmoles.net/images/fa/archive.svg --endpoint https://s3.us-west-2.amazonaws.com/
+	cos check s3://www.dmoles.net/images/fa/archive.svg -e https://s3.us-west-2.amazonaws.com/ -x c99ad299fa53d5d9688909164cf25b386b33bea8d4247310d80f615be29978f5
+	cos check s3://mrt-test/inusitatum.png -e http://127.0.0.1:9000/ -a md5 -x cadf871cd4135212419f488f42c62482
+	SWIFT_API_USER=<user> SWIFT_API_KEY=<key> cos check 'swift://distrib.stage.9001.__c5e/ark:/99999/fk4kw5kc1z|1|producer/6GBZeroFile.txt' -e http://cloud.sdsc.edu/auth/v1.0
     `
 )
 

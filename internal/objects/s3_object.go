@@ -132,15 +132,15 @@ func (obj *S3Object) Delete() (err error) {
 		return err
 	}
 	logger := logging.DefaultLogger()
-	logger.Detailf("Deleting %v\n", protocolUriStr)
+	logger.Tracef("Deleting %v\n", protocolUriStr)
 	_, err = s3.New(awsSession).DeleteObject(&s3.DeleteObjectInput{
 		Bucket: &obj.Endpoint.Bucket,
 		Key:    &obj.Key,
 	})
 	if err == nil {
-		logger.Detailf("Deleted %v\n", protocolUriStr)
+		logger.Tracef("Deleted %v\n", protocolUriStr)
 	} else {
-		logger.Detailf("Deleting %v failed: %v", protocolUriStr, err)
+		logger.Tracef("Deleting %v failed: %v", protocolUriStr, err)
 	}
 	return err
 }
