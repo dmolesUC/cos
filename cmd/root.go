@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/dmolesUC3/cos/internal/objects"
 	"github.com/spf13/cobra"
 
 	"github.com/dmolesUC3/cos/internal/logging"
@@ -22,7 +23,7 @@ const (
         credentials.
 
         Note that for OpenStack Swift, the API username and key must be specified
-        with the SWIFT_API_USER and SWIFT_API_KEY environment variables.
+        with the `+objects.SwiftUserEnvVar+` and `+objects.SwiftKeyEnvVar+` environment variables.
     ` // TODO: use ST_USER, ST_KEY, whatever the endpoint variable was
 )
 

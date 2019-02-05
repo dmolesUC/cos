@@ -10,31 +10,33 @@ import (
 )
 
 const (
-	defaultRetries = 3
+	SwiftUserEnvVar = "ST_USER"
+	SwiftKeyEnvVar  = "ST_KEY"
+	defaultRetries  = 3
 )
 
 // ------------------------------------------------------------
 // SwiftTarget type
 
 type SwiftTarget struct {
-	UserName string
-	APIKey   string
-	AuthURL  *url.URL
+	UserName  string
+	APIKey    string
+	AuthURL   *url.URL
 	Container string
-	cnx      *swift.Connection
+	cnx       *swift.Connection
 }
 
 // ------------------------------
 // Factory method
 
 func NewSwiftEndpoint(endpointUrl *url.URL, container string) (*SwiftTarget, error) {
-	swiftAPIUser := os.Getenv("SWIFT_API_USER")
+	swiftAPIUser := os.Getenv(SwiftUserEnvVar)
 	if swiftAPIUser == "" {
-		return nil, errors.New("missing environment variable $SWIFT_API_USER")
+		return nil, errors.New("missing environment variable $" + SwiftUserEnvVar)
 	}
-	swiftAPIKey := os.Getenv("SWIFT_API_KEY")
+	swiftAPIKey := os.Getenv(SwiftKeyEnvVar)
 	if swiftAPIKey == "" {
-		return nil, errors.New("missing environment variable $SWIFT_API_KEY")
+		return nil, errors.New("missing environment variable $" + SwiftKeyEnvVar)
 	}
 	return &SwiftTarget{UserName: swiftAPIUser, APIKey: swiftAPIKey, AuthURL: endpointUrl, Container: container}, nil
 }
