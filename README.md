@@ -211,10 +211,20 @@ As such, it requires Go 1.11 or later, and should be cloned _outside_
 
 ### Building
 
-From the project root:
+The `cos` project can be built and installed simply with `go build` and `go
+install`, but it also supports [Mage](https://magefile.org):
 
-- to build `cos`, writing the executable to the source directory, use `go build`.
-- to build `cos` and install it in `$GOPATH/bin`, use `go install`.
+| Command | Purpose |
+| :--- | :--- |
+| `mage -l` | list available targets |
+| `mage build` | builds a cos binary for the current platform. |
+| `mage buildAll` | builds a cos binary for each target platform. |
+| `mage clean` | removes compiled binaries from the current working directory. |
+| `mage install` | installs cos in $GOPATH/bin. |
+| `mage platforms` | lists target platforms for buildAll. |
+
+Note that `mage build` is a thin wrapper around `go build` and supports the
+same environment variables, e.g. `$GOOS` and `$GOARCH`.
 
 #### Cross-compiling
 
