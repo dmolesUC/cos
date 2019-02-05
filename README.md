@@ -38,6 +38,26 @@ and `[URL]` can be the URL of an object or of a bucket/container, depending
 on the context. The protocol (`s3://` or `swift://`) of the URL is used to
 determine the cloud storage API to use.
 
+## Authentication
+
+For authentication, `cos` uses the same environment variables as the [AWS
+CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html)
+(for S3 and compatible storage) or [OpenStack Swift
+CLI](https://docs.openstack.org/python-swiftclient/latest/cli/index.html)
+(for Swift storage):
+
+| Protocol | Variable | Purpose |
+| :--- | :--- | :--- |
+| S3 | `AWS_ACCESS_KEY_ID` | AWS access key |
+| | `AWS_SECRET_ACCESS_KEY` | Secret key associated with the AWS access key |
+| Swift | `ST_USER` | Swift username |
+| | `ST_KEY` | Swift password |
+
+Credentials for S3 storage can also be specified [in various other
+ways](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html#specifying-credentials)
+supported by the AWS SDK for Go, such as a shared credentials file or, when
+running in the Amazon EC2 environment, an IAM role.
+
 ### Flags
 
 All `cos` commands support the following flags:
