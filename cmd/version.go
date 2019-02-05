@@ -26,7 +26,7 @@ func versionStr() string {
 	// if these are blank, we were probably built with plain 'go build' or
 	// 'go install', bypassing the ldflags in the magefile
 	if tag == "" {
-		return "(unknown version)"
+		return "(devel)"
 	}
 	versionStr := fmt.Sprintf("%v (%v, %v)", tag, commitHash, timestamp)
 	return versionStr
