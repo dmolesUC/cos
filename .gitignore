@@ -3,8 +3,9 @@
 # github-markdown-preview previews
 *.md.html
 
-# default compiled binary
+# default compiled binaries
 cos
+cos-*-*
 
 #### Generated ignores ####
 
