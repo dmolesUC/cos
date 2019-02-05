@@ -27,15 +27,20 @@ const (
 
 	longDescKeys = shortDescKeys + `
 
-	Creates, retrieves, verifies, and deletes a small object for each value in
-        the specified key list. By default, writes each failed key to standard output
-        as a quoted Go string literal (see https://golang.org/pkg/strconv/); use the
-        --raw option to write the keys without quoting or escaping. (Note however that
-        any newlines in keys will -also- not be escaped!)
+		Creates, retrieves, verifies, and deletes a small object for each value
+		in the specified key list. By default, keys outputs only failed keys, to
+		standard output, writing each key as a quoted Go string literal
+		(see https://golang.org/pkg/strconv/). 
 
-        Use the --ok option to write successful keys to a file, and the --bad option
-        (or shell redirection) to write failed keys to a file instead of stdout.
+		Use the --raw option to write the keys without quoting or escaping; note
+		that this may produce confusing results if any of the keys contain
+		newlines.
 
+        Use the --ok option to write successful keys to a file, and the --bad
+		option (or shell redirection) to write failed keys to a file instead of to
+		standard output.
+
+		Use the --list option to select one of the built-in "standard" key lists.
         Use the --file option to specify a file containing keys to test, one key per
         file, separated by newlines (LF, \n).
 
@@ -141,9 +146,9 @@ func init() {
 	cmdFlags := cmd.Flags()
 	f.AddTo(cmdFlags)
 
-	cmdFlags.BoolVar(&f.Raw, "raw", false, "whether to write keys in raw format (default format is quoted)")
-	cmdFlags.StringVarP(&f.OkFile, "ok", "o", "", "file to write successful ('OK') keys (not written by default)")
-	cmdFlags.StringVarP(&f.BadFile, "bad", "b", "", "file to write failed ('bad') keys (written to stdout by default)")
+	cmdFlags.BoolVar(&f.Raw, "raw", false, "write keys in raw (unquoted) format")
+	cmdFlags.StringVarP(&f.OkFile, "ok", "o", "", "write successful (\"OK\") keys to specified file")
+	cmdFlags.StringVarP(&f.BadFile, "bad", "b", "", "write failed (\"bad\") keys to specified file")
 	cmdFlags.StringVarP(&f.ListName, "list", "l", keys.DefaultKeyListName, "key list to check")
 	cmdFlags.StringVarP(&f.KeyFile, "file", "f", "", "file of keys to check")
 

@@ -111,7 +111,63 @@ $ crvd swift://distrib.stage.9001.__c5e/ -e http://cloud.sdsc.edu/auth/v1.0
 
 ### `cos keys`
 
-> #### TODO: document this
+The `keys` command tests the keys supported by an object storage endpoint,
+creating, retrieving, validating, and deleting a small object for each value
+in the specified key list. 
+
+In addition to the global flags listed above, the `keys` command supports
+the following:
+
+| Flag | Short form | Description |
+| :-- | :-- | :-- |
+| --raw | | write keys in raw (unquoted) format |
+| --ok FILE | -o | write successful ("OK") keys to specified file |
+| --bad FILE | -b | write failed ("bad") keys to specified file |
+| --list LIST | -l | use the specified 'standard' list of keys |
+| --file FILE | -f | read keys to be tested from the specified file |
+
+By default, `keys` outputs only failed keys, to standard output, writing
+each key as a [quoted Go string literal](https://golang.org/pkg/strconv/#Quote).
+
+```
+$ cos keys s3://uc3-s3mrt5001-stg/ -e 'https://s3-us-west-2.amazonaws.com/' --list misc 
+"../leading-double-dot-path"
+"../../leading-multiple-double-dot-path"
+"trailing-double-dot-path/.."
+(...etc.)
+```
+
+Use the `--raw` option to write the keys without quoting or escaping; note
+that this may produce confusing results if any of the keys contain
+newlines.
+
+```
+$ cos keys s3://uc3-s3mrt5001-stg/ -e 'https://s3-us-west-2.amazonaws.com/' --list misc --raw
+../leading-double-dot-path
+../../leading-multiple-double-dot-path
+trailing-double-dot-path/..
+trailing-multiple-double-dot-path/../..
+(...etc.)
+```
+
+Use the `--ok` option to write successful keys to a file, and the `--bad`
+option (or shell redirection) to write failed keys to a file instead of
+stdout.
+
+```
+$ cos keys s3://uc3-s3mrt5001-stg/ -e 'https://s3-us-west-2.amazonaws.com/' --list misc \
+  --ok out/keys-ok.txt --bad out/keys-bad.txt
+```
+
+Several "standard" lists are provided (though these aren't very systematic;
+see [#10](https://github.com/dmolesUC3/cos/issues/10)). Use the `--file`
+option to specify a file containing keys to test, one key per file,
+separated by newlines (LF, `U+000A`, `\n`).
+
+```
+$ cos keys s3://uc3-s3mrt5001-stg/ -e 'https://s3-us-west-2.amazonaws.com/' \
+  --file my-keys.txt
+```
 
 ## For developers
 
