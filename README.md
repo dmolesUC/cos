@@ -2,6 +2,19 @@
 
 A tool for testing and validating cloud object storage.
 
+- [Invocation](#invocation)
+   - [Flags](#flags)
+- [Commands](#commands)
+   - [cos check](#cos-check)
+   - [cos crvd](#cos-crvd)
+   - [cos keys](#cos-keys)
+- [For developers](#for-developers)
+   - [Building](#building)
+      - [Cross-compiling](#cross-compiling)
+   - [Running tests](#running-tests)
+   - [Configuring JetBrains IDEs (GoLand or IDEA)](#configuring-jetbrains-ides-goland-or-idea)
+- [Roadmap](#roadmap)
+
 ## Invocation
 
 Invocation is in the form
