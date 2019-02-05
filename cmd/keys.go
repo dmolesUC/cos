@@ -3,10 +3,7 @@ package cmd
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
-	"runtime"
-	"runtime/pprof"
 	"strings"
 	"text/tabwriter"
 
@@ -65,8 +62,6 @@ type keysFlags struct {
 	BadFile  string
 	ListName string
 	KeyFile  string
-
-	MemProfile string
 }
 
 func (f keysFlags) Pretty() string {
@@ -76,7 +71,6 @@ func (f keysFlags) Pretty() string {
         badFile:    %v
 		listName:   %v
 		listFile:	%v
-        memprofile: %#v
 		region:     %#v
 		endpoint:   %#v
 		log level:  %v
@@ -90,8 +84,6 @@ func (f keysFlags) Pretty() string {
 		f.BadFile,
 		f.ListName,
 		f.KeyFile,
-
-		f.MemProfile,
 
 		f.Region,
 		f.Endpoint,
@@ -152,29 +144,10 @@ func init() {
 	cmdFlags.StringVarP(&f.ListName, "list", "l", keys.DefaultKeyListName, "key list to check")
 	cmdFlags.StringVarP(&f.KeyFile, "file", "f", "", "file of keys to check")
 
-	cmdFlags.StringVarP(&f.MemProfile, "memprofile", "", "", "write memory profile to `file`")
-
 	rootCmd.AddCommand(cmd)
 }
 
 func checkKeys(bucketStr string, f keysFlags) error {
-	defer func() {
-		if f.MemProfile != "" {
-			f, err := os.Create(f.MemProfile)
-			if err != nil {
-				log.Fatal("could not create memory profile: ", err)
-			}
-			runtime.GC() // get up-to-date statistics
-			if err := pprof.WriteHeapProfile(f); err != nil {
-				log.Fatal("could not write memory profile: ", err)
-			}
-			err = f.Close()
-			if err != nil {
-				log.Fatal("could not close memory profile: ", err)
-			}
-		}
-	}()
-
 	logger := logging.DefaultLoggerWithLevel(f.LogLevel())
 	logger.Tracef("flags: %v\n", f)
 	logger.Tracef("bucket URL: %v\n", bucketStr)
