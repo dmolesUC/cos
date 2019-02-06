@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -12,8 +11,6 @@ import (
 	"github.com/dmolesUC3/cos/internal/keys"
 
 	"github.com/dmolesUC3/cos/internal/logging"
-	"github.com/dmolesUC3/cos/internal/objects"
-	"github.com/dmolesUC3/cos/internal/streaming"
 	"github.com/dmolesUC3/cos/pkg"
 )
 
@@ -49,47 +46,9 @@ const (
 		cos keys --list naughty-strings --endpoint https://s3.us-west-2.amazonaws.com/ s3://www.dmoles.net/  
 		cos keys --raw --ok ok.txt --bad bad.txt --endpoint https://s3.us-west-2.amazonaws.com/ s3://www.dmoles.net/
 		cos keys --file my-keys.txt --endpoint https://s3.us-west-2.amazonaws.com/ s3://www.dmoles.net/
+        cos keys --sample 100 --file my-keys.txt --raw --ok ok.txt --bad bad.txt --endpoint https://s3.us-west-2.amazonaws.com/ s3://www.dmoles.net/ 
 	`
 )
-
-// TODO: more output formats other than --raw and quoted-Go-literal, e.g. --ascii
-
-type keysFlags struct {
-	CosFlags
-
-	Raw      bool
-	OkFile   string
-	BadFile  string
-	ListName string
-	KeyFile  string
-}
-
-func (f keysFlags) Pretty() string {
-	format := `
-		raw:        %v
-        okFile:     %v
-        badFile:    %v
-		listName:   %v
-		listFile:	%v
-		region:     %#v
-		endpoint:   %#v
-		log level:  %v
-	`
-	format = logging.Untabify(format, "  ")
-
-	// TODO: clean up order of flags in other commands
-	return fmt.Sprintf(format,
-		f.Raw,
-		f.OkFile,
-		f.BadFile,
-		f.ListName,
-		f.KeyFile,
-
-		f.Region,
-		f.Endpoint,
-		f.LogLevel(),
-	)
-}
 
 func longDescription() string {
 	listList, err := availableKeyLists()
@@ -143,6 +102,7 @@ func init() {
 	cmdFlags.StringVarP(&f.BadFile, "bad", "b", "", "write failed (\"bad\") keys to specified file")
 	cmdFlags.StringVarP(&f.ListName, "list", "l", keys.DefaultKeyListName, "key list to check")
 	cmdFlags.StringVarP(&f.KeyFile, "file", "f", "", "file of keys to check")
+	cmdFlags.IntVarP(&f.Sample, "sample", "s", 0, "sample size, or 0 for all keys")
 
 	rootCmd.AddCommand(cmd)
 }
@@ -152,48 +112,19 @@ func checkKeys(bucketStr string, f keysFlags) error {
 	logger.Tracef("flags: %v\n", f)
 	logger.Tracef("bucket URL: %v\n", bucketStr)
 
-	endpointURL, err := streaming.ValidAbsURL(f.Endpoint)
+	target, err := f.Target(bucketStr)
 	if err != nil {
 		return err
 	}
 
-	bucketURL, err := streaming.ValidAbsURL(bucketStr)
+	keyList, err := f.KeyList()
 	if err != nil {
 		return err
 	}
 
-	target, err := objects.NewTarget(endpointURL, bucketURL, f.Region)
+	okOut, badOut, err := f.Outputs()
 	if err != nil {
 		return err
-	}
-
-	keyFile := f.KeyFile
-	var keyList keys.KeyList
-	if keyFile != "" {
-		keyList, err = keys.KeyListForFile(keyFile)
-	} else {
-		listName := f.ListName
-		keyList, err = keys.KeyListForName(listName)
-	}
-	if err != nil {
-		return err
-	}
-
-	var okOut io.Writer
-	if f.OkFile != "" {
-		okOut, err = os.Create(f.OkFile)
-		if err != nil {
-			return err
-		}
-	}
-	var badOut io.Writer
-	if f.BadFile == "" {
-		badOut = os.Stdout
-	} else {
-		badOut, err = os.Create(f.BadFile)
-		if err != nil {
-			return err
-		}
 	}
 
 	k := pkg.NewKeys(target, keyList)
