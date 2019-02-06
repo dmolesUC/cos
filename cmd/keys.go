@@ -84,8 +84,6 @@ func init() {
 		Short:         shortDescKeys,
 		Long:          longDescription(),
 		Args:          cobra.ExactArgs(1),
-		SilenceUsage:  true,
-		SilenceErrors: true,
 		Example:       logging.Untabify(exampleKeys, "  "),
 		Run: func(cmd *cobra.Command, args []string) {
 			err := checkKeys(args[0], f)

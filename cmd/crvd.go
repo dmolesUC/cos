@@ -121,8 +121,6 @@ func init() {
 		Short:         shortDescCrvd,
 		Long:          logging.Untabify(longDescCrvd, ""),
 		Args:          cobra.ExactArgs(1),
-		SilenceUsage:  true,
-		SilenceErrors: true,
 		Example:       logging.Untabify(exampleCrvd, "  "),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return crvd(args[0], flags)

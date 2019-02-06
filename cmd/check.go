@@ -117,8 +117,6 @@ func init() {
 		Short:         shortDescCheck,
 		Long:          logging.Untabify(longDescCheck, ""),
 		Args:          cobra.ExactArgs(1),
-		SilenceUsage:  true,
-		SilenceErrors: true,
 		Example:       logging.Untabify(exampleCheck, "  "),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return check(args[0], flags)

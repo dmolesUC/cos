@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/dmolesUC3/cos/pkg"
+	"github.com/dmolesUC3/cos/internal/suite"
 
 	"fmt"
 
@@ -14,10 +14,11 @@ import (
 func init() {
 	f := CosFlags{}
 	cmd := &cobra.Command{
-		Use: "suite",
+		Use:   "suite <BUCKET-URL>",
 		Short: "run a suite of tests",
+		Args:          cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return suite(args[0], f)
+			return runSuite(args[0], f)
 		},
 	}
 	cmdFlags := cmd.Flags()
@@ -25,7 +26,7 @@ func init() {
 	rootCmd.AddCommand(cmd)
 }
 
-func suite(bucketStr string, f CosFlags) error {
+func runSuite(bucketStr string, f CosFlags) error {
 	// TODO: figure out some sensible way to log while spinning
 	// logger := logging.DefaultLoggerWithLevel(f.LogLevel())
 	// logger.Tracef("flags: %v\n", f)
@@ -36,31 +37,27 @@ func suite(bucketStr string, f CosFlags) error {
 		return err
 	}
 
+	//noinspection GoPrintFunctions
 	fmt.Println("Starting test suite…\n")
 
-	// TODO: track and output time for each test & total time
-	title := "1. create, retrieve, verify, delete"
-	s := spinner.StartNew(title)
-	crvd := pkg.NewDefaultCrvd(target, "")
-	err = crvd.CreateRetrieveVerifyDelete()
-	s.Stop()
+	allTasks := suite.AllTasks()
+	for index, task := range allTasks {
+		title := fmt.Sprintf("%d. %v", index+1, task.Title())
 
-	var indicator string
-	var result string
-	if err == nil {
-		indicator = "\u2705"
-		result = "successful"
-	} else {
-		indicator = "\u274C"
-		result = fmt.Sprintf("FAILED")
+		s := spinner.StartNew(title)
+		ok, err := task.Invoke(target)
+		s.Stop()
+
+		if ok {
+			fmt.Printf("\u2705 %v: successful\n", title)
+		} else {
+			fmt.Printf("\u274C %v: FAILED\n", title)
+		}
+
+		if err != nil && f.LogLevel() > logging.Info {
+			fmt.Println(err.Error())
+		}
 	}
-	
-	fmt.Printf("%v %v: %v\n", indicator, title, result)
-	if err != nil && f.LogLevel() > logging.Info {
-		fmt.Println(err.Error())
-	}
-
-
 	fmt.Println("\n…test complete.")
 
 	return nil
