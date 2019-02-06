@@ -27,7 +27,7 @@ func SamplingKeyList(origList KeyList, sampleSize int) (KeyList, error) {
 	}
 	var origIndices intsets.Sparse
 	for origIndices.Len() < sampleSize {
-		origIndex := rand.Intn(sampleSize)
+		origIndex := rand.Intn(origList.Count())
 		origIndices.Insert(origIndex)
 	}
 	origKeys := origList.Keys()
