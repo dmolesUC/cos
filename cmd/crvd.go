@@ -12,8 +12,6 @@ import (
 
 	"github.com/dmolesUC3/cos/internal/logging"
 
-	"github.com/dmolesUC3/cos/internal/objects"
-	"github.com/dmolesUC3/cos/internal/streaming"
 	"github.com/dmolesUC3/cos/pkg"
 )
 
@@ -93,30 +91,14 @@ func crvd(bucketStr string, f crvdFlags) (err error) {
 	logger.Tracef("flags: %v\n", f)
 	logger.Tracef("bucket URL: %v\n", bucketStr)
 
-	endpointURL, err := streaming.ValidAbsURL(f.Endpoint)
-	if err != nil {
-		return err
-	}
-
-	bucketURL, err := streaming.ValidAbsURL(bucketStr)
-	if err != nil {
-		return err
-	}
-
-	target, err := objects.NewTarget(endpointURL, bucketURL, f.Region)
-	if err != nil {
-		return err
-	}
-
+	target, err := f.Target(bucketStr)
+	
 	contentLength, err := f.ContentLength()
 	if err != nil {
 		return err
 	}
 
-	crvd, err := pkg.NewCrvd(target, f.Key, contentLength, f.Seed)
-	if err != nil {
-		return err
-	}
+	crvd := pkg.NewCrvd(target, f.Key, contentLength, f.Seed)
 
 	if f.Keep {
 		err = crvd.CreateRetrieveVerify()

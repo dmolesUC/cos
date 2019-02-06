@@ -23,11 +23,11 @@ type Crvd struct {
 	RandomSeed    int64
 }
 
-func NewDefaultCrvd(target Target, key string) (*Crvd, error) {
+func NewDefaultCrvd(target Target, key string) *Crvd {
 	return NewCrvd(target, key, DefaultContentLengthBytes, DefaultRandomSeed)
 }
 
-func NewCrvd(target Target, key string, contentLength int64, randomSeed int64) (*Crvd, error) {
+func NewCrvd(target Target, key string, contentLength int64, randomSeed int64) *Crvd {
 	if key == "" {
 		key = fmt.Sprintf("cos-crvd-%d.bin", time.Now().Unix())
 	}
@@ -37,7 +37,7 @@ func NewCrvd(target Target, key string, contentLength int64, randomSeed int64) (
 		ContentLength: contentLength,
 		RandomSeed:    randomSeed,
 	}
-	return &crvd, nil
+	return &crvd
 }
 
 func (c *Crvd) CreateRetrieveVerifyDelete() error {

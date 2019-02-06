@@ -8,9 +8,6 @@ import (
 	"github.com/dmolesUC3/cos/internal/keys"
 
 	"github.com/dmolesUC3/cos/internal/logging"
-
-	"github.com/dmolesUC3/cos/internal/objects"
-	"github.com/dmolesUC3/cos/internal/streaming"
 )
 
 type keysFlags struct {
@@ -64,20 +61,6 @@ func (f *keysFlags) KeyList() (keyList keys.KeyList, err error) {
 		keyList, err = keys.SamplingKeyList(keyList, f.Sample)
 	}
 	return keyList, err
-}
-
-func (f *keysFlags) Target(bucketStr string) (objects.Target, error) {
-	endpointURL, err := streaming.ValidAbsURL(f.Endpoint)
-	if err != nil {
-		return nil, err
-	}
-
-	bucketURL, err := streaming.ValidAbsURL(bucketStr)
-	if err != nil {
-		return nil, err
-	}
-
-	return objects.NewTarget(endpointURL, bucketURL, f.Region)
 }
 
 func (f *keysFlags) Outputs() (okOut io.Writer, badOut io.Writer, err error) {

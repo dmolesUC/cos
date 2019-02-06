@@ -66,10 +66,7 @@ func (k *Keys) CheckAll(okOut io.Writer, badOut io.Writer, raw bool) ([]KeyResul
 }
 
 func (k *Keys) Check(key string) (err error) {
-	crvd, err := NewDefaultCrvd(k.Endpoint, key)
-	if err != nil {
-		return err
-	}
+	crvd := NewDefaultCrvd(k.Endpoint, key)
 	return crvd.CreateRetrieveVerifyDelete()
 }
 
