@@ -53,7 +53,7 @@ func init() {
 	f.AddTo(cmdFlags)
 
 	// TODO: document these
-	sizeMaxDefault := bytefmt.ByteSize(bytefmt.GIGABYTE)
+	sizeMaxDefault := bytefmt.ByteSize(256 * bytefmt.GIGABYTE)
 	cmdFlags.StringVarP(&f.SizeMax, "sizeMax", "s", sizeMaxDefault, "max file size to create")
 	cmdFlags.Int64VarP(&f.CountMax, "countMax", "c", -1, "max number of files to create, or -1 for no limit")
 	cmdFlags.BoolVarP(&f.DryRun, "dryRun", "n", false, "dry run")
