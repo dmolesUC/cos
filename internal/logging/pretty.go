@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	nsPerMilli = int64(time.Millisecond)
 	nsPerSecond = int64(time.Second)
 	nsPerMinute = int64(time.Minute)
 	nsPerHour   = int64(time.Hour)
@@ -69,5 +70,9 @@ func FormatNanos(ns int64) string {
 	if minutes > 0 {
 		return fmt.Sprintf("%dm %ds", minutes, seconds)
 	}
-	return fmt.Sprintf("%ds", seconds)
+	if seconds > 0 {
+		return fmt.Sprintf("%ds", seconds)
+	}
+	millis := ns / nsPerMilli
+	return fmt.Sprintf("%dms", millis)
 }

@@ -12,7 +12,7 @@ import (
 
 	. "github.com/dmolesUC3/cos/internal/suite"
 
-	"github.com/janeczku/go-spinner"
+	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
 
 	"github.com/dmolesUC3/cos/internal/logging"
@@ -107,30 +107,29 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 	for index, task := range tasks {
 		title := fmt.Sprintf("%d. %v", index+1, task.Title())
 
-		sp := spinner.NewSpinner(title)
-		sp.SetCharset([]string{"🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"})
+		spinChars := []string{"🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"}
+		sp := spinner.New(spinChars, time.Second / time.Duration(len(spinChars)))
+		sp.Suffix = " " + title
 		sp.Start()
 
 		var ok bool
 		var detail string
 
+		// if we don't take at least a little time the spinner gets confused
+		const minTaskTime = time.Second / time.Duration(8)
+
 		start := time.Now().UnixNano()
 		if f.DryRun {
+			time.Sleep(minTaskTime)
 			ok = true
 		} else {
 			ok, detail = task.Invoke(target)
 		}
 		elapsed := time.Now().UnixNano() - start
 
-		// Lock() / Unlock() around Stop() needed to synchronize cursor movement
-		// ..but not always enough (thus the sleep above)
-		// TODO: file an issue about this
-		sp.Lock()
-		sp.Stop()
-		sp.Unlock()
-
-		// More framerate sync shenanigans
-		time.Sleep(time.Duration(len(sp.Charset)) * sp.FrameRate)
+		if time.Duration(elapsed) < minTaskTime {
+			time.Sleep(minTaskTime - time.Duration(elapsed))
+		}
 
 		var msgFmt string
 		if ok {
@@ -139,7 +138,9 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 			msgFmt = "\u274C %v: FAILED (%v)"
 		}
 		msg := fmt.Sprintf(msgFmt, title, logging.FormatNanos(elapsed))
-		fmt.Println(msg)
+
+		sp.FinalMSG = msg + "\n"
+		sp.Stop()
 
 		if detail != "" && f.LogLevel() > logging.Info {
 			fmt.Println(detail)
