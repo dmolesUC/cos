@@ -58,12 +58,13 @@ type crvdFlags struct {
 }
 
 func (f crvdFlags) ContentLength() (int64, error) {
-	sizeIsNumeric := strings.IndexFunc(f.Size, unicode.IsLetter) == -1
+	sizeStr := f.Size
+	sizeIsNumeric := strings.IndexFunc(sizeStr, unicode.IsLetter) == -1
 	if sizeIsNumeric {
-		return strconv.ParseInt(f.Size, 10, 64)
+		return strconv.ParseInt(sizeStr, 10, 64)
 	}
 
-	bytes, err := bytefmt.ToBytes(f.Size)
+	bytes, err := bytefmt.ToBytes(sizeStr)
 	if err == nil && bytes > math.MaxInt64 {
 		return 0, fmt.Errorf("specified size %d bytes exceeds maximum %d", bytes, math.MaxInt64)
 	}

@@ -1,7 +1,13 @@
 package cmd
 
 import (
+	"math"
+	"strconv"
+	"strings"
 	"time"
+	"unicode"
+
+	"code.cloudfoundry.org/bytefmt"
 
 	"github.com/dmolesUC3/cos/internal/suite"
 
@@ -15,7 +21,23 @@ import (
 
 type SuiteFlags struct {
 	CosFlags
+	SizeMax string
+	CountMax int64
 	DryRun bool
+}
+
+func (f *SuiteFlags) sizeMax() (int64, error) {
+	sizeStr := f.SizeMax
+	sizeIsNumeric := strings.IndexFunc(sizeStr, unicode.IsLetter) == -1
+	if sizeIsNumeric {
+		return strconv.ParseInt(sizeStr, 10, 64)
+	}
+
+	bytes, err := bytefmt.ToBytes(sizeStr)
+	if err == nil && bytes > math.MaxInt64 {
+		return 0, fmt.Errorf("specified size %d bytes exceeds maximum %d", bytes, math.MaxInt64)
+	}
+	return int64(bytes), err
 }
 
 func init() {
@@ -30,6 +52,11 @@ func init() {
 	}
 	cmdFlags := cmd.Flags()
 	f.AddTo(cmdFlags)
+
+	// TODO: document these
+	sizeMaxDefault := bytefmt.ByteSize(bytefmt.GIGABYTE)
+	cmdFlags.StringVarP(&f.SizeMax, "sizeMax", "s", sizeMaxDefault, "max file size to create")
+	cmdFlags.Int64VarP(&f.CountMax, "countMax", "c", -1, "max number of files to create, or -1 for no limit")
 	cmdFlags.BoolVarP(&f.DryRun, "dryRun", "n", false, "dry run")
 	rootCmd.AddCommand(cmd)
 }
@@ -45,11 +72,23 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 		return err
 	}
 
+	sizeMax, err := f.sizeMax()
+	if err != nil {
+		return err
+	}
+
+	var countMax uint64
+	if f.CountMax < 0 {
+		countMax = math.MaxUint64
+	} else {
+		countMax = uint64(f.CountMax)
+	}
+
 	//noinspection GoPrintFunctions
 	fmt.Println("Starting test suite…\n")
 
 	startAll := time.Now().UnixNano()
-	allTasks := suite.AllTasks()
+	allTasks := suite.AllTasks(sizeMax, countMax)
 	for index, task := range allTasks {
 		title := fmt.Sprintf("%d. %v", index+1, task.Title())
 
@@ -57,7 +96,7 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 		sp := spinner.StartNew(title)
 
 		var ok bool
-		var err error
+		var detail string
 
 		start := time.Now().UnixNano()
 		if f.DryRun {
@@ -65,7 +104,7 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 			time.Sleep(time.Duration(len(sp.Charset)) * sp.FrameRate)
 			ok = true
 		} else {
-			ok, err = task.Invoke(target)
+			ok, detail = task.Invoke(target)
 		}
 		elapsed := time.Now().UnixNano() - start
 
@@ -85,8 +124,8 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 		msg := fmt.Sprintf(msgFmt, title, logging.FormatNanos(elapsed))
 		fmt.Println(msg)
 
-		if err != nil && f.LogLevel() > logging.Info {
-			fmt.Println(err.Error())
+		if detail != "" && f.LogLevel() > logging.Info {
+			fmt.Println(detail)
 		}
 	}
 	elapsedAll := time.Now().UnixNano() - startAll

@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	DefaultContentLengthBytes = 128
+	DefaultContentLengthBytes = 8
 	DefaultRandomSeed         = 1
 )
 
@@ -21,6 +21,7 @@ type Crvd struct {
 	Object        Object
 	ContentLength int64
 	RandomSeed    int64
+	BodyProvider  func() io.Reader
 }
 
 func NewDefaultCrvd(target Target, key string) *Crvd {
@@ -35,7 +36,7 @@ func NewCrvd(target Target, key string, contentLength int64, randomSeed int64) *
 	var crvd = Crvd{
 		Object:        obj,
 		ContentLength: contentLength,
-		RandomSeed:    randomSeed,
+		RandomSeed:    randomSeed, // TODO: clean this up so we set BodyProvider instead of RandomSeed
 	}
 	return &crvd
 }
@@ -81,7 +82,10 @@ func (c *Crvd) CreateRetrieveVerify() error {
 	return err
 }
 
-func (c *Crvd) newBody() io.Reader {
+func (c *Crvd) NewBody() io.Reader {
+	if c.BodyProvider != nil {
+		return c.BodyProvider()
+	}
 	random := rand.New(rand.NewSource(c.RandomSeed))
 	return io.LimitReader(random, c.ContentLength)
 }
@@ -91,7 +95,7 @@ func (c *Crvd) create() ([] byte, error) {
 	logger := logging.DefaultLogger()
 
 	digest := sha256.New()
-	tr := io.TeeReader(c.newBody(), digest)
+	tr := io.TeeReader(c.NewBody(), digest)
 
 	contentLength := c.ContentLength
 	in := logging.NewProgressReader(tr, contentLength)
