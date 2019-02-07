@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -10,8 +11,6 @@ import (
 	"code.cloudfoundry.org/bytefmt"
 
 	"github.com/dmolesUC3/cos/internal/suite"
-
-	"fmt"
 
 	"github.com/janeczku/go-spinner"
 	"github.com/spf13/cobra"
@@ -92,16 +91,15 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 	for index, task := range allTasks {
 		title := fmt.Sprintf("%d. %v", index+1, task.Title())
 
-		// TODO: spin with emoji so width doesn't change
-		sp := spinner.StartNew(title)
+		sp := spinner.NewSpinner(title)
+		sp.SetCharset([]string{"🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"})
+		sp.Start()
 
 		var ok bool
 		var detail string
 
 		start := time.Now().UnixNano()
 		if f.DryRun {
-			// More framerate sync shenanigans
-			time.Sleep(time.Duration(len(sp.Charset)) * sp.FrameRate)
 			ok = true
 		} else {
 			ok, detail = task.Invoke(target)
@@ -114,6 +112,9 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 		sp.Lock()
 		sp.Stop()
 		sp.Unlock()
+
+		// More framerate sync shenanigans
+		time.Sleep(time.Duration(len(sp.Charset)) * sp.FrameRate)
 
 		var msgFmt string
 		if ok {
