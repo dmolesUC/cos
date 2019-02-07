@@ -10,7 +10,7 @@ import (
 
 	"code.cloudfoundry.org/bytefmt"
 
-	"github.com/dmolesUC3/cos/internal/suite"
+	. "github.com/dmolesUC3/cos/internal/suite"
 
 	"github.com/janeczku/go-spinner"
 	"github.com/spf13/cobra"
@@ -20,9 +20,11 @@ import (
 
 type SuiteFlags struct {
 	CosFlags
-	SizeMax string
-	CountMax int64
-	DryRun bool
+	SizeMax   string
+	CountMax  int64
+	SizeOnly  bool
+	CountOnly bool
+	DryRun    bool
 }
 
 func (f *SuiteFlags) sizeMax() (int64, error) {
@@ -54,8 +56,10 @@ func init() {
 
 	// TODO: document these
 	sizeMaxDefault := bytefmt.ByteSize(256 * bytefmt.GIGABYTE)
-	cmdFlags.StringVarP(&f.SizeMax, "sizeMax", "s", sizeMaxDefault, "max file size to create")
-	cmdFlags.Int64VarP(&f.CountMax, "countMax", "c", -1, "max number of files to create, or -1 for no limit")
+	cmdFlags.StringVarP(&f.SizeMax, "size-max", "s", sizeMaxDefault, "max file size to create")
+	cmdFlags.Int64VarP(&f.CountMax, "count-max", "c", -1, "max number of files to create, or -1 for no limit")
+	cmdFlags.BoolVar(&f.SizeOnly, "size-only", false, "run only file-size tests")
+	cmdFlags.BoolVar(&f.CountOnly, "count-only", false, "run only files-per-prefix tests")
 	cmdFlags.BoolVarP(&f.DryRun, "dryRun", "n", false, "dry run")
 	rootCmd.AddCommand(cmd)
 }
@@ -83,12 +87,24 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 		countMax = uint64(f.CountMax)
 	}
 
+	var tasks []TestTask
+	if f.SizeOnly {
+		if f.CountOnly {
+			return fmt.Errorf("can't specify both --size-only and --count-only")
+		} else {
+			tasks = SizeTasks(sizeMax)
+		}
+	} else if f.CountOnly {
+		tasks = CountTasks(countMax)
+	} else {
+		tasks = AllTasks(sizeMax, countMax)
+	}
+
 	//noinspection GoPrintFunctions
 	fmt.Println("Starting test suite…\n")
 
 	startAll := time.Now().UnixNano()
-	allTasks := suite.AllTasks(sizeMax, countMax)
-	for index, task := range allTasks {
+	for index, task := range tasks {
 		title := fmt.Sprintf("%d. %v", index+1, task.Title())
 
 		sp := spinner.NewSpinner(title)

@@ -27,15 +27,15 @@ type TestTask interface {
 }
 
 func AllTasks(sizeMax int64, countMax uint64) []TestTask {
-	tasks := singleFileTasks(sizeMax)
-	tasks = append(tasks, multipleFileTasks(countMax)...)
+	tasks := SizeTasks(sizeMax)
+	tasks = append(tasks, CountTasks(countMax)...)
 	return tasks
 }
 
 // ------------------------------------------------------------
 // Task implementations
 
-func singleFileTasks(sizeMax int64) []TestTask {
+func SizeTasks(sizeMax int64) []TestTask {
 	tasks := []TestTask{singleFileTask(0)}
 	for _, unit := range []int64{BYTE, KILOBYTE, MEGABYTE, GIGABYTE} {
 		if unit > sizeMax {
@@ -66,10 +66,10 @@ func singleFileTask(size int64) TestTask {
 	return newTestTask(title, runTest)
 }
 
-func multipleFileTasks(countMax uint64) []TestTask {
+func CountTasks(countMax uint64) []TestTask {
 	var tasks []TestTask
-	for i := 2; i <= 10; i++ {
-		count := uint64(1) << uint64(2*i)
+	for i := 9; i <= 20; i++ {
+		count := uint64(1) << uint64(i)
 		if count > countMax {
 			break
 		}
