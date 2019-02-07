@@ -53,6 +53,7 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 	for index, task := range allTasks {
 		title := fmt.Sprintf("%d. %v", index+1, task.Title())
 
+		// TODO: spin with emoji so width doesn't change
 		sp := spinner.StartNew(title)
 
 		var ok bool
