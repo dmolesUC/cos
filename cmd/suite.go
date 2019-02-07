@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"time"
+
 	"github.com/dmolesUC3/cos/internal/suite"
 
 	"fmt"
@@ -11,22 +13,28 @@ import (
 	"github.com/dmolesUC3/cos/internal/logging"
 )
 
+type SuiteFlags struct {
+	CosFlags
+	DryRun bool
+}
+
 func init() {
-	f := CosFlags{}
+	f := SuiteFlags{}
 	cmd := &cobra.Command{
 		Use:   "suite <BUCKET-URL>",
 		Short: "run a suite of tests",
-		Args:          cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runSuite(args[0], f)
 		},
 	}
 	cmdFlags := cmd.Flags()
 	f.AddTo(cmdFlags)
+	cmdFlags.BoolVarP(&f.DryRun, "dryRun", "n", false, "dry run")
 	rootCmd.AddCommand(cmd)
 }
 
-func runSuite(bucketStr string, f CosFlags) error {
+func runSuite(bucketStr string, f SuiteFlags) error {
 	// TODO: figure out some sensible way to log while spinning
 	// logger := logging.DefaultLoggerWithLevel(f.LogLevel())
 	// logger.Tracef("flags: %v\n", f)
@@ -44,15 +52,34 @@ func runSuite(bucketStr string, f CosFlags) error {
 	for index, task := range allTasks {
 		title := fmt.Sprintf("%d. %v", index+1, task.Title())
 
-		s := spinner.StartNew(title)
-		ok, err := task.Invoke(target)
-		s.Stop()
+		sp := spinner.StartNew(title)
 
-		if ok {
-			fmt.Printf("\u2705 %v: successful\n", title)
+		var ok bool
+		var err error
+
+		if f.DryRun {
+			// More framerate sync shenanigans
+			time.Sleep(time.Duration(len(sp.Charset)) * sp.FrameRate)
+			ok = true
 		} else {
-			fmt.Printf("\u274C %v: FAILED\n", title)
+			ok, err = task.Invoke(target)
 		}
+
+		// Lock() / Unlock() around Stop() needed to synchronize cursor movement
+		// ..but not always enough (thus the sleep above)
+		// TODO: file an issue about this
+		sp.Lock()
+		sp.Stop()
+		sp.Unlock()
+
+		var msgFmt string
+		if ok {
+			msgFmt = "\u2705 %v: successful"
+		} else {
+			msgFmt = "\u274C %v: FAILED"
+		}
+		msg := fmt.Sprintf(msgFmt, title)
+		fmt.Println(msg)
 
 		if err != nil && f.LogLevel() > logging.Info {
 			fmt.Println(err.Error())
