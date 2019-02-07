@@ -48,6 +48,7 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 	//noinspection GoPrintFunctions
 	fmt.Println("Starting test suite…\n")
 
+	startAll := time.Now().UnixNano()
 	allTasks := suite.AllTasks()
 	for index, task := range allTasks {
 		title := fmt.Sprintf("%d. %v", index+1, task.Title())
@@ -57,6 +58,7 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 		var ok bool
 		var err error
 
+		start := time.Now().UnixNano()
 		if f.DryRun {
 			// More framerate sync shenanigans
 			time.Sleep(time.Duration(len(sp.Charset)) * sp.FrameRate)
@@ -64,6 +66,7 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 		} else {
 			ok, err = task.Invoke(target)
 		}
+		elapsed := time.Now().UnixNano() - start
 
 		// Lock() / Unlock() around Stop() needed to synchronize cursor movement
 		// ..but not always enough (thus the sleep above)
@@ -74,18 +77,19 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 
 		var msgFmt string
 		if ok {
-			msgFmt = "\u2705 %v: successful"
+			msgFmt = "\u2705 %v: successful (%v)"
 		} else {
-			msgFmt = "\u274C %v: FAILED"
+			msgFmt = "\u274C %v: FAILED (%v)"
 		}
-		msg := fmt.Sprintf(msgFmt, title)
+		msg := fmt.Sprintf(msgFmt, title, logging.FormatNanos(elapsed))
 		fmt.Println(msg)
 
 		if err != nil && f.LogLevel() > logging.Info {
 			fmt.Println(err.Error())
 		}
 	}
-	fmt.Println("\n…test complete.")
+	elapsedAll := time.Now().UnixNano() - startAll
+	fmt.Printf("\n…test complete (%v).\n", logging.FormatNanos(elapsedAll))
 
 	return nil
 }
