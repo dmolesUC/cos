@@ -2,7 +2,8 @@ package keys
 
 import (
 	"fmt"
-	"strings"
+
+	"github.com/dmolesUC3/cos/internal/logging"
 )
 
 type KeyResult struct {
@@ -31,6 +32,6 @@ func (f *KeyResult) Pretty() string {
 		1+f.Index,
 		f.List.Count(),
 		f.List.Name(),
-		strings.Replace(f.Error.Error(), "\n", "\\n", -1),
+		logging.FormatError(f.Error),
 	)
 }

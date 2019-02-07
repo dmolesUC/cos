@@ -3,6 +3,7 @@ package logging
 import (
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
 	"code.cloudfoundry.org/bytefmt"
@@ -40,6 +41,13 @@ func PrettyStrP(s *string) string {
 		return "<nil>"
 	}
 	return *s
+}
+
+func FormatError(err error) string {
+	 if err == nil {
+	 	return ""
+	 }
+	 return strings.Replace(err.Error(), "\n", "\\n", -1)
 }
 
 func FormatBytes(bytes int64) string {

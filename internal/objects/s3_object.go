@@ -140,7 +140,7 @@ func (obj *S3Object) Delete() (err error) {
 	if err == nil {
 		logger.Tracef("Deleted %v\n", protocolUriStr)
 	} else {
-		logger.Tracef("Deleting %v failed: %v", protocolUriStr, err)
+		logger.Tracef("Deleting %v failed: %v", protocolUriStr, logging.FormatError(err))
 	}
 	return err
 }

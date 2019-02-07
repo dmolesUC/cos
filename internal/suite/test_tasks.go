@@ -88,7 +88,15 @@ func multipleFileTask(prefix string, count uint64) TestTask {
 		return bytes.NewReader(body)
 	}
 
+
 	runTest := func(target objects.Target) (ok bool, detail string) {
+		var keysToDelete []string
+		defer func() {
+			for _, k := range keysToDelete {
+				_ = target.Object(k).Delete()
+			}
+		}()
+
 		// TODO: any out-of-the-box timing tools?
 		times := make([]int64, count)
 
@@ -96,12 +104,14 @@ func multipleFileTask(prefix string, count uint64) TestTask {
 			start := time.Now().UnixNano()
 
 			key := fmt.Sprintf("%v/file-%d.bin", prefix, i)
+			keysToDelete = append(keysToDelete, key)
+
 			crvd := Crvd{
 				Object:        target.Object(key),
 				ContentLength: contentLength,
 				BodyProvider:  bodyProvider,
 			}
-			err := crvd.CreateRetrieveVerifyDelete()
+			err := crvd.CreateRetrieveVerify()
 			if err != nil {
 				return false, err.Error()
 			}
