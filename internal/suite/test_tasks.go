@@ -68,7 +68,7 @@ func singleFileTask(size int64) TestTask {
 
 func multipleFileTasks(countMax uint64) []TestTask {
 	var tasks []TestTask
-	for i := 2; i <= 12; i++ {
+	for i := 2; i <= 10; i++ {
 		count := uint64(1) << uint64(2*i)
 		if count > countMax {
 			break
