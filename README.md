@@ -150,12 +150,12 @@ the following:
 
 | Flag | Short form | Description |
 | :-- | :-- | :-- |
-| --raw | | write keys in raw (unquoted) format |
-| --ok FILE | -o | write successful ("OK") keys to specified file |
-| --bad FILE | -b | write failed ("bad") keys to specified file |
-| --list LIST | -l | use the specified 'standard' list of keys |
-| --file FILE | -f | read keys to be tested from the specified file |
-| --sample COUNT | -s | sample size, or 0 for all keys |
+| `--raw` | | write keys in raw (unquoted) format |
+| `--ok FILE` | -o | write successful ("OK") keys to specified file |
+| `--bad FILE` | -b | write failed ("bad") keys to specified file |
+| `--list LIST` | -l | use the specified 'standard' list of keys |
+| `--file FILE` | -f | read keys to be tested from the specified file |
+| `--sample COUNT` | -s | sample size, or 0 for all keys |
 
 By default, `keys` outputs only failed keys, to standard output, writing
 each key as a [quoted Go string literal](https://golang.org/pkg/strconv/#Quote).
