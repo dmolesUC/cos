@@ -221,11 +221,22 @@ As such, it requires Go 1.11 or later, and should be cloned _outside_
 ### Building
 
 The `cos` project can be built and installed simply with `go build` and `go
-install`, but it also supports [Mage](https://magefile.org):
+install`, but it also supports [Mage](https://magefile.org).
 
-| Command | Purpose |
+To install Mage, execute the following from _outside_ the project directory
+(`go get` behaves differently when run in the context of a module project):
+
+```
+go get -u -d github.com/magefile/mage \
+&& cd $GOPATH/src/github.com/magefile/mage \
+&& go run bootstrap.go
+```
+
+#### Mage tasks:
+
+| Tasks | Purpose |
 | :--- | :--- |
-| `mage -l` | list available targets |
+| `mage -l` | list available tasks |
 | `mage build` | builds a cos binary for the current platform. |
 | `mage buildAll` | builds a cos binary for each target platform. |
 | `mage clean` | removes compiled binaries from the current working directory. |
@@ -234,14 +245,6 @@ install`, but it also supports [Mage](https://magefile.org):
 
 Note that `mage build` is a thin wrapper around `go build` and supports the
 same environment variables, e.g. `$GOOS` and `$GOARCH`.
-
-#### Cross-compiling
-
-To cross-compile for Linux (Intel, 64-bit):
-
-```
-GOOS=linux GOARCH=amd64 go build -o <output file>
-```
 
 ### Running tests
 
