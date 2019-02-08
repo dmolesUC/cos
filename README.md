@@ -45,12 +45,12 @@ CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html
 CLI](https://docs.openstack.org/python-swiftclient/latest/cli/index.html)
 (for Swift storage):
 
-| Protocol | Variable | Purpose |
-| :--- | :--- | :--- |
-| S3 | `AWS_ACCESS_KEY_ID` | AWS access key |
-| | `AWS_SECRET_ACCESS_KEY` | Secret key associated with the AWS access key |
-| Swift | `ST_USER` | Swift username |
-| | `ST_KEY` | Swift password |
+| Protocol | Variable                | Purpose                                       |
+| :---     | :---                    | :---                                          |
+| S3       | `AWS_ACCESS_KEY_ID`     | AWS access key                                |
+|          | `AWS_SECRET_ACCESS_KEY` | Secret key associated with the AWS access key |
+| Swift    | `ST_USER`               | Swift username                                |
+|          | `ST_KEY`                | Swift password                                |
 
 Credentials for S3 storage can also be specified [in various other
 ways](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html#specifying-credentials)
@@ -61,12 +61,12 @@ running in the Amazon EC2 environment, an IAM role.
 
 All `cos` commands support the following flags:
 
-| Flag | Short form | Description |
-| :-- | :-- | :-- |
-| `--endpoint ENDPOINT` | `-e` | HTTP(S) endpoint URL (required) |
-| `--region REGION` | `-r` | AWS region (optional) |
-| `--verbose` | `-v` | Verbose output |
-| `--help` | `-h` | Print help and exit |
+| Flag                  | Short form | Description                     |
+| :--                   | :--        | :--                             |
+| `--endpoint ENDPOINT` | `-e`       | HTTP(S) endpoint URL (required) |
+| `--region REGION`     | `-r`       | AWS region (optional)           |
+| `--verbose`           | `-v`       | Verbose output                  |
+| `--help`              | `-h`       | Print help and exit             |
 
 For Amazon S3 buckets, the region can usually be determined from the
 endpoint URL. If not, and if the `--region` flag is not provided, it
@@ -87,10 +87,10 @@ to verify objects of arbitary size, not limited by local storage space.
 
 In addition to the global flags listed above, the `check` command supports the following:
 
-| Flag | Short form | Description |
-| :-- | :-- | :-- |
-| `--algorithm ALG` | `-a` | Digest algorithm (md5 or sha256; defaults to sha256) |
-| `--expected DIGEST` | `-x` | Expected digest value |
+| Flag                | Short form | Description                                          |
+| :--                 | :--        | :--                                                  |
+| `--algorithm ALG`   | `-a`       | Digest algorithm (md5 or sha256; defaults to sha256) |
+| `--expected DIGEST` | `-x`       | Expected digest value                                |
 
 By default, `check` outputs the digest to standard output, and exits:
 
@@ -127,12 +127,12 @@ with the `--random-seed` flag.
 
 In addition to the global flags listed above, the `check` command supports the following:
 
-| Flag | Short form | Description |
-| :-- | :-- | :-- |
-| `--size SIZE` | `-s` | size of object to create (default 128 bytes) |
-| `--key KEY` | `-k` | key to create (defaults to `cos-crvd-TIMESTAMP.bin`) |
-| `--random-seed SEED` | | seed for random-number generator (default 1) |
-| `--keep` | | keep object after verification (default false) |
+| Flag                 | Short form | Description                                          |
+| :--                  | :--        | :--                                                  |
+| `--size SIZE`        | `-s`       | size of object to create (default 128 bytes)         |
+| `--key KEY`          | `-k`       | key to create (defaults to `cos-crvd-TIMESTAMP.bin`) |
+| `--random-seed SEED` |            | seed for random-number generator (default 1)         |
+| `--keep`             |            | keep object after verification (default false)       |
 
 ```
 $ crvd swift://distrib.stage.9001.__c5e/ -e http://cloud.sdsc.edu/auth/v1.0 
@@ -148,14 +148,15 @@ in the specified key list.
 In addition to the global flags listed above, the `keys` command supports
 the following:
 
-| Flag | Short form | Description |
-| :-- | :-- | :-- |
-| `--raw` | | write keys in raw (unquoted) format |
-| `--ok FILE` | -o | write successful ("OK") keys to specified file |
-| `--bad FILE` | -b | write failed ("bad") keys to specified file |
-| `--list LIST` | -l | use the specified 'standard' list of keys |
-| `--file FILE` | -f | read keys to be tested from the specified file |
-| `--sample COUNT` | -s | sample size, or 0 for all keys |
+| Flag             | Short form | Description                                    |
+| :--              | :--        | :--                                            |
+| `--raw`          |            | write keys in raw (unquoted) format            |
+| `--ok FILE`      | `-o`       | write successful ("OK") keys to specified file |
+| `--bad FILE`     | `-b`       | write failed ("bad") keys to specified file    |
+| `--list LIST`    | `-l`       | use the specified 'standard' list of keys      |
+| `--file FILE`    | `-f`       | read keys to be tested from the specified file |
+| `--sample COUNT` | `-s`       | sample size, or 0 for all keys                 |
+
 
 By default, `keys` outputs only failed keys, to standard output, writing
 each key as a [quoted Go string literal](https://golang.org/pkg/strconv/#Quote).
@@ -235,14 +236,14 @@ To install the latest version of Mage:
 
 #### Mage tasks:
 
-| Tasks | Purpose |
-| :--- | :--- |
-| `mage -l` | list available tasks |
-| `mage build` | builds a cos binary for the current platform. |
-| `mage buildAll` | builds a cos binary for each target platform. |
-| `mage clean` | removes compiled binaries from the current working directory. |
-| `mage install` | installs cos in $GOPATH/bin. |
-| `mage platforms` | lists target platforms for buildAll. |
+| Tasks            | Purpose                                                       |
+| :---             | :---                                                          |
+| `mage -l`        | list available tasks                                          |
+| `mage build`     | builds a cos binary for the current platform.                 |
+| `mage buildAll`  | builds a cos binary for each target platform.                 |
+| `mage clean`     | removes compiled binaries from the current working directory. |
+| `mage install`   | installs cos in $GOPATH/bin.                                  |
+| `mage platforms` | lists target platforms for buildAll.                          |
 
 Note that `mage build` is a thin wrapper around `go build` and supports the
 same environment variables, e.g. `$GOOS` and `$GOARCH`.
