@@ -3,14 +3,13 @@
 A tool for testing and validating cloud object storage.
 
 - [Invocation](#invocation)
-   - [Flags](#flags)
+- [Authentication](#authentication)
 - [Commands](#commands)
    - [cos check](#cos-check)
    - [cos crvd](#cos-crvd)
    - [cos keys](#cos-keys)
 - [For developers](#for-developers)
    - [Building](#building)
-      - [Cross-compiling](#cross-compiling)
    - [Running tests](#running-tests)
    - [Configuring JetBrains IDEs (GoLand or IDEA)](#configuring-jetbrains-ides-goland-or-idea)
 - [Roadmap](#roadmap)
@@ -76,8 +75,6 @@ defaults to `us-west-2`.
 For OpenStack Swift containers, the `--region` flag is ignored.
 
 Additional command-specific flags are listed below.
-
-> #### TODO: document authentication for both Swift and S3
 
 ## Commands
 
