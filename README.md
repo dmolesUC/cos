@@ -225,7 +225,7 @@ To install the latest version of Mage:
 
 1. visit their [releases page](https://github.com/magefile/mage/releases),
    download the appropriate binary, and place it in your `$PATH`, or
-2. from _outside_ the project directory (`go get` behaves differently when
+2. from _outside_ this project directory (`go get` behaves differently when
    run in the context of a module project), execute the following:
 
    ```
