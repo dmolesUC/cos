@@ -223,14 +223,18 @@ As such, it requires Go 1.11 or later, and should be cloned _outside_
 The `cos` project can be built and installed simply with `go build` and `go
 install`, but it also supports [Mage](https://magefile.org).
 
-To install Mage, execute the following from _outside_ the project directory
-(`go get` behaves differently when run in the context of a module project):
+To install the latest version of Mage:
 
-```
-go get -u -d github.com/magefile/mage \
-&& cd $GOPATH/src/github.com/magefile/mage \
-&& go run bootstrap.go
-```
+1. visit their [releases page](https://github.com/magefile/mage/releases),
+   download the appropriate binary, and place it in your `$PATH`, or
+2. from _outside_ the project directory (`go get` behaves differently when
+   run in the context of a module project), execute the following:
+
+   ```
+   go get -u -d github.com/magefile/mage \
+   && cd $GOPATH/src/github.com/magefile/mage \
+   && go run bootstrap.go
+   ```
 
 #### Mage tasks:
 
