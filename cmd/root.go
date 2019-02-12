@@ -1,11 +1,9 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
+	"github.com/spf13/cobra"
 
 	"github.com/dmolesUC3/cos/internal/objects"
-	"github.com/spf13/cobra"
 
 	"github.com/dmolesUC3/cos/internal/logging"
 )
@@ -23,25 +21,16 @@ const (
         credentials.
 
         Note that for OpenStack Swift, the API username and key must be specified
-        with the `+objects.SwiftUserEnvVar+` and `+objects.SwiftKeyEnvVar+` environment variables.
+        with the ` + objects.SwiftUserEnvVar + ` and ` + objects.SwiftKeyEnvVar + ` environment variables.
     `
 )
 
-// rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "cos",
 	Short: shortDescRoot,
 	Long:  logging.Untabify(longDescRoot, ""),
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-}
-
-func init() {
+func Execute() error {
+	return rootCmd.Execute()
 }
