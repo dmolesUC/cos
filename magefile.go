@@ -62,22 +62,16 @@ func Build() error {
 	return sh.RunV(gocmd, "build", "-ldflags", flags)
 }
 
+// BuildLinux builds a linux-amd64 binary (the most common cross-compile case)
+func BuildLinux() error {
+	return buildFor("linux", "amd64")
+}
+
 // BuildAll builds a cos binary for each target platform.
 func BuildAll() error {
 	for _, os_ := range oses {
 		for _, arch := range architectures {
-			binName := binNameFor(os_, arch)
-
-			flags, err := ldFlags()
-			if err != nil {
-				return fmt.Errorf("error determining ldflags: %v", err)
-			}
-
-			env := map[string]string{
-				"GOOS":   os_,
-				"GOARCH": arch,
-			}
-			err = sh.RunWith(env, gocmd, "build", "-o", binName, "-ldflags", flags)
+			err := buildFor(os_, arch)
 			if err != nil {
 				return err
 			}
@@ -162,3 +156,19 @@ func binNameFor(os_ string, arch string) string {
 	}
 	return binName
 }
+
+func buildFor(os_, arch string) error {
+	binName := binNameFor(os_, arch)
+
+	flags, err := ldFlags()
+	if err != nil {
+		return fmt.Errorf("error determining ldflags: %v", err)
+	}
+
+	env := map[string]string{
+		"GOOS":   os_,
+		"GOARCH": arch,
+	}
+	return sh.RunWith(env, gocmd, "build", "-o", binName, "-ldflags", flags)
+}
+
