@@ -99,7 +99,7 @@ func (c *Crvd) create() ([] byte, error) {
 
 	contentLength := c.ContentLength
 	in := logging.NewProgressReader(tr, contentLength)
-	in.LogTo(logger, time.Second)
+	in.LogTo(logger, 2 * time.Second)
 
 	err := obj.Create(in, contentLength)
 	if err != nil {
