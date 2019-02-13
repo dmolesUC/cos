@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"io"
 
+	"code.cloudfoundry.org/bytefmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	. "github.com/aws/aws-sdk-go/service/s3/s3manager"
 
 	"github.com/dmolesUC3/cos/internal/logging"
 )
+
+const MaxPartSize = 5 * bytefmt.GIGABYTE
 
 // ------------------------------------------------------------
 // S3Object type
@@ -98,7 +101,7 @@ func (obj *S3Object) DownloadRange(startInclusive, endInclusive int64, buffer []
 
 	out := aws.NewWriteAtBuffer(buffer)
 	rangeStr := fmt.Sprintf("bytes=%d-%d", startInclusive, endInclusive)
-	downloader := s3manager.NewDownloader(awsSession)
+	downloader := NewDownloader(awsSession)
 	return downloader.Download(out, &s3.GetObjectInput{
 		Bucket: &obj.Endpoint.Bucket,
 		Key:    &obj.Key,
@@ -113,8 +116,10 @@ func (obj *S3Object) Create(body io.Reader, length int64) (err error) {
 	}
 	logging.DefaultLogger().Detailf("Uploading %d bytes to %v\n", length, obj)
 
-	uploader := s3manager.NewUploader(awsSession)
-	result, err := uploader.Upload(&s3manager.UploadInput{
+	uploader := NewUploader(awsSession)
+	uploader.PartSize = partSize(length)
+
+	result, err := uploader.Upload(&UploadInput{
 		Bucket: &obj.Endpoint.Bucket,
 		Key:    &obj.Key,
 		Body:   body,
@@ -124,6 +129,17 @@ func (obj *S3Object) Create(body io.Reader, length int64) (err error) {
 	}
 	return err
 }
+
+func partSize(length int64) int64 {
+	if length < MaxPartSize {
+		return length
+	}
+	return MaxPartSize
+}
+
+//func numberOfParts(length, partSize int64) int64 {
+//	return 1 + ((length - 1) / partSize)
+//}
 
 func (obj *S3Object) Delete() (err error) {
 	protocolUriStr := obj
@@ -181,4 +197,3 @@ func (obj *S3Object) Get() (h *s3.GetObjectOutput, err error) {
 		return nil, errors.New("s3.GetObject() returned nil")
 	}
 }
-
