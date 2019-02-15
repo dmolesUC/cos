@@ -236,14 +236,14 @@ To install the latest version of Mage:
 
 #### Mage tasks:
 
-| Tasks            | Purpose                                                       |
-| :---             | :---                                                          |
-| `mage -l`        | list available tasks                                          |
-| `mage build`     | builds a cos binary for the current platform.                 |
-| `mage buildAll`  | builds a cos binary for each target platform.                 |
-| `mage clean`     | removes compiled binaries from the current working directory. |
-| `mage install`   | installs cos in $GOPATH/bin.                                  |
-| `mage platforms` | lists target platforms for buildAll.                          |
+| Tasks        | Purpose                                                          |
+| :---         | :---                                                             |
+| `build`      | builds a binary for the current platform                         |
+| `buildAll`   | builds a binary for each target platform                         |
+| `buildLinux` | builds a linux-amd64 binary (the most common cross-compile case) |
+| `clean`      | removes compiled binaries from the current working directory     |
+| `install`    | installs in $GOPATH/bin                                          |
+| `platforms`  | lists target platforms for buildAll                              |
 
 Note that `mage build` is a thin wrapper around `go build` and supports the
 same environment variables, e.g. `$GOOS` and `$GOARCH`.

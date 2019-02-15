@@ -28,7 +28,7 @@ var architectures = []string{"amd64"}
 // ------------------------------------------------------------
 // Targets
 
-// Install installs cos in $GOPATH/bin.
+// Install installs in $GOPATH/bin.
 func Install() error {
 	binName := appName
 	if runtime.GOOS == "windows" {
@@ -49,7 +49,7 @@ func Install() error {
 	return sh.RunV(gocmd, "build", "-o", binPath, "-ldflags", flags)
 }
 
-// Build builds a cos binary for the current platform.
+// Build builds a binary for the current platform.
 func Build() error {
 	binName := appName
 	if runtime.GOOS == "windows" {
@@ -62,12 +62,12 @@ func Build() error {
 	return sh.RunV(gocmd, "build", "-ldflags", flags)
 }
 
-// BuildLinux builds a linux-amd64 binary (the most common cross-compile case)
+// BuildLinux builds a linux-amd64 binary (the most common cross-compile case).
 func BuildLinux() error {
 	return buildFor("linux", "amd64")
 }
 
-// BuildAll builds a cos binary for each target platform.
+// BuildAll builds a binary for each target platform.
 func BuildAll() error {
 	for _, os_ := range oses {
 		for _, arch := range architectures {
@@ -171,4 +171,3 @@ func buildFor(os_, arch string) error {
 	}
 	return sh.RunWith(env, gocmd, "build", "-o", binName, "-ldflags", flags)
 }
-
