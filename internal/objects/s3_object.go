@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -113,7 +114,12 @@ func (obj *S3Object) Create(body io.Reader, length int64) (err error) {
 	}
 	logging.DefaultLogger().Detailf("Uploading %d bytes to %v\n", length, obj)
 
+
 	uploader := s3manager.NewUploader(awsSession)
+	uploader.PartSize = partSize(length)
+	logging.DefaultLogger().Detailf("Set part size to %v\n", logging.FormatBytes(uploader.PartSize))
+
+
 	result, err := uploader.Upload(&s3manager.UploadInput{
 		Bucket: &obj.Endpoint.Bucket,
 		Key:    &obj.Key,
@@ -182,3 +188,22 @@ func (obj *S3Object) Get() (h *s3.GetObjectOutput, err error) {
 	}
 }
 
+// ------------------------------------------------------------
+// Unexported utility functions
+
+func numberOfParts(length, partSize int64) int64 {
+	return 1 + ((length - 1) / partSize)
+}
+
+func partSize(length int64) int64 {
+	ptSize := length
+	if ptSize > s3manager.DefaultUploadPartSize {
+		ptSize = s3manager.DefaultUploadPartSize
+	}
+	if numberOfParts(length, ptSize) > s3manager.MaxUploadParts {
+		partSizeExact := float64(length) / float64(s3manager.MaxUploadParts)
+		order := math.Ceil(math.Log2(partSizeExact))
+		ptSize = int64(math.Pow(2, order))
+	}
+	return ptSize
+}

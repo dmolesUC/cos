@@ -73,7 +73,7 @@ func (c *Crvd) CreateRetrieveVerify() error {
 		return fmt.Errorf("content-length mismatch: expected: %d, actual: %d", contentLength, actualLength)
 	}
 	logger.Tracef("Uploaded %d bytes\n", contentLength)
-	logger.Tracef("Verifying %v (expected digest: %x)\n", obj, expectedDigest)
+	logger.Detailf("Verifying %v (expected digest: %x)\n", obj, expectedDigest)
 	check := Check{Object: obj, Expected: expectedDigest, Algorithm: "sha256"}
 	actualDigest, err := check.VerifyDigest()
 	if err == nil {
@@ -99,7 +99,7 @@ func (c *Crvd) create() ([] byte, error) {
 
 	contentLength := c.ContentLength
 	in := logging.NewProgressReader(tr, contentLength)
-	in.LogTo(logger, time.Second)
+	in.LogTo(logger, 2 * time.Second)
 
 	err := obj.Create(in, contentLength)
 	if err != nil {
