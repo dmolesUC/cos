@@ -18,6 +18,7 @@ import (
 
 const (
 	appName = "cos"
+	cmdPkg = "github.com/dmolesUC3/cos/cmd"
 )
 
 var gocmd = mg.GoCmd()
@@ -142,7 +143,7 @@ func ldFlags() (string, error) {
 
 	var flags []string
 	for k, v := range flagVals {
-		flag := fmt.Sprintf("-X github.com/dmolesUC3/cos/cmd.%s=%s", k, v)
+		flag := fmt.Sprintf("-X %s.%s=%s", cmdPkg, k, v)
 		flags = append(flags, flag)
 	}
 	return strings.Join(flags, " "), nil
