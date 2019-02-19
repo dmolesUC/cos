@@ -3,16 +3,11 @@ package cmd
 import (
 	"fmt"
 	"math"
-	"strconv"
-	"strings"
-	"time"
-	"unicode"
 
 	"code.cloudfoundry.org/bytefmt"
 
 	. "github.com/dmolesUC3/cos/internal/suite"
 
-	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
 
 	"github.com/dmolesUC3/cos/internal/logging"
@@ -22,23 +17,7 @@ type SuiteFlags struct {
 	CosFlags
 	SizeMax   string
 	CountMax  int64
-	SizeOnly  bool
-	CountOnly bool
 	DryRun    bool
-}
-
-func (f *SuiteFlags) sizeMax() (int64, error) {
-	sizeStr := f.SizeMax
-	sizeIsNumeric := strings.IndexFunc(sizeStr, unicode.IsLetter) == -1
-	if sizeIsNumeric {
-		return strconv.ParseInt(sizeStr, 10, 64)
-	}
-
-	bytes, err := bytefmt.ToBytes(sizeStr)
-	if err == nil && bytes > math.MaxInt64 {
-		return 0, fmt.Errorf("specified size %d bytes exceeds maximum %d", bytes, math.MaxInt64)
-	}
-	return int64(bytes), err
 }
 
 func init() {
@@ -58,8 +37,6 @@ func init() {
 	sizeMaxDefault := bytefmt.ByteSize(256 * bytefmt.GIGABYTE)
 	cmdFlags.StringVarP(&f.SizeMax, "size-max", "s", sizeMaxDefault, "max file size to create")
 	cmdFlags.Int64VarP(&f.CountMax, "count-max", "c", -1, "max number of files to create, or -1 for no limit")
-	cmdFlags.BoolVar(&f.SizeOnly, "size-only", false, "run only file-size tests")
-	cmdFlags.BoolVar(&f.CountOnly, "count-only", false, "run only files-per-prefix tests")
 	cmdFlags.BoolVarP(&f.DryRun, "dryRun", "n", false, "dry run")
 	rootCmd.AddCommand(cmd)
 }
@@ -70,12 +47,7 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 	// logger.Tracef("flags: %v\n", f)
 	// logger.Tracef("bucket URL: %v\n", bucketStr)
 
-	target, err := f.Target(bucketStr)
-	if err != nil {
-		return err
-	}
-
-	sizeMax, err := f.sizeMax()
+	sizeMax, err := ParseSizeMax(f.SizeMax)
 	if err != nil {
 		return err
 	}
@@ -87,66 +59,15 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 		countMax = uint64(f.CountMax)
 	}
 
-	var tasks []TestTask
-	if f.SizeOnly {
-		if f.CountOnly {
-			return fmt.Errorf("can't specify both --size-only and --count-only")
-		} else {
-			tasks = SizeTasks(sizeMax)
-		}
-	} else if f.CountOnly {
-		tasks = CountTasks(countMax)
-	} else {
-		tasks = AllTasks(sizeMax, countMax)
+	target, err := f.Target(bucketStr)
+	if err != nil {
+		return err
 	}
 
 	//noinspection GoPrintFunctions
 	fmt.Println("Starting test suite…\n")
-
-	startAll := time.Now().UnixNano()
-	for index, task := range tasks {
-		title := fmt.Sprintf("%d. %v", index+1, task.Title())
-
-		spinChars := []string{"🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"}
-		sp := spinner.New(spinChars, time.Second / time.Duration(len(spinChars)))
-		sp.Suffix = " " + title
-		sp.Start()
-
-		var ok bool
-		var detail string
-
-		// if we don't take at least a little time the spinner gets confused
-		const minTaskTime = time.Second / time.Duration(8)
-
-		start := time.Now().UnixNano()
-		if f.DryRun {
-			time.Sleep(minTaskTime)
-			ok = true
-		} else {
-			ok, detail = task.Invoke(target)
-		}
-		elapsed := time.Now().UnixNano() - start
-
-		if time.Duration(elapsed) < minTaskTime {
-			time.Sleep(minTaskTime - time.Duration(elapsed))
-		}
-
-		var msgFmt string
-		if ok {
-			msgFmt = "\u2705 %v: successful (%v)"
-		} else {
-			msgFmt = "\u274C %v: FAILED (%v)"
-		}
-		msg := fmt.Sprintf(msgFmt, title, logging.FormatNanos(elapsed))
-
-		sp.FinalMSG = msg + "\n"
-		sp.Stop()
-
-		if detail != "" && f.LogLevel() > logging.Info {
-			fmt.Println(detail)
-		}
-	}
-	elapsedAll := time.Now().UnixNano() - startAll
+	suite := AllCases(sizeMax, countMax, target, f.LogLevel(), f.DryRun)
+	elapsedAll := suite.Execute()
 	fmt.Printf("\n…test complete (%v).\n", logging.FormatNanos(elapsedAll))
 
 	return nil
