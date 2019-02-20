@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"code.cloudfoundry.org/bytefmt"
+	"github.com/dmolesUC3/cos/pkg"
 
 	. "github.com/dmolesUC3/cos/internal/suite"
 
@@ -90,6 +91,9 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 	}
 
 	logLevel := f.LogLevel()
+	if logLevel > logging.Detail {
+		_ = logging.DefaultLoggerWithLevel(logLevel)
+	}
 
 	var cases []Case
 	runAllCases := !(f.Size || f.Count || f.Unicode)
@@ -101,6 +105,16 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 	}
 	if runAllCases || f.Unicode {
 		cases = append(cases, AllUnicodeCases()...)
+	}
+
+	// sanity check
+	fmt.Println("Checking server connection…")
+	if !f.DryRun {
+		crvd := pkg.NewDefaultCrvd(target, "")
+		err := crvd.CreateRetrieveVerifyDelete()
+		if err != nil {
+			return fmt.Errorf("connection check failed: %v", err)
+		}
 	}
 
 	//noinspection GoPrintFunctions
