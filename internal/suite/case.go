@@ -93,7 +93,7 @@ func (c *caseImpl) finalMsg(index int, ok bool, elapsed int64) string {
 
 func iconAndStatus(ok bool) (rune, string) {
 	if ok {
-		return '\u2705', "sucessful"
+		return '\u2705', "successful"
 	}
 	return '\u274C', "FAILED"
 }
