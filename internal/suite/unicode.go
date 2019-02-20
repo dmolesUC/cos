@@ -126,20 +126,17 @@ func rangeTableToRunes(rt *unicode.RangeTable) []rune {
 }
 
 func range16ToRunes(r16 unicode.Range16) []rune {
-	lenRunes16 := (1 + r16.Hi - r16.Lo) / r16.Stride
-	var runes = make([]rune, lenRunes16)
-	start16 := 0
-	for i, cp := start16, r16.Lo; cp <= r16.Hi; cp += r16.Stride {
-		runes[i] = rune(cp)
+	var runes []rune
+	for cp := r16.Lo; cp <= r16.Hi; cp += r16.Stride {
+		runes = append(runes, rune(cp))
 	}
 	return runes
 }
 
 func range32ToRunes(r32 unicode.Range32) []rune {
-	lenRunes32 := (1 + r32.Hi - r32.Lo) / r32.Stride
-	var runes = make([]rune, lenRunes32)
-	for i, cp := 0, r32.Lo; cp <= r32.Hi; cp += r32.Stride {
-		runes[i] = rune(cp)
+	var runes []rune
+	for cp := r32.Lo; cp <= r32.Hi; cp += r32.Stride {
+		runes = append(runes, rune(cp))
 	}
 	return runes
 }
