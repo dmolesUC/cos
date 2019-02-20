@@ -2,7 +2,10 @@ package suite
 
 import (
 	"fmt"
+	"sort"
 	"unicode"
+
+	"github.com/dmolesUC3/cos/internal/logging"
 
 	. "github.com/dmolesUC3/cos/pkg"
 
@@ -11,7 +14,7 @@ import (
 
 const (
 	keyMaxBytes      = 1024
-	maxRunesToReport = 40
+	maxRunesToReport = 10
 )
 
 func AllUnicodeCases() []Case {
@@ -30,8 +33,15 @@ func UnicodeScriptsCases() []Case {
 }
 
 func toCases(prefix string, tables map[string]*unicode.RangeTable) []Case {
+	var rangeNames []string
+	for rangeName := range tables {
+		rangeNames = append(rangeNames, rangeName)
+	}
+	sort.Strings(rangeNames)
+
 	var cases []Case
-	for rangeName, rt := range tables {
+	for _, rangeName := range rangeNames {
+		rt := tables[rangeName]
 		// Bad things happen if we try to cast these to runes
 		if rt == unicode.Noncharacter_Code_Point {
 			continue
@@ -75,10 +85,13 @@ func findInvalidRunesForKeyIn(keyRunes []rune, target objects.Target) []rune {
 		return nil
 	}
 	if len(keyRunes) < keyMaxBytes {
-		crvd := NewCrvd(target, string(keyRunes), DefaultContentLengthBytes, DefaultRandomSeed)
+		filename := string(keyRunes)
+		crvd := NewCrvd(target, filename, DefaultContentLengthBytes, DefaultRandomSeed)
 		err := crvd.CreateRetrieveVerifyDelete()
 		if err == nil {
 			return nil
+		} else {
+			logging.DefaultLogger().Tracef("error creating %#v: %v\n", filename, err)
 		}
 		runes := []rune(keyRunes)
 		if len(runes) == 1 {
