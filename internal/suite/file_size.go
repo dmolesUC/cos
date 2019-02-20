@@ -15,6 +15,10 @@ import (
 	. "github.com/dmolesUC3/cos/pkg"
 )
 
+const (
+	SizeMaxDefault = 256 * GIGABYTE
+)
+
 func FileSizeCases(sizeMax int64) []Case {
 	tasks := []Case{FileSizeCase(0)}
 	for _, unit := range []int64{BYTE, KILOBYTE, MEGABYTE, GIGABYTE} {

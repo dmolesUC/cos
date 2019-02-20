@@ -16,9 +16,15 @@ import (
 	"github.com/dmolesUC3/cos/internal/objects"
 )
 
+const (
+	log2CountMin = 9
+	log2CountMax = 24
+	CountMaxDefault =  uint64(1) << uint64(log2CountMax)
+)
+
 func FileCountCases(countMax uint64) []Case {
 	var cases []Case
-	for i := 9; i <= 20; i++ {
+	for i := log2CountMin; i <= log2CountMax; i++ {
 		count := uint64(1) << uint64(i)
 		if count > countMax {
 			break

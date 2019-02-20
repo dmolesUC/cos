@@ -84,13 +84,16 @@ func (c *caseImpl) maybeExec(target objects.Target, dryRun bool) (elapsed int64,
 	return
 }
 
+const finalMsgFormat = "%v %d. %v: %v (%v)\n"
+
 func (c *caseImpl) finalMsg(index int, ok bool, elapsed int64) string {
-	var msgFmt string
+	icon, status := iconAndStatus(ok)
+	return fmt.Sprintf(finalMsgFormat, string(icon), index+1, c.Name(), status, logging.FormatNanos(elapsed))
+}
+
+func iconAndStatus(ok bool) (rune, string) {
 	if ok {
-		msgFmt = "\u2705 %v: successful (%v)\n"
-	} else {
-		msgFmt = "\u274C %v: FAILED (%v)\n"
+		return '\u2705', "sucessful"
 	}
-	msg := fmt.Sprintf(msgFmt, fmt.Sprintf("%d. %v", index+1, c.Name()), logging.FormatNanos(elapsed))
-	return msg
+	return '\u274C', "FAILED"
 }

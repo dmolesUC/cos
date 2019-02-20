@@ -15,16 +15,37 @@ import (
 
 type SuiteFlags struct {
 	CosFlags
+
+	Size bool
 	SizeMax   string
-	CountMax  int64
+
+	Count bool
+	CountMax  uint64
+
+	Unicode bool
+
 	DryRun    bool
 }
+
+const (
+	suiteLongDesc = `
+		Run a suite of test cases investigating various possible limitations of a
+		cloud storage service:
+
+		- maximum file size (--size)
+		- maximum number of files per key prefix (--count)
+		- Unicode key support (--unicode)
+
+		If none of --size, --count, etc. is specified, all test cases are run.
+	`
+)
 
 func init() {
 	f := SuiteFlags{}
 	cmd := &cobra.Command{
 		Use:   "suite <BUCKET-URL>",
 		Short: "run a suite of tests",
+		Long: logging.Untabify(suiteLongDesc, ""),
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runSuite(args[0], f)
@@ -33,11 +54,15 @@ func init() {
 	cmdFlags := cmd.Flags()
 	f.AddTo(cmdFlags)
 
-	// TODO: document these
-	sizeMaxDefault := bytefmt.ByteSize(256 * bytefmt.GIGABYTE)
-	cmdFlags.StringVarP(&f.SizeMax, "size-max", "s", sizeMaxDefault, "max file size to create")
-	cmdFlags.Int64VarP(&f.CountMax, "count-max", "c", -1, "max number of files to create, or -1 for no limit")
-	cmdFlags.BoolVarP(&f.DryRun, "dryRun", "n", false, "dry run")
+	cmdFlags.BoolVarP(&f.Size, "size", "s", false, "test file sizes")
+	cmdFlags.StringVar(&f.SizeMax, "size-max", bytefmt.ByteSize(SizeMaxDefault), "max file size to create")
+
+	cmdFlags.BoolVarP(&f.Count, "count", "c", false, "test file counts")
+	cmdFlags.Uint64Var(&f.CountMax, "count-max", CountMaxDefault, "max number of files to create, or -1 for no limit")
+
+	cmdFlags.BoolVarP(&f.Unicode, "unicode", "u", false, "test Unicode keys")
+
+	cmdFlags.BoolVarP(&f.DryRun, "dry-run", "n", false, "dry run")
 	rootCmd.AddCommand(cmd)
 }
 
@@ -64,9 +89,23 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 		return err
 	}
 
+	logLevel := f.LogLevel()
+
+	var cases []Case
+	runAllCases := !(f.Size || f.Count || f.Unicode)
+	if runAllCases || f.Size {
+		cases = append(cases, FileSizeCases(sizeMax)...)
+	}
+	if runAllCases || f.Count {
+		cases = append(cases, FileCountCases(countMax)...)
+	}
+	if runAllCases || f.Unicode {
+		cases = append(cases, AllUnicodeCases()...)
+	}
+
 	//noinspection GoPrintFunctions
-	fmt.Println("Starting test suite…\n")
-	suite := AllCases(sizeMax, countMax, target, f.LogLevel(), f.DryRun)
+	fmt.Printf("Starting test suite (%d cases)…\n\n", len(cases))
+	suite := NewSuite(cases, target, logLevel, f.DryRun)
 	elapsedAll := suite.Execute()
 	fmt.Printf("\n…test complete (%v).\n", logging.FormatNanos(elapsedAll))
 
