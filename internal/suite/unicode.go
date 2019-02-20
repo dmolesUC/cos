@@ -76,7 +76,7 @@ func (u *unicodeCase) doExec(target objects.Target) (ok bool, detail string) {
 	} else {
 		invalidRunesStr = string(invalidRunesForKey[0:maxRunesToReport]) + "…"
 	}
-	return true, fmt.Sprintf("%d invalid characters: %#v", numInvalidRunes, invalidRunesStr)
+	return false, fmt.Sprintf("%d invalid characters: %#v", numInvalidRunes, invalidRunesStr)
 }
 
 // TODO: parallelize this?
