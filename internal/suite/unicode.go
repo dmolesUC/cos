@@ -68,7 +68,7 @@ func (u *unicodeCase) doExec(target objects.Target) (ok bool, detail string) {
 	invalidRunesForKey := findInvalidRunesForKeyIn(u.allRunes, target)
 	numInvalidRunes := len(invalidRunesForKey)
 	if numInvalidRunes == 0 {
-		return true, "no invalid characters found"
+		return true, ""
 	}
 	var invalidRunesStr string
 	if numInvalidRunes < maxRunesToReport {
