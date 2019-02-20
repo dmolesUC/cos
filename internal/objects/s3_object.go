@@ -114,11 +114,9 @@ func (obj *S3Object) Create(body io.Reader, length int64) (err error) {
 	}
 	logging.DefaultLogger().Detailf("Uploading %d bytes to %v\n", length, obj)
 
-
 	uploader := s3manager.NewUploader(awsSession)
 	uploader.PartSize = partSize(length)
 	logging.DefaultLogger().Detailf("Set part size to %v\n", logging.FormatBytes(uploader.PartSize))
-
 
 	result, err := uploader.Upload(&s3manager.UploadInput{
 		Bucket: &obj.Endpoint.Bucket,
@@ -197,7 +195,9 @@ func numberOfParts(length, partSize int64) int64 {
 
 func partSize(length int64) int64 {
 	ptSize := length
-	if ptSize > s3manager.DefaultUploadPartSize {
+	if ptSize < s3manager.MinUploadPartSize {
+		ptSize = s3manager.MinUploadPartSize
+	} else if ptSize > s3manager.DefaultUploadPartSize {
 		ptSize = s3manager.DefaultUploadPartSize
 	}
 	if numberOfParts(length, ptSize) > s3manager.MaxUploadParts {
