@@ -24,7 +24,7 @@ const (
 
 func FileCountCases(countMax uint64) []Case {
 	var cases []Case
-	for i := log2CountMin; i <= log2CountMax; i++ {
+	for i := log2CountMin; ; i++ {
 		count := uint64(1) << uint64(i)
 		if count > countMax {
 			break
