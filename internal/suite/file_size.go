@@ -21,7 +21,7 @@ const (
 
 func FileSizeCases(sizeMax int64) []Case {
 	tasks := []Case{FileSizeCase(0)}
-	for _, unit := range []int64{BYTE, KILOBYTE, MEGABYTE, GIGABYTE} {
+	for _, unit := range []int64{BYTE, KILOBYTE, MEGABYTE, GIGABYTE, TERABYTE} {
 		if unit > sizeMax {
 			break
 		}
