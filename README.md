@@ -8,6 +8,7 @@ A tool for testing and validating cloud object storage.
    - [cos check](#cos-check)
    - [cos crvd](#cos-crvd)
    - [cos keys](#cos-keys)
+   - [cos suite](#cos-suite)
 - [For developers](#for-developers)
    - [Building](#building)
    - [Running tests](#running-tests)
@@ -30,6 +31,9 @@ where `<command>` is one of:
   create, retrieve, verify, and delete an object
 - [`keys`](https://github.com/dmolesUC3/cos#cos-keys): 
   test the keys supported by an object storage endpoint
+- [`suite`](https://github.com/dmolesUC3/cos#cos-suite): 
+  run a suite of test cases investigating various possible limitations of a
+  cloud storage service
 - `help`: 
   list these commands, or get help for a subcommand
 
@@ -62,7 +66,7 @@ running in the Amazon EC2 environment, an IAM role.
 All `cos` commands support the following flags:
 
 | Flag                  | Short form | Description                     |
-| :--                   | :--        | :--                             |
+| :---                  | :---       | :---                            |
 | `--endpoint ENDPOINT` | `-e`       | HTTP(S) endpoint URL (required) |
 | `--region REGION`     | `-r`       | AWS region (optional)           |
 | `--verbose`           | `-v`       | Verbose output                  |
@@ -88,7 +92,7 @@ to verify objects of arbitary size, not limited by local storage space.
 In addition to the global flags listed above, the `check` command supports the following:
 
 | Flag                | Short form | Description                                          |
-| :--                 | :--        | :--                                                  |
+| :---                | :---       | :---                                                 |
 | `--algorithm ALG`   | `-a`       | Digest algorithm (md5 or sha256; defaults to sha256) |
 | `--expected DIGEST` | `-x`       | Expected digest value                                |
 
@@ -128,7 +132,7 @@ with the `--random-seed` flag.
 In addition to the global flags listed above, the `check` command supports the following:
 
 | Flag                 | Short form | Description                                          |
-| :--                  | :--        | :--                                                  |
+| :---                 | :---       | :---                                                 |
 | `--size SIZE`        | `-s`       | size of object to create (default 128 bytes)         |
 | `--key KEY`          | `-k`       | key to create (defaults to `cos-crvd-TIMESTAMP.bin`) |
 | `--random-seed SEED` |            | seed for random-number generator (default 1)         |
@@ -149,7 +153,7 @@ In addition to the global flags listed above, the `keys` command supports
 the following:
 
 | Flag             | Short form | Description                                    |
-| :--              | :--        | :--                                            |
+| :---             | :---       | :---                                           |
 | `--raw`          |            | write keys in raw (unquoted) format            |
 | `--ok FILE`      | `-o`       | write successful ("OK") keys to specified file |
 | `--bad FILE`     | `-b`       | write failed ("bad") keys to specified file    |
@@ -208,6 +212,35 @@ $ cos keys s3://uc3-s3mrt5001-stg/ -e 'https://s3-us-west-2.amazonaws.com/' \
   --file my-very-long-list-of-keys.txt \
   --sample 500
 ```
+
+### `cos suite`
+
+The `suite` command a suite of test cases investigating various possible limitations of a
+cloud storage service:
+
+- maximum file size (`--size`)
+- maximum number of files per key prefix (`--count`)
+- Unicode key support (`--unicode`)
+
+If none of `--size`, `--count`, etc. is specified, all test cases are run.
+
+In addition to the global flags listed above, the `keys` command supports
+the following:
+
+| Flag                | Short form | Description                                                          |
+| :---                | :---       | :---                                                                 |
+| `--size`            | `-s`       | test file sizes                                                      |
+| `--size-max SIZE`   |            | max file size to create (default "256G")                             |
+| `--count`           | `-c`       | test file counts                                                     |
+| `--count-max COUNT` |            | max number of files to create, or -1 for no limit (default 16777216) |
+| `--unicode`         | `-u`       | test Unicode keys                                                    |
+
+The maximum size may be specified as an exact number of bytes, or using
+human-readable quantities such as "5K" (4 KiB or 4096 bytes), "3.5M" (3.5
+MiB or 3670016 bytes), etc. The units supported are bytes (B), binary
+kilobytes (K, KB, KiB), binary megabytes (M, MB, MiB), binary gigabytes (G,
+GB, GiB), and binary terabytes (T, TB, TiB). If no unit is specified, bytes
+are assumed.
 
 ## For developers
 

@@ -38,6 +38,13 @@ const (
 		- Unicode key support (--unicode)
 
 		If none of --size, --count, etc. is specified, all test cases are run.
+
+		The maximum size may be specified as an exact number of bytes, or using
+		human-readable quantities such as "5K" (4 KiB or 4096 bytes), "3.5M" (3.5
+		MiB or 3670016 bytes), etc. The units supported are bytes (B), binary
+		kilobytes (K, KB, KiB), binary megabytes (M, MB, MiB), binary gigabytes (G,
+		GB, GiB), and binary terabytes (T, TB, TiB). If no unit is specified, bytes
+		are assumed.
 	`
 )
 
