@@ -227,13 +227,14 @@ If none of `--size`, `--count`, etc. is specified, all test cases are run.
 In addition to the global flags listed above, the `keys` command supports
 the following:
 
-| Flag                | Short form | Description                                                          |
-| :---                | :---       | :---                                                                 |
-| `--size`            | `-s`       | test file sizes                                                      |
-| `--size-max SIZE`   |            | max file size to create (default "256G")                             |
-| `--count`           | `-c`       | test file counts                                                     |
-| `--count-max COUNT` |            | max number of files to create, or -1 for no limit (default 16777216) |
-| `--unicode`         | `-u`       | test Unicode keys                                                    |
+| Flag                | Short form | Description                                                           |
+| :---                | :---       | :---                                                                  |
+| `--size`            | `-s`       | test file sizes                                                       |
+| `--size-max SIZE`   |            | max file size to create (default "256G")                              |
+| `--count`           | `-c`       | test file counts                                                      |
+| `--count-max COUNT` |            | max number of files to create, or -1 for no limit (default 16777216)  |
+| `--unicode`         | `-u`       | test Unicode keys                                                     |
+| `--dry-run`         | `-n`       | dry run; list all tests that would be run, but don't create any files |
 
 The maximum size may be specified as an exact number of bytes, or using
 human-readable quantities such as "5K" (4 KiB or 4096 bytes), "3.5M" (3.5

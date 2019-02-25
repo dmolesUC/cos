@@ -70,7 +70,7 @@ func init() {
 
 	cmdFlags.BoolVarP(&f.Unicode, "unicode", "u", false, "test Unicode keys")
 
-	cmdFlags.BoolVarP(&f.DryRun, "dry-run", "n", false, "dry run")
+	cmdFlags.BoolVarP(&f.DryRun, "dry-run", "n", false, "dry run; list all tests that would be run, but don't create any files")
 	rootCmd.AddCommand(cmd)
 }
 
