@@ -18,7 +18,7 @@ import (
 
 const (
 	log2CountMin = 9
-	log2CountMax = 24
+	log2CountMax = 21
 	CountMaxDefault =  uint64(1) << uint64(log2CountMax)
 )
 
