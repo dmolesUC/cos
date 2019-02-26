@@ -90,7 +90,7 @@ func init() {
 	cmdFlags.BoolVar(&f.UnicodeProperties, "unicode-properties", false, "test Unicode properties")
 	cmdFlags.BoolVar(&f.UnicodeEmoji, "unicode-emoji", false, "test Unicode emoji")
 
-	cmdFlags.BoolVarP(&f.DryRun, "dry-run", "n", false, "dry run; list all tests that would be run, but don't create any files")
+	cmdFlags.BoolVarP(&f.DryRun, "dry-run", "n", false, "dry run; list all tests that would be run, but don't make any requests")
 	rootCmd.AddCommand(cmd)
 }
 

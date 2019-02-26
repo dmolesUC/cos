@@ -65,12 +65,12 @@ running in the Amazon EC2 environment, an IAM role.
 
 All `cos` commands support the following flags:
 
-| Flag                  | Short form | Description                     |
-| :---                  | :---       | :---                            |
-| `--endpoint ENDPOINT` | `-e`       | HTTP(S) endpoint URL (required) |
-| `--region REGION`     | `-r`       | AWS region (optional)           |
-| `--verbose`           | `-v`       | Verbose output                  |
-| `--help`              | `-h`       | Print help and exit             |
+| Short form | Flag                  | Description                     |
+| :---       | :---                  | :---                            |
+| `-e`       | `--endpoint ENDPOINT` | HTTP(S) endpoint URL (required) |
+| `-r`       | `--region REGION`     | AWS region (optional)           |
+| `-v`       | `--verbose`           | Verbose output                  |
+| `-h`       | `--help`              | Print help and exit             |
 
 For Amazon S3 buckets, the region can usually be determined from the
 endpoint URL. If not, and if the `--region` flag is not provided, it
@@ -91,10 +91,10 @@ to verify objects of arbitary size, not limited by local storage space.
 
 In addition to the global flags listed above, the `check` command supports the following:
 
-| Flag                | Short form | Description                                          |
-| :---                | :---       | :---                                                 |
-| `--algorithm ALG`   | `-a`       | Digest algorithm (md5 or sha256; defaults to sha256) |
-| `--expected DIGEST` | `-x`       | Expected digest value                                |
+| Short form | Flag                | Description                                          |
+| :---       | :---                | :---                                                 |
+| `-a`       | `--algorithm ALG`   | Digest algorithm (md5 or sha256; defaults to sha256) |
+| `-x`       | `--expected DIGEST` | Expected digest value                                |
 
 By default, `check` outputs the digest to standard output, and exits:
 
@@ -131,12 +131,12 @@ with the `--random-seed` flag.
 
 In addition to the global flags listed above, the `check` command supports the following:
 
-| Flag                 | Short form | Description                                          |
-| :---                 | :---       | :---                                                 |
-| `--size SIZE`        | `-s`       | size of object to create (default 128 bytes)         |
-| `--key KEY`          | `-k`       | key to create (defaults to `cos-crvd-TIMESTAMP.bin`) |
-| `--random-seed SEED` |            | seed for random-number generator (default 1)         |
-| `--keep`             |            | keep object after verification (default false)       |
+| Short form | Flag                 | Description                                          |
+| :---       | :---                 | :---                                                 |
+| `-s`       | `--size SIZE`        | size of object to create (default 128 bytes)         |
+| `-k`       | `--key KEY`          | key to create (defaults to `cos-crvd-TIMESTAMP.bin`) |
+|            | `--random-seed SEED` | seed for random-number generator (default 1)         |
+|            | `--keep`             | keep object after verification (default false)       |
 
 ```
 $ crvd swift://distrib.stage.9001.__c5e/ -e http://cloud.sdsc.edu/auth/v1.0 
@@ -152,14 +152,14 @@ in the specified key list.
 In addition to the global flags listed above, the `keys` command supports
 the following:
 
-| Flag             | Short form | Description                                    |
-| :---             | :---       | :---                                           |
-| `--raw`          |            | write keys in raw (unquoted) format            |
-| `--ok FILE`      | `-o`       | write successful ("OK") keys to specified file |
-| `--bad FILE`     | `-b`       | write failed ("bad") keys to specified file    |
-| `--list LIST`    | `-l`       | use the specified 'standard' list of keys      |
-| `--file FILE`    | `-f`       | read keys to be tested from the specified file |
-| `--sample COUNT` | `-s`       | sample size, or 0 for all keys                 |
+| Short form | Flag             | Description                                    |
+| :---       | :---             | :---                                           |
+|            | `--raw`          | write keys in raw (unquoted) format            |
+| `-o`       | `--ok FILE`      | write successful ("OK") keys to specified file |
+| `-b`       | `--bad FILE`     | write failed ("bad") keys to specified file    |
+| `-l`       | `--list LIST`    | use the specified 'standard' list of keys      |
+| `-f`       | `--file FILE`    | read keys to be tested from the specified file |
+| `-s`       | `--sample COUNT` | sample size, or 0 for all keys                 |
 
 
 By default, `keys` outputs only failed keys, to standard output, writing
@@ -224,17 +224,34 @@ cloud storage service:
 
 If none of `--size`, `--count`, etc. is specified, all test cases are run.
 
+Unicode key support tests are further divided into:
+
+- Unicode category support (--unicode-categories)
+- Unicode script support (--unicode-scripts)
+- Unicode properties support (--unicode-properties)
+- Unicode emoji support (--unicode-emoji)
+
+If --unicode is specified, all of these are run.
+
+Note that there is considerable overlap between the characters in the
+category support, script support, and properties support tests.
+
 In addition to the global flags listed above, the `keys` command supports
 the following:
 
-| Flag                | Short form | Description                                                           |
-| :---                | :---       | :---                                                                  |
-| `--size`            | `-s`       | test file sizes                                                       |
-| `--size-max SIZE`   |            | max file size to create (default "256G")                              |
-| `--count`           | `-c`       | test file counts                                                      |
-| `--count-max COUNT` |            | max number of files to create, or -1 for no limit (default 16777216)  |
-| `--unicode`         | `-u`       | test Unicode keys                                                     |
-| `--dry-run`         | `-n`       | dry run; list all tests that would be run, but don't create any files |
+| Short form | Flag                   | Description                                                            |
+| :---       | :---                   | :---                                                                   |
+| `-s`       | `--size`               | test file sizes                                                        |
+|            | `--size-max SIZE`      | max file size to create (default "256G")                               |
+| `-c`       | `--count`              | test file counts                                                       |
+|            | `--count-max COUNT`    | max number of files to create, or -1 for no limit (default 16777216)   |
+| `-u`       | `--unicode`            | test Unicode keys                                                      |
+|            | `--unicode-categories` | test Unicode categories                                                |
+|            | `--unicode-scripts`    | test Unicode scripts                                                   |
+|            | `--unicode-properties` | test Unicode properties                                                |
+|            | `--unicode-emoji`      | test Unicode emoji                                                     |
+| `-n`       | `--dry-run`            | dry run; list all tests that would be run, but don't make any requests |
+
 
 The maximum size may be specified as an exact number of bytes, or using
 human-readable quantities such as "5K" (4 KiB or 4096 bytes), "3.5M" (3.5
@@ -242,6 +259,7 @@ MiB or 3670016 bytes), etc. The units supported are bytes (B), binary
 kilobytes (K, KB, KiB), binary megabytes (M, MB, MiB), binary gigabytes (G,
 GB, GiB), and binary terabytes (T, TB, TiB). If no unit is specified, bytes
 are assumed.
+
 
 ## For developers
 
@@ -299,15 +317,3 @@ In **Preferences > Go > Go Modules (vgo)** (GoLand) or **Preferences >
 Languages & Frameworks Go > Go Modules (vgo)** (IDEA + Go plugin) , check
 “Enable Go Modules (vgo) integration“. The “Vgo Executable” field should
 default to “Project SDK” (1.11.x).
-
-## Roadmap
-
-- ✅ fixity checking: expected vs. actual
-- ✅ sanity check: can we create/retrieve/verify/delete a file?
-- ✅ weird filenames
-- 🔲 scalability
-  - large files
-  - large numbers of files per bucket
-  - large numbers of files per key prefix
-- 🔲 streaming download performance
-- 🔲 reliability 
