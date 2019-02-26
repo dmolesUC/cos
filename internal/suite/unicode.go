@@ -3,6 +3,7 @@ package suite
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"unicode"
 
 	"github.com/dmolesUC3/cos/internal/logging"
@@ -30,14 +31,21 @@ func AllUnicodeCases() []Case {
 }
 
 func UnicodePropertiesCases() []Case {
-	return toCases("Unicode properties: ", unicode.Properties)
+	return rangeTablesToCases("Unicode properties: ", unicode.Properties)
 }
 
 func UnicodeScriptsCases() []Case {
-	return toCases("Unicode scripts: ", unicode.Scripts)
+	return rangeTablesToCases("Unicode scripts: ", unicode.Scripts)
 }
 
 func UnicodeEmojiCases() []Case {
+	var cases []Case
+	cases = append(cases, UnicodeEmojiPropertyCases()...)
+	cases = append(cases, UnicodeEmojiSequenceCases()...)
+	return cases
+}
+
+func UnicodeEmojiPropertyCases() []Case {
 	var tables = map[string]*unicode.RangeTable{}
 	for _, prop := range emojidata.AllProperties {
 		rt := emoji.Latest.RangeTable(prop)
@@ -46,12 +54,22 @@ func UnicodeEmojiCases() []Case {
 		}
 		tables[prop.String()] = rt
 	}
-	return toCases("Unicode emoji: ", tables)
+	return rangeTablesToCases("Unicode emoji properties: ", tables)
 }
 
-// TODO: emoji sequences
+func UnicodeEmojiSequenceCases() []Case {
+	var sequences = map[string][]string{}
+	for _, seqType := range emojidata.AllSeqTypes {
+		seq := emoji.Latest.Sequences(seqType)
+		if len(seq) == 0 {
+			continue
+		}
+		sequences[seqType.String()] = seq
+	}
+	return sequencesToCases("Unicode emoji sequences: ", sequences)
+}
 
-func toCases(prefix string, tables map[string]*unicode.RangeTable) []Case {
+func rangeTablesToCases(prefix string, tables map[string]*unicode.RangeTable) []Case {
 	var rangeNames []string
 	for rangeName := range tables {
 		rangeNames = append(rangeNames, rangeName)
@@ -66,6 +84,22 @@ func toCases(prefix string, tables map[string]*unicode.RangeTable) []Case {
 			continue
 		}
 		uc := newUnicodeCase(prefix+rangeName, rangeTableToRunes(rt))
+		cases = append(cases, uc)
+	}
+	return cases
+}
+
+func sequencesToCases(prefix string, sequences map[string][]string) []Case {
+	var seqNames []string
+	for seqName := range sequences {
+		seqNames = append(seqNames, seqName)
+	}
+	sort.Strings(seqNames)
+
+	var cases []Case
+	for _, seqName := range seqNames {
+		seq := sequences[seqName]
+		uc := newUnicodeCase(prefix+seqName, []rune(strings.Join(seq, "")))
 		cases = append(cases, uc)
 	}
 	return cases
@@ -120,6 +154,7 @@ func findInvalidRunesForKeyIn(keyRunes []rune, target objects.Target) []rune {
 	// Either:
 	// 1. we have too many characters to test in a single key, so we split it, or
 	// 2. we have one or more invalid key characters somewhere in this string, so we binary search for them
+	// TODO: something clever to make sure we don't split emoji sequences in the middle
 	kr1, kr2 := split(keyRunes)
 	result1 := findInvalidRunesForKeyIn(kr1, target)
 	result2 := findInvalidRunesForKeyIn(kr2, target)
@@ -159,7 +194,6 @@ func range32ToRunes(r32 unicode.Range32) []rune {
 	}
 	return runes
 }
-
 
 func isEmpty(rt *unicode.RangeTable) bool {
 	return len(rt.R16) == 0 && len(rt.R32) == 0
