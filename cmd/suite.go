@@ -122,8 +122,10 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 		_ = logging.DefaultLoggerWithLevel(logLevel)
 	}
 
+	var anyUnicode = f.Unicode || f.UnicodeScripts || f.UnicodeProperties || f.UnicodeEmoji || f.UnicodeCategories
+
 	var cases []Case
-	runAllCases := !(f.Size || f.Count || f.Unicode || f.UnicodeScripts || f.UnicodeProperties || f.UnicodeEmoji)
+	runAllCases := !(f.Size || f.Count || anyUnicode)
 	if runAllCases || f.Size {
 		cases = append(cases, FileSizeCases(sizeMax)...)
 	}
@@ -134,6 +136,9 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 		cases = append(cases, AllUnicodeCases()...)
 	}
 	if !f.Unicode {
+		if f.UnicodeCategories {
+			cases = append(cases, UnicodeCategoriesCases()...)
+		}
 		if f.UnicodeScripts {
 			cases = append(cases, UnicodeScriptsCases()...)
 		}
