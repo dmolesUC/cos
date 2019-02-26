@@ -5,6 +5,7 @@ require (
 	github.com/aws/aws-sdk-go v1.16.13
 	github.com/briandowns/spinner v0.0.0-20190126160308-b298438e1f0d
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dmolesUC3/emoji v0.0.0-20190225233115-69a41eabd5cc
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/magefile/mage v1.8.0
@@ -21,7 +22,7 @@ require (
 	golang.org/x/net v0.0.0-20181220203305-927f97764cc3 // indirect
 	golang.org/x/sys v0.0.0-20181205085412-a5c9d58dba9a // indirect
 	golang.org/x/tools v0.0.0-20190206041539-40960b6deb8e
-	gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405
+	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127
 	gopkg.in/yaml.v2 v2.2.2 // indirect
 )
 

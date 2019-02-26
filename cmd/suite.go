@@ -24,6 +24,9 @@ type SuiteFlags struct {
 	CountMax  uint64
 
 	Unicode bool
+	UnicodeScripts bool
+	UnicodeProperties bool
+	UnicodeEmoji bool
 
 	DryRun    bool
 }
@@ -45,6 +48,17 @@ const (
 		kilobytes (K, KB, KiB), binary megabytes (M, MB, MiB), binary gigabytes (G,
 		GB, GiB), and binary terabytes (T, TB, TiB). If no unit is specified, bytes
 		are assumed.
+
+		Unicode key support tests are further divided into:
+
+        - Unicode script support (--unicode-scripts)
+        - Unicode properties support (--unicode-properties)
+        - Unicode emoji support (--unicode-emoji)
+
+		If --unicode is specified, all of these are run.
+
+		Note that there is considerable overlap between the characters in the
+		script support and properties support tests.
 	`
 )
 
@@ -69,6 +83,9 @@ func init() {
 	cmdFlags.Uint64Var(&f.CountMax, "count-max", CountMaxDefault, "max number of files to create, or -1 for no limit")
 
 	cmdFlags.BoolVarP(&f.Unicode, "unicode", "u", false, "test Unicode keys")
+	cmdFlags.BoolVar(&f.UnicodeScripts, "unicode-scripts", false, "test Unicode scripts")
+	cmdFlags.BoolVar(&f.UnicodeProperties, "unicode-properties", false, "test Unicode properties")
+	cmdFlags.BoolVar(&f.UnicodeEmoji, "unicode-emoji", false, "test Unicode emoji")
 
 	cmdFlags.BoolVarP(&f.DryRun, "dry-run", "n", false, "dry run; list all tests that would be run, but don't create any files")
 	rootCmd.AddCommand(cmd)
@@ -103,7 +120,7 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 	}
 
 	var cases []Case
-	runAllCases := !(f.Size || f.Count || f.Unicode)
+	runAllCases := !(f.Size || f.Count || f.Unicode || f.UnicodeScripts || f.UnicodeProperties || f.UnicodeEmoji)
 	if runAllCases || f.Size {
 		cases = append(cases, FileSizeCases(sizeMax)...)
 	}
@@ -112,6 +129,17 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 	}
 	if runAllCases || f.Unicode {
 		cases = append(cases, AllUnicodeCases()...)
+	}
+	if !f.Unicode {
+		if f.UnicodeScripts {
+			cases = append(cases, UnicodeScriptsCases()...)
+		}
+		if f.UnicodeProperties {
+			cases = append(cases, UnicodePropertiesCases()...)
+		}
+		if f.UnicodeEmoji {
+			cases = append(cases, UnicodeEmojiCases()...)
+		}
 	}
 
 	// sanity check

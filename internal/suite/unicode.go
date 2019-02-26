@@ -10,6 +10,10 @@ import (
 	. "github.com/dmolesUC3/cos/pkg"
 
 	"github.com/dmolesUC3/cos/internal/objects"
+
+	"github.com/dmolesUC3/emoji"
+
+	emojidata "github.com/dmolesUC3/emoji/data"
 )
 
 const (
@@ -21,6 +25,7 @@ func AllUnicodeCases() []Case {
 	var cases []Case
 	cases = append(cases, UnicodePropertiesCases()...)
 	cases = append(cases, UnicodeScriptsCases()...)
+	cases = append(cases, UnicodeEmojiCases()...)
 	return cases
 }
 
@@ -31,6 +36,20 @@ func UnicodePropertiesCases() []Case {
 func UnicodeScriptsCases() []Case {
 	return toCases("Unicode scripts: ", unicode.Scripts)
 }
+
+func UnicodeEmojiCases() []Case {
+	var tables = map[string]*unicode.RangeTable{}
+	for _, prop := range emojidata.AllProperties {
+		rt := emoji.Latest.RangeTable(prop)
+		if isEmpty(rt) {
+			continue
+		}
+		tables[prop.String()] = rt
+	}
+	return toCases("Unicode emoji: ", tables)
+}
+
+// TODO: emoji sequences
 
 func toCases(prefix string, tables map[string]*unicode.RangeTable) []Case {
 	var rangeNames []string
@@ -139,4 +158,9 @@ func range32ToRunes(r32 unicode.Range32) []rune {
 		runes = append(runes, rune(cp))
 	}
 	return runes
+}
+
+
+func isEmpty(rt *unicode.RangeTable) bool {
+	return len(rt.R16) == 0 && len(rt.R32) == 0
 }
