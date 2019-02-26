@@ -27,14 +27,6 @@ func NewRangeTableCase(prefix string, rangeName string, rt *unicode.RangeTable) 
 	return &c
 }
 
-// Deprecated
-func newRTC(rn string, allRunes []rune) Case {
-	c := rangeCase{allRunes: allRunes}
-	c.name = fmt.Sprintf("%v (%d characters)", rn, len(allRunes))
-	c.exec = c.doExec
-	return &c
-}
-
 func (u *rangeCase) doExec(target objects.Target) (ok bool, detail string) {
 	invalidRunesForKey := findInvalidRunesForKeyIn(u.allRunes, target)
 	numInvalid := len(invalidRunesForKey)
