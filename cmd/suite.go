@@ -24,6 +24,7 @@ type SuiteFlags struct {
 	CountMax  uint64
 
 	Unicode bool
+	UnicodeCategories bool
 	UnicodeScripts bool
 	UnicodeProperties bool
 	UnicodeEmoji bool
@@ -51,6 +52,7 @@ const (
 
 		Unicode key support tests are further divided into:
 
+		- Unicode category support (--unicode-categories)
         - Unicode script support (--unicode-scripts)
         - Unicode properties support (--unicode-properties)
         - Unicode emoji support (--unicode-emoji)
@@ -58,7 +60,7 @@ const (
 		If --unicode is specified, all of these are run.
 
 		Note that there is considerable overlap between the characters in the
-		script support and properties support tests.
+		category support, script support, and properties support tests.
 	`
 )
 
@@ -83,6 +85,7 @@ func init() {
 	cmdFlags.Uint64Var(&f.CountMax, "count-max", CountMaxDefault, "max number of files to create, or -1 for no limit")
 
 	cmdFlags.BoolVarP(&f.Unicode, "unicode", "u", false, "test Unicode keys")
+	cmdFlags.BoolVar(&f.UnicodeCategories, "unicode-categories", false, "test Unicode categories")
 	cmdFlags.BoolVar(&f.UnicodeScripts, "unicode-scripts", false, "test Unicode scripts")
 	cmdFlags.BoolVar(&f.UnicodeProperties, "unicode-properties", false, "test Unicode properties")
 	cmdFlags.BoolVar(&f.UnicodeEmoji, "unicode-emoji", false, "test Unicode emoji")

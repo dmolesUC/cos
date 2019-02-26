@@ -15,10 +15,15 @@ const (
 
 func AllUnicodeCases() []Case {
 	var cases []Case
+	cases = append(cases, UnicodeCategoriesCases()...)
 	cases = append(cases, UnicodePropertiesCases()...)
 	cases = append(cases, UnicodeScriptsCases()...)
 	cases = append(cases, UnicodeEmojiCases()...)
 	return cases
+}
+
+func UnicodeCategoriesCases() []Case {
+	return rangeTablesToCases("Unicode categories: ", unicode.Categories)
 }
 
 func UnicodePropertiesCases() []Case {
