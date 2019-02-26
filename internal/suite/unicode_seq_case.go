@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/dmolesUC3/emoji"
+
 	"github.com/dmolesUC3/cos/internal/logging"
 	. "github.com/dmolesUC3/cos/pkg"
 
@@ -32,19 +34,19 @@ func (u *seqCase) doExec(target objects.Target) (ok bool, detail string) {
 }
 
 func toMessage(invalidSeqs []string) string {
-	var sb strings.Builder
+	msg := ""
 	for i, s := range invalidSeqs {
 		next := fmt.Sprintf("%v %X\n", s, []rune(s))
 		if 1 + i < len(invalidSeqs) {
 			next += ", "
 		}
-		// TODO: use emoji.DisplayWidth()
-		if sb.Len() + len(next) > 60 {
-			return sb.String()
+		msgNext := msg + next
+		if emoji.DisplayWidth(msgNext) > 60 {
+			return msg + "…"
 		}
-		sb.WriteString(next)
+		msg = msgNext
 	}
-	return sb.String()
+	return msg
 }
 
 func findInvalidSeqsForKeyIn(seqs []string, target objects.Target) []string {
