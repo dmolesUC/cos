@@ -75,6 +75,7 @@ func splitRunes(r []rune) (left, right []rune) {
 	return left, right
 }
 
+// TODO: use rangetable.Visit()
 func rangeTableToRunes(rt *unicode.RangeTable) []rune {
 	var runes []rune
 	for _, r16 := range rt.R16 {
