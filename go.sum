@@ -7,6 +7,7 @@ github.com/briandowns/spinner v0.0.0-20190212173954-5cf08d0ac778/go.mod h1:hw/JE
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/dmolesUC3/big-list-of-naughty-strings/naughtystrings v0.0.0-20190129235316-1531f613e06a h1:ZMVZYVnaEyYeD7gf6ai4aMvei5hPV9BPxz/9343G36A=
 github.com/dmolesUC3/big-list-of-naughty-strings/naughtystrings v0.0.0-20190129235316-1531f613e06a/go.mod h1:JbjHlMEuA7AKSWQPyEFPQ0hIRsl6ob4RBLPvGhwqddU=
 github.com/dmolesUC3/emoji v0.0.0-20190226181050-1849526eb21f h1:l4W9/rRyCN5QtPsgMvERrQ3mKSsaO/b191TPxe2ROO8=
 github.com/dmolesUC3/emoji v0.0.0-20190226181050-1849526eb21f/go.mod h1:+5FBTP/tHiFB2yrIvWaLq9PchgdvVu99lBK5ZrEzl9w=

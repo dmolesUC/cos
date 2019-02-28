@@ -76,3 +76,15 @@ func FormatNanos(ns int64) string {
 	millis := ns / nsPerMilli
 	return fmt.Sprintf("%dms", millis)
 }
+
+func FormatByteArray(bb []byte) string {
+	ii := make([]int, len(bb))
+	for i, b := range bb {
+		ii[i] = int(b)
+	}
+	return fmt.Sprintf("%#x", ii)
+}
+
+func FormatStringBytes(s string) string {
+	return FormatByteArray([]byte(s))
+}
