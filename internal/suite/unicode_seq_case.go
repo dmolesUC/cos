@@ -15,17 +15,27 @@ import (
 type seqCase struct {
 	caseImpl
 	allSeqs []string
+	linear bool
 }
 
-func NewSeqCase(prefix string, seqName string, seqs []string) Case {
-	c := seqCase{allSeqs: seqs}
+func NewBinarySearchSeqCase(prefix string, seqName string, seqs []string) Case {
+	return NewSeqCase(prefix, seqName, seqs, false)
+}
+
+func NewSeqCase(prefix string, seqName string, seqs []string, linear bool) Case {
+	c := seqCase{allSeqs: seqs, linear: linear}
 	c.name = fmt.Sprintf("%v%v (%d sequences)", prefix, seqName, len(seqs))
 	c.exec = c.doExec
 	return &c
 }
 
 func (u *seqCase) doExec(target objects.Target) (ok bool, detail string) {
-	invalidSeqsForKey := findInvalidSeqsForKeyIn(u.allSeqs, target)
+	var invalidSeqsForKey []string
+	if u.linear {
+		invalidSeqsForKey = listInvalidSeqsForKeyIn(u.allSeqs, target)
+	} else {
+		invalidSeqsForKey = findInvalidSeqsForKeyIn(u.allSeqs, target)
+	}
 	numInvalid := len(invalidSeqsForKey)
 	if numInvalid == 0 {
 		return true, ""
@@ -36,7 +46,7 @@ func (u *seqCase) doExec(target objects.Target) (ok bool, detail string) {
 func toMessage(invalidSeqs []string) string {
 	msg := ""
 	for i, s := range invalidSeqs {
-		next := fmt.Sprintf("%v %X\n", s, []rune(s))
+		next := fmt.Sprintf("%v %v\n", s, logging.FormatStringBytes(s))
 		if 1 + i < len(invalidSeqs) {
 			next += ", "
 		}
@@ -47,6 +57,25 @@ func toMessage(invalidSeqs []string) string {
 		msg = msgNext
 	}
 	return msg
+}
+
+func listInvalidSeqsForKeyIn(seqs []string, target objects.Target) []string {
+	if len(seqs) == 0 {
+		return nil
+	}
+	var invalid []string
+	for _, seq := range seqs {
+		if len(seq) > keyMaxBytes {
+			panic("key too long: " + logging.FormatStringBytes(seq))
+		}
+		crvd := NewCrvd(target, seq, DefaultContentLengthBytes, DefaultRandomSeed)
+		err := crvd.CreateRetrieveVerifyDelete()
+		if err != nil {
+			logging.DefaultLogger().Tracef("error creating %#v: %v\n", seq, err)
+			invalid = append(invalid, seq)
+		}
+	}
+	return invalid
 }
 
 func findInvalidSeqsForKeyIn(seqs []string, target objects.Target) []string {

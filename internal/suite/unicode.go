@@ -19,6 +19,7 @@ func AllUnicodeCases() []Case {
 	cases = append(cases, UnicodePropertiesCases()...)
 	cases = append(cases, UnicodeScriptsCases()...)
 	cases = append(cases, UnicodeEmojiCases()...)
+	cases = append(cases, UnicodeInvalidCases()...)
 	return cases
 }
 
@@ -67,6 +68,16 @@ func UnicodeEmojiSequenceCases() []Case {
 	return sequencesToCases("Unicode emoji sequences: ", sequences)
 }
 
+func UnicodeInvalidCases() []Case {
+	var cases []Case
+	cases = append(cases, rangeTablesToCases("Unicode invalid characters: ", UnicodeInvalid)...)
+	cases = append(cases, sequencesToLinearCases("UTF8 invalid sequences: ", UTF8InvalidSequences)...)
+	return cases
+}
+
+// ------------------------------------------------------------
+// Unexported symbols
+
 func rangeTablesToCases(prefix string, tables map[string]*unicode.RangeTable) []Case {
 	var rangeNames []string
 	for rangeName := range tables {
@@ -95,8 +106,23 @@ func sequencesToCases(prefix string, sequences map[string][]string) []Case {
 
 	var cases []Case
 	for _, seqName := range seqNames {
-		cases = append(cases, NewSeqCase(prefix, seqName, sequences[seqName]))
+		cases = append(cases, NewBinarySearchSeqCase(prefix, seqName, sequences[seqName]))
 	}
 	return cases
 }
+
+func sequencesToLinearCases(prefix string, sequences map[string][]string) []Case {
+	var seqNames []string
+	for seqName := range sequences {
+		seqNames = append(seqNames, seqName)
+	}
+	sort.Strings(seqNames)
+
+	var cases []Case
+	for _, seqName := range seqNames {
+		cases = append(cases, NewSeqCase(prefix, seqName, sequences[seqName], true))
+	}
+	return cases
+}
+
 

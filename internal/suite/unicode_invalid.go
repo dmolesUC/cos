@@ -1,6 +1,7 @@
 package suite
 
 import (
+	"fmt"
 	"math"
 	. "unicode"
 )
@@ -10,7 +11,21 @@ var UnicodeInvalid = map[string]*RangeTable{
 	"UTF8 Invalid Bytes": UTF8InvalidBytes,
 }
 
-var UTF8InvalidSequences = _UTF8InvalidSequences
+var UTF8InvalidSequences = func () map[string][]string {
+	byLength := map[int][]string{}
+	for _, bb := range _UTF8InvalidSequences {
+		byLength[len(bb)] = append(byLength[len(bb)], string(bb))
+	}
+	result := map[string][]string{}
+	for l, s := range byLength {
+		caseName := fmt.Sprintf("%d byte", l)
+		if l > 1 {
+			caseName = caseName + "s"
+		}
+		result[caseName] = s
+	}
+	return result
+}()
 
 var (
 	NonCharacter     = _NonCharacter     // Code points permanently reserved for internal use: https://www.unicode.org/faq/private_use.html#noncharacters

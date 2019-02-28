@@ -28,6 +28,7 @@ type SuiteFlags struct {
 	UnicodeScripts bool
 	UnicodeProperties bool
 	UnicodeEmoji bool
+	UnicodeInvalid bool
 
 	DryRun    bool
 }
@@ -56,6 +57,7 @@ const (
         - Unicode script support (--unicode-scripts)
         - Unicode properties support (--unicode-properties)
         - Unicode emoji support (--unicode-emoji)
+        - invalid Unicode key support (--unicode-invalid)
 
 		If --unicode is specified, all of these are run.
 
@@ -89,6 +91,7 @@ func init() {
 	cmdFlags.BoolVar(&f.UnicodeScripts, "unicode-scripts", false, "test Unicode scripts")
 	cmdFlags.BoolVar(&f.UnicodeProperties, "unicode-properties", false, "test Unicode properties")
 	cmdFlags.BoolVar(&f.UnicodeEmoji, "unicode-emoji", false, "test Unicode emoji")
+	cmdFlags.BoolVar(&f.UnicodeInvalid, "unicode-invalid", false, "test invalid Unicode")
 
 	cmdFlags.BoolVarP(&f.DryRun, "dry-run", "n", false, "dry run; list all tests that would be run, but don't make any requests")
 	rootCmd.AddCommand(cmd)
@@ -122,7 +125,12 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 		_ = logging.DefaultLoggerWithLevel(logLevel)
 	}
 
-	var anyUnicode = f.Unicode || f.UnicodeScripts || f.UnicodeProperties || f.UnicodeEmoji || f.UnicodeCategories
+	var anyUnicode = f.Unicode ||
+		f.UnicodeScripts ||
+		f.UnicodeProperties ||
+		f.UnicodeEmoji ||
+		f.UnicodeCategories ||
+		f.UnicodeInvalid
 
 	var cases []Case
 	runAllCases := !(f.Size || f.Count || anyUnicode)
@@ -147,6 +155,9 @@ func runSuite(bucketStr string, f SuiteFlags) error {
 		}
 		if f.UnicodeEmoji {
 			cases = append(cases, UnicodeEmojiCases()...)
+		}
+		if f.UnicodeInvalid {
+			cases = append(cases, UnicodeInvalidCases()...)
 		}
 	}
 
