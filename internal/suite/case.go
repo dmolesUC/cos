@@ -75,11 +75,15 @@ func (c *caseImpl) title(index int) string {
 func (c *caseImpl) maybeExec(target objects.Target, dryRun bool) (elapsed int64, ok bool, detail string) {
 	start := time.Now().UnixNano()
 	if dryRun {
-		time.Sleep(minTaskTime)
-		ok, detail = true, "(dry run)"
-	} else {
-		ok, detail = c.exec(target)
+		execOrig := c.exec
+		defer func() {
+			c.exec = execOrig
+		}()
+		c.exec = func(target objects.Target) (ok bool, detail string) {
+			return true, ""
+		}
 	}
+	ok, detail = c.exec(target)
 	elapsed = time.Now().UnixNano() - start
 	return
 }
