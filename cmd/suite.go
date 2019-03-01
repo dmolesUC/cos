@@ -63,6 +63,10 @@ const (
 
 		Note that there is considerable overlap between the characters in the
 		category support, script support, and properties support tests.
+
+		Note also that the --unicode-invalid test depends somewhat on the exact
+		mechanisms used to generate key strings from bytes, and results with your
+		own client code may differ.
 	`
 )
 

@@ -230,11 +230,16 @@ Unicode key support tests are further divided into:
 - Unicode script support (--unicode-scripts)
 - Unicode properties support (--unicode-properties)
 - Unicode emoji support (--unicode-emoji)
+        - invalid Unicode key support (--unicode-invalid)
 
-If --unicode is specified, all of these are run.
+If `--unicode` is specified, all of these are run.
 
 Note that there is considerable overlap between the characters in the
 category support, script support, and properties support tests.
+
+Note also that the `--unicode-invalid` test depends somewhat on the exact
+mechanisms used to generate key strings from bytes, and results with your
+own client code may differ.
 
 In addition to the global flags listed above, the `keys` command supports
 the following:
@@ -250,8 +255,8 @@ the following:
 |            | `--unicode-scripts`    | test Unicode scripts                                                   |
 |            | `--unicode-properties` | test Unicode properties                                                |
 |            | `--unicode-emoji`      | test Unicode emoji                                                     |
+|            | `--unicode-invalid`    | test invalid Unicode                                                   |
 | `-n`       | `--dry-run`            | dry run; list all tests that would be run, but don't make any requests |
-
 
 The maximum size may be specified as an exact number of bytes, or using
 human-readable quantities such as "5K" (4 KiB or 4096 bytes), "3.5M" (3.5
