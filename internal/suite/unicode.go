@@ -23,8 +23,6 @@ func AllUnicodeCases() []Case {
 	return cases
 }
 
-// TODO: where do noncharacters go? "--unicode-misc"?
-
 func UnicodeCategoriesCases() []Case {
 	return rangeTablesToCases("Unicode categories: ", unicode.Categories)
 }
