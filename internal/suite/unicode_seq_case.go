@@ -46,7 +46,7 @@ func (u *seqCase) doExec(target objects.Target) (ok bool, detail string) {
 func toMessage(invalidSeqs []string) string {
 	msg := ""
 	for i, s := range invalidSeqs {
-		next := fmt.Sprintf("%v %v\n", s, logging.FormatStringBytes(s))
+		next := fmt.Sprintf("%v %v", s, logging.FormatStringBytes(s))
 		if 1 + i < len(invalidSeqs) {
 			next += ", "
 		}
