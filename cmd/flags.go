@@ -20,6 +20,7 @@ func (f *CosFlags) LogLevel() logging.LogLevel {
 	return logging.LogLevel(f.Verbose)
 }
 
+// Deprecated TODO: use rootCmd.PersistentFlags() instead
 func (f *CosFlags) AddTo(cmdFlags *pflag.FlagSet) {
 	cmdFlags.SortFlags = false
 
