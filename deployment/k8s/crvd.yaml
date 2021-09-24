@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cos
+  labels:
+    app.kubernetes.io/component: cos
+    app.kubernetes.io/instance: cos
+    app.kubernetes.io/name: cos
+    app.kubernetes.io/part-of: cos
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: cos
+      app.kubernetes.io/instance: cos
+      app.kubernetes.io/name: cos
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: cos
+        app.kubernetes.io/instance: cos
+        app.kubernetes.io/name: cos
+    spec:
+      containers:
+        - image: nginx:1.20-alpine
+          name: cos
+          ports:
+            - containerPort: 80
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 100m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /index.html
+              port: 80
+            failureThreshold: 30
+            periodSeconds: 5
+            initialDelaySeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /index.html
+              port: 80
+            failureThreshold: 30
+            periodSeconds: 5
+            initialDelaySeconds: 10
+status:
+  readyReplicas: 1
+  availableReplicas: 1
