@@ -1,3 +1,5 @@
+[![Docker Repository on Quay](https://quay.io/repository/denistrofimov/cos/status "Docker Repository on Quay")](https://quay.io/repository/denistrofimov/cos)
+
 # cos
 
 A tool for testing and validating cloud object storage.
