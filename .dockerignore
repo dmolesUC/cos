@@ -1,4 +1,6 @@
 *.md
+deployment/
+*.sh
 
 #### Custom ignores ####
 
