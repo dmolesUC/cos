@@ -11,9 +11,9 @@ var UnicodeInvalid = map[string]*RangeTable{
 	"UTF8 Invalid Bytes": UTF8InvalidBytes,
 }
 
-var UTF8InvalidSequences = func () map[string][]string {
+var UTF8InvalidSequences = func() map[string][]string {
 	byLength := map[int][]string{}
-	for _, bb := range _UTF8InvalidSequences {
+	for _, bb := range UTF8InvalidByteSequences {
 		byLength[len(bb)] = append(byLength[len(bb)], string(bb))
 	}
 	result := map[string][]string{}
@@ -27,38 +27,7 @@ var UTF8InvalidSequences = func () map[string][]string {
 	return result
 }()
 
-var (
-	NonCharacter     = _NonCharacter     // Code points permanently reserved for internal use: https://www.unicode.org/faq/private_use.html#noncharacters
-	UTF8InvalidBytes = _UTF8InvalidBytes // Bytes that must never appear in a valid UTF8 sequence
-)
-
-var _NonCharacter = func() *RangeTable {
-	rt := RangeTable{}
-	rt.R16 = append(rt.R16, Range16{Lo: 0xfdd0, Hi: 0xfdef, Stride: 1})
-	for i := uint32(0); i <= 0x100000; i += 0x10000 {
-		cp0, cp1 := i+0xfffe, i+0xffff
-		if cp1 < math.MaxUint16 {
-			r16 := Range16{Lo: uint16(cp0), Hi: uint16(cp1), Stride: 1}
-			rt.R16 = append(rt.R16, r16)
-		} else {
-			r32 := Range32{Lo: cp0, Hi: cp1, Stride: 1}
-			rt.R32 = append(rt.R32, r32)
-		}
-	}
-	return &rt
-}()
-
-var _UTF8InvalidBytes = func() *RangeTable {
-	return &RangeTable{
-		R16: []Range16{
-			{Lo: 0xc0, Hi: 0xc1, Stride: 1},
-			{Lo: 0xf5, Hi: 0xfd, Stride: 1},
-		},
-		LatinOffset: 2,
-	}
-}()
-
-var _UTF8InvalidSequences = func() [][]byte {
+var UTF8InvalidByteSequences = func() [][]byte {
 	result := [][]byte{
 		// length 1 invalid sequences
 		{0xff},
@@ -244,4 +213,35 @@ var _UTF8InvalidSequences = func() [][]byte {
 		{0xf4, 0x8f, 0xbf, 0xc0},
 	}
 	return result
+}()
+
+var (
+	NonCharacter     = _NonCharacter     // Code points permanently reserved for internal use: https://www.unicode.org/faq/private_use.html#noncharacters
+	UTF8InvalidBytes = _UTF8InvalidBytes // Bytes that must never appear in a valid UTF8 sequence
+)
+
+var _NonCharacter = func() *RangeTable {
+	rt := RangeTable{}
+	rt.R16 = append(rt.R16, Range16{Lo: 0xfdd0, Hi: 0xfdef, Stride: 1})
+	for i := uint32(0); i <= 0x100000; i += 0x10000 {
+		cp0, cp1 := i+0xfffe, i+0xffff
+		if cp1 < math.MaxUint16 {
+			r16 := Range16{Lo: uint16(cp0), Hi: uint16(cp1), Stride: 1}
+			rt.R16 = append(rt.R16, r16)
+		} else {
+			r32 := Range32{Lo: cp0, Hi: cp1, Stride: 1}
+			rt.R32 = append(rt.R32, r32)
+		}
+	}
+	return &rt
+}()
+
+var _UTF8InvalidBytes = func() *RangeTable {
+	return &RangeTable{
+		R16: []Range16{
+			{Lo: 0xc0, Hi: 0xc1, Stride: 1},
+			{Lo: 0xf5, Hi: 0xfd, Stride: 1},
+		},
+		LatinOffset: 2,
+	}
 }()

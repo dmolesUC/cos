@@ -28,7 +28,7 @@ func (s *UnicodeSuite) TestNonCharacter(c *C) {
 
 func (s *UnicodeSuite) TestUTF8InvalidSequences(c *C) {
 	const badChar = rune(0xfffd)
-	for i, bb := range suite.UTF8InvalidSequences {
+	for i, bb := range suite.UTF8InvalidByteSequences {
 		bytesStr := logging.FormatByteArray(bb)
 		asString := string(bb)
 		c.Check(strings.ContainsRune(asString, badChar), Equals, true,
