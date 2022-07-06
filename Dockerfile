@@ -13,7 +13,7 @@ RUN go mod download
 COPY . .
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o cos main.go
+RUN CGO_ENABLED=0 GOOS=linux GO111MODULE=on go build -a -o cos main.go
 
 # Use distroless as minimal base image to package the cos binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
